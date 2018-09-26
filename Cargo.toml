@@ -1,0 +1,6 @@
+[package]
+name = "cryptonum"
+version = "0.1.0"
+authors = ["awick"]
+
+[dependencies]
