@@ -1695,4 +1695,38 @@ mod tests {
     generate_div_tests!(U16448, u16448);
     generate_div_tests!(U30784, u30784);
   }
+  mod barrett_gen {
+    use super::super::*;
+    use testing::run_test;
+
+    generate_barrett_gen_tests!(U192, u192, U256);
+    generate_barrett_gen_tests!(U256, u256, U320);
+    generate_barrett_gen_tests!(U384, u384, U448);
+    generate_barrett_gen_tests!(U512, u512, U576);
+    generate_barrett_gen_tests!(U576, u576, U640);
+    generate_barrett_gen_tests!(U1024, u1024, U1088);
+    generate_barrett_gen_tests!(U2048, u2048, U2112);
+    generate_barrett_gen_tests!(U3072, u3072, U3136);
+    generate_barrett_gen_tests!(U4096, u4096, U4160);
+    generate_barrett_gen_tests!(U7680, u7680, U7744);
+    generate_barrett_gen_tests!(U8192, u8192, U8256);
+    generate_barrett_gen_tests!(U15360, u15360, U15424);
+  }
+  mod barrett_red {
+    use super::super::*;
+    use testing::run_test;
+
+    generate_barrett_red_tests!(U192, u192, U256, U384);
+    generate_barrett_red_tests!(U256, u256, U320, U512);
+    generate_barrett_red_tests!(U384, u384, U448, U768);
+    generate_barrett_red_tests!(U512, u512, U576, U1024);
+    generate_barrett_red_tests!(U576, u576, U640, U1152);
+    generate_barrett_red_tests!(U1024, u1024, U1088, U2048);
+    generate_barrett_red_tests!(U2048, u2048, U2112, U4096);
+    generate_barrett_red_tests!(U3072, u3072, U3136, U6144);
+    generate_barrett_red_tests!(U4096, u4096, U4160, U8192);
+    generate_barrett_red_tests!(U7680, u7680, U7744, U15360);
+    generate_barrett_red_tests!(U8192, u8192, U8256, U16384);
+    generate_barrett_red_tests!(U15360, u15360, U15424, U30720);
+  }
 }

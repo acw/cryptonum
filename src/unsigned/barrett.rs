@@ -31,9 +31,9 @@ macro_rules! barrett_impl {
            pub fn reduce(&self, x: &$dbl) -> $name {
                 let     m2: $dbl64  = $dbl64::from(&self.m);
                 // 1. q1←⌊x/bk−1⌋, q2←q1 · μ, q3←⌊q2/bk+1⌋.
-                let     q1: $name64 = $name64::from(x >> (self.k - 1));
+                let     q1: $name64 = $name64::from(x >> ((self.k - 1) * 64));
                 let     q2: $dbl64  = $dbl64::from(q1 * &self.mu);
-                let     q3: $name64 = $name64::from(q2 >> (self.k + 1));
+                let     q3: $name64 = $name64::from(q2 >> ((self.k + 1) * 64));
                 // 2. r1←x mod bk+1, r2←q3 · m mod bk+1, r←r1 − r2.
                 let mut r:  $dbl64  = $dbl64::from(x);
                 r.mask(self.k + 1);
@@ -55,5 +55,72 @@ macro_rules! barrett_impl {
                 $name::from(&r)
            }
        }
+
+       impl $name {
+           pub fn generate_barrett(&self) -> $bar {
+               $bar::new(self.clone())
+           }
+
+           #[cfg(test)]
+           pub(crate) fn new_barrett(k: usize, m: $name64, mu: $name64) -> $bar {
+               $bar{ k: k, m: m, mu: mu }
+           }
+       }
+    };
+}
+
+#[cfg(test)]
+macro_rules! generate_barrett_gen_tests {
+    ($name: ident, $lname: ident, $bname: ident) => {
+        #[test]
+        fn $lname() {
+            let fname = format!("testdata/barrett_gen/{}.tests", stringify!($name));
+            run_test(fname.to_string(), 3, |case| {
+                let (neg0, mbytes) = case.get("m").unwrap();
+                let (neg1, kbytes) = case.get("k").unwrap();
+                let (neg2, ubytes) = case.get("u").unwrap();
+                assert!(!neg0 && !neg1 && !neg2);
+
+                let m    = $name::from_bytes(mbytes);
+                let kbig = $name::from_bytes(kbytes);
+                let mu   = $bname::from_bytes(ubytes);
+                //
+                let mbig = $bname::from(&m);
+                let k    = usize::from(&kbig);
+                //
+                let bar  = m.generate_barrett();
+                assert_eq!(k,    bar.k);
+                assert_eq!(mbig, bar.m);
+                assert_eq!(mu,   bar.mu);
+            });
+        }
+    };
+}
+
+#[cfg(test)]
+macro_rules! generate_barrett_red_tests {
+    ($name: ident, $lname: ident, $bname: ident, $dbl: ident) => {
+        #[test]
+        fn $lname() {
+            let fname = format!("testdata/barrett_reduce/{}.tests", stringify!($name));
+            run_test(fname.to_string(), 5, |case| {
+                let (neg0, mbytes) = case.get("m").unwrap();
+                let (neg1, kbytes) = case.get("k").unwrap();
+                let (neg2, ubytes) = case.get("u").unwrap();
+                let (neg3, xbytes) = case.get("x").unwrap();
+                let (neg4, rbytes) = case.get("r").unwrap();
+                assert!(!neg0 && !neg1 && !neg2 && !neg3 && !neg4);
+
+                let m    = $name::from_bytes(mbytes);
+                let kbig = $name::from_bytes(kbytes);
+                let k    = usize::from(&kbig);
+                let mu   = $bname::from_bytes(ubytes);
+                let bar  = $name::new_barrett(usize::from(k), $bname::from(m), mu);
+                let x    = $dbl::from_bytes(xbytes);
+                let r    = $name::from_bytes(rbytes);
+                //
+                assert_eq!(r, bar.reduce(&x));
+            });
+        }
     };
 }

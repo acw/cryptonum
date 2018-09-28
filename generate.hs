@@ -93,16 +93,18 @@ generateInvocs =
                          "U" ++ show b ++ ");")
        hPutStrLn hndl "\n#[cfg(test)]"
        hPutStrLn hndl "mod tests {"
-       generateTestBlock hndl "base"       Base   True  []
-       generateTestBlock hndl "conversion" Base   False []
-       generateTestBlock hndl "codec"      Base   False []
-       generateTestBlock hndl "cmp"        Base   True  []
-       generateTestBlock hndl "sub"        Base   True  []
-       generateTestBlock hndl "shiftl"     Base   True  []
-       generateTestBlock hndl "shiftr"     Base   True  []
-       generateTestBlock hndl "add"        DivMul True  [(+ 64)]
-       generateTestBlock hndl "mul"        DivMul True  [(* 2)]
-       generateTestBlock hndl "div"        DivMul True  []
+       generateTestBlock hndl "base"        Base    True  []
+       generateTestBlock hndl "conversion"  Base    False []
+       generateTestBlock hndl "codec"       Base    False []
+       generateTestBlock hndl "cmp"         Base    True  []
+       generateTestBlock hndl "sub"         Base    True  []
+       generateTestBlock hndl "shiftl"      Base    True  []
+       generateTestBlock hndl "shiftr"      Base    True  []
+       generateTestBlock hndl "add"         DivMul  True  [(+ 64)]
+       generateTestBlock hndl "mul"         DivMul  True  [(* 2)]
+       generateTestBlock hndl "div"         DivMul  True  []
+       generateTestBlock hndl "barrett_gen" Barrett True  [(+ 64)]
+       generateTestBlock hndl "barrett_red" Barrett True  [(+ 64), (* 2)]
        hPutStrLn hndl "}"
 
 log :: String -> IO ()
@@ -181,7 +183,7 @@ generateAllTheTests =
        let (m, memory1) = generateNum memory0 "m" size
            k            = computeK m
            u            = barrett m
-       in (Map.fromList [("m", showX m), ("k", showX k), ("u", showX u)], memory1)
+       in (Map.fromList [("m", showX m), ("k", showX k), ("u", showX u)],memory1)
      let (db3, gen3) = emptyDatabase gen1
      generateTests Barrett "barrett_reduce" db3 $ \ size memory0 ->
        let (m, memory1) = generateNum memory0 "m" size

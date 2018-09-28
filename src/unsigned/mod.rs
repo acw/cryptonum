@@ -13,6 +13,8 @@ mod conversion;
 #[macro_use]
 mod div;
 #[macro_use]
+mod formatter;
+#[macro_use]
 mod mul;
 #[macro_use]
 mod shifts;
@@ -22,19 +24,20 @@ mod sub;
 use self::add::{addition,unsafe_addition};
 use self::base::CryptoNum;
 use self::cmp::compare;
-use self::div::{DivMod,get_number_size};
 use self::codec::{Encoder,Decoder,raw_decoder};
+use self::div::{DivMod,get_number_size};
+use self::formatter::tochar;
 use self::mul::multiply;
 use self::shifts::{shiftl,shiftr};
 use self::sub::subtract;
 use std::cmp::{Ordering,min};
+use std::fmt;
+use std::fmt::Write;
 use std::ops::{Add,AddAssign};
 use std::ops::{Div,Mul,Rem};
 use std::ops::{Shl,ShlAssign,Shr,ShrAssign};
 use std::ops::{Sub,SubAssign};
 
-#[cfg(test)]
-use std::fmt;
 #[cfg(test)]
 use quickcheck::{Arbitrary,Gen};
 
@@ -44,6 +47,7 @@ macro_rules! generate_number
         generate_base!($name, $size);
         generate_base_conversions!($name);
         generate_codec!($name);
+        generate_formatter!($name);
 
         cmp_impls!($name);
 
