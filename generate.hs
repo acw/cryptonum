@@ -51,15 +51,20 @@ conversions :: [Int] -> [(Int,Int)]
 conversions []       = []
 conversions (x:rest) = (map (\ y -> (x,y)) rest) ++ conversions rest
 
-generateTestBlock :: Handle -> String -> IO ()
-generateTestBlock hndl name =
+generateTestBlock :: Handle -> String -> Level -> Bool -> [Int -> Int] -> IO ()
+generateTestBlock hndl name level useRT addOns =
   do hPutStrLn hndl ("  mod " ++ name ++ " {")
-     hPutStrLn hndl ("    use super::super::*;\n")
-     hPutStrLn hndl ("    use testing::run_test;\n")
+     when useRT $
+       do hPutStrLn hndl ("    use super::super::*;")
+          hPutStrLn hndl ("    use testing::run_test;")
+          hPutStrLn hndl ""
      forM_ (sort (Map.toList finalMap)) $ \ (size, kind) ->
-       when (kind >= Base) $
+       when (kind >= level) $
          hPutStrLn hndl ("    generate_" ++ name ++ 
-                         "_tests!(U" ++ show size ++ ");")
+                         "_tests!(U" ++ show size ++ ", " ++
+                         "u" ++ show size ++
+                         concatMap (\ f -> ", U" ++ show (f size)) addOns ++
+                         ");")
      hPutStrLn hndl "  }"
 
 generateInvocs :: IO ()
@@ -88,7 +93,16 @@ generateInvocs =
                          "U" ++ show b ++ ");")
        hPutStrLn hndl "\n#[cfg(test)]"
        hPutStrLn hndl "mod tests {"
-       generateTestBlock hndl "base"
+       generateTestBlock hndl "base"       Base   True  []
+       generateTestBlock hndl "conversion" Base   False []
+       generateTestBlock hndl "codec"      Base   False []
+       generateTestBlock hndl "cmp"        Base   True  []
+       generateTestBlock hndl "sub"        Base   True  []
+       generateTestBlock hndl "shiftl"     Base   True  []
+       generateTestBlock hndl "shiftr"     Base   True  []
+       generateTestBlock hndl "add"        DivMul True  [(+ 64)]
+       generateTestBlock hndl "mul"        DivMul True  [(* 2)]
+       generateTestBlock hndl "div"        DivMul True  []
        hPutStrLn hndl "}"
 
 log :: String -> IO ()
@@ -160,8 +174,8 @@ generateAllTheTests =
      generateTests DivMul "add" db1 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (b, memory2) = generateNum memory1 "b" size
-           c            = modulate    (a + b)     size
-       in (Map.fromList [("a", showX a), ("b", showX b), ("c", showX c)], memory2)
+           c            = a + b
+       in (Map.fromList [("a", showX a), ("b", showX b),("c", showX c)], memory2)
      let (db2, gen2) = emptyDatabase gen1
      generateTests Barrett "barrett_gen" db2 $ \ size memory0 ->
        let (m, memory1) = generateNum memory0 "m" size
@@ -201,16 +215,18 @@ generateAllTheTests =
      generateTests DivMul "div" db6 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (b, memory2) = generateNum memory1 "b" size
-           res          = Map.fromList [("a", showX a), ("b", showX b), ("c", showX (a `div` b))]
+           q            = a `div` b
+           r            = a `mod` b
+           res          = Map.fromList [("a", showX a), ("b", showX b),
+                                        ("q", showX q), ("r", showX r)]
        in (res, memory2)
      let (db7, gen7) = emptyDatabase gen5
      generateTests DivMul "mul" db7 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (b, memory2) = generateNum memory1 "b" size
            c            = a * b
-           d            = modulate c size
            res          = Map.fromList [("a", showX a), ("b", showX b),
-                                        ("c", showX c), ("d", showX d)]
+                                        ("c", showX c)]
        in (res, memory2)
      let (db8, gen8) = emptyDatabase gen6
      generateTests Base "shiftl" db8 $ \ size memory0 ->

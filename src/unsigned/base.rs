@@ -38,13 +38,20 @@ macro_rules! generate_base
                 }
             }
         }
-    }
-}
 
-#[cfg(test)]
-macro_rules! generate_base_tests
-{
-    ($name: ident) => {
+        #[cfg(test)]
+        impl Arbitrary for $name {
+            fn arbitrary<G: Gen>(g: &mut G) -> $name {
+                let mut res = $name::zero();
+
+                for val in res.value.iter_mut() {
+                    *val = g.next_u64();
+                }
+                res
+            }
+        }
+
+        #[cfg(test)]
         impl fmt::Debug for $name {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 f.write_str(stringify!($name))?;
@@ -53,10 +60,15 @@ macro_rules! generate_base_tests
                 f.write_str("}")
             }
         }
+    }
+}
 
+#[cfg(test)]
+macro_rules! generate_base_tests
+{
+    ($name: ident, $lname: ident) => {
         #[test]
-        #[allow(non_snake_case)]
-        fn $name() {
+        fn $lname() {
             let fname = format!("testdata/base/{}.tests", stringify!($name));
             run_test(fname.to_string(), 6, |case| {
                 let (neg0, xbytes) = case.get("x").unwrap();

@@ -19,6 +19,26 @@ macro_rules! generate_base_conversions
     () => {};
 }
 
+#[cfg(test)]
+macro_rules! generate_conversion_tests
+{
+    ($name: ident, $lname: ident) => {
+        #[cfg(test)]
+        mod $lname {
+            use super::super::super::*;
+            use std::convert::From;
+
+            quickcheck! {
+                fn conversion_u8(   x: u8)    -> bool { x == u8::from($name::from(x))    }
+                fn conversion_u16(  x: u16)   -> bool { x == u16::from($name::from(x))   }
+                fn conversion_u32(  x: u32)   -> bool { x == u32::from($name::from(x))   }
+                fn conversion_u64(  x: u64)   -> bool { x == u64::from($name::from(x))   }
+                fn conversion_usize(x: usize) -> bool { x == usize::from($name::from(x)) }
+            }
+        }
+    }
+}
+
 macro_rules! conversion_impls
 {
     ($name: ident, $other: ident) => {

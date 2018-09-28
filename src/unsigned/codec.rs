@@ -68,3 +68,21 @@ macro_rules! generate_codec
         generate_encoder!($name);
     }
 }
+
+#[cfg(test)]
+macro_rules! generate_codec_tests {
+    ($name: ident, $lname: ident) => {
+        #[cfg(test)]
+        mod $lname {
+            use super::super::super::*;
+
+            quickcheck! {
+                fn decode_encode(x: $name) -> bool {
+                    let bytes = x.to_bytes();
+                    let x2    = $name::from_bytes(&bytes);
+                    x == x2
+                }
+            }
+        }
+    };
+}

@@ -35,6 +35,8 @@ use std::ops::{Sub,SubAssign};
 
 #[cfg(test)]
 use std::fmt;
+#[cfg(test)]
+use quickcheck::{Arbitrary,Gen};
 
 macro_rules! generate_number
 {
