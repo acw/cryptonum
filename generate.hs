@@ -10,56 +10,105 @@ import System.FilePath((</>))
 import System.IO(Handle,IOMode(WriteMode),hPutStrLn,withFile,hFlush,hPutStr,stderr)
 import System.Random(StdGen,newStdGen,random,split)
 
-data Level = Base | DivMul | Barrett
+data Operation = Add
+               | BaseOps
+               | Barretts
+               | Div
+               | ModExp
+               | ModMul
+               | ModSq
+               | Mul
+               | Shifts
+               | Sub
+               | Convert Int
  deriving (Eq, Ord, Show)
+
+data Requirement = Req Int Operation
+ deriving (Eq, Ord, Show)
+
+data Need = Need Operation (Int -> [Requirement])
+
+needs :: [Need]
+needs = [ Need ModExp   (\ size -> [Req size ModMul
+                                   ,Req size ModSq
+                                   ,Req size Barretts])
+        , Need ModSq    (\ size -> [Req (size * 2) Div
+                                   ,Req size Barretts])
+        , Need ModMul   (\ size -> [Req size Mul
+                                   ,Req size Barretts
+                                   ,Req size (Convert (size * 2))
+                                   ,Req (size * 2) Div])
+        , Need Barretts (\ size -> [Req (size + 64) BaseOps
+                                   ,Req size (Convert (size + 64))
+                                   ,Req (size + 64) (Convert ((size * 2) + 64))
+                                   ,Req size (Convert ((size * 2) + 64))
+                                   ,Req ((size * 2) + 64) Add
+                                   ,Req ((size * 2) + 64) Sub
+                                   ,Req (size + 64) Mul
+                                   ,Req (size * 2) (Convert ((size * 2) + 64))
+                                   ,Req ((size * 2) + 64) Shifts
+                                   ,Req ((size * 2) + 64) Div
+                                   ,Req (size + 64) (Convert (size * 2))
+                                   ,Req ((size * 2) + 64)
+                                        (Convert ((size * 2) + 128))
+                                   ])
+        , Need Div      (\ size -> [Req size (Convert (size * 2))
+                                   ,Req 192 BaseOps
+                                   ,Req 384 BaseOps
+                                   ,Req 192 Mul
+                                   ,Req size Mul
+                                   ,Req size Shifts
+                                   ,Req (size * 2) Sub
+                                   ])
+        , Need Mul      (\ size -> [Req (size * 2) BaseOps])
+        , Need Sub      (\ size -> [Req size Add])
+        , Need Add      (\ size -> [Req (size + 64) BaseOps
+                                   ,Req size (Convert (size + 64))])
+        ]
+
+newRequirements :: Requirement -> [Requirement]
+newRequirements (Req size op) = concatMap go needs ++ [Req size BaseOps]
+ where
+  go (Need op2 generator) | op == op2 = generator size
+                          | otherwise = []
 
 bitSizes :: [Int]
 bitSizes =  [192,256,384,512,576,1024,2048,3072,4096,7680,8192,15360]
 
+baseRequirements :: [Requirement]
+baseRequirements = map (\ x -> Req x ModExp) bitSizes
+
+requirements :: [Requirement]
+requirements = go baseRequirements
+ where
+  step ls = let news = concatMap newRequirements ls
+                destBits = concatMap destRequirements (news ++ ls)
+            in ls ++ news ++ destBits
+  --
+  go ls = let ls' = removeDups (sort (step ls))
+          in if ls == ls' then ls else go ls'
+  --
+  removeDups [] = []
+  removeDups (x:xs) | x `elem` xs = removeDups xs
+                    | otherwise   = x : removeDups xs
+  --
+  destRequirements (Req _ (Convert t)) = [Req t BaseOps]
+  destRequirements _                   = []
+
 numberOfTests :: Int
 numberOfTests = 1000
 
-baseMap :: Map.Map Int Level
-baseMap = foldr (\ s m -> Map.insert s Barrett m) Map.empty bitSizes
-
-smartInsert :: Int -> Level -> Map.Map Int Level -> Map.Map Int Level
-smartInsert size level map = Map.insertWith max size level map
-
-generateNext :: Int -> Level -> Map.Map Int Level -> Map.Map Int Level
-generateNext size Base    acc = acc
-generateNext size DivMul  acc = smartInsert (size + 64) Base $
-                                smartInsert (size * 2)  Base $
-                                acc
-generateNext size Barrett acc = smartInsert (size + 64)       Base   $
-                                smartInsert (size * 2)        Base   $
-                                smartInsert ( size      + 64) DivMul $
-                                smartInsert ((size * 2) + 64) DivMul $
-                                acc
-
-step :: Map.Map Int Level -> Map.Map Int Level
-step m = Map.foldrWithKey generateNext m m
-
-fixpoint :: Map.Map Int Level -> Map.Map Int Level
-fixpoint m | m == m'   = m
-           | otherwise = fixpoint m'
- where m' = step m
-
-finalMap :: Map.Map Int Level
-finalMap = fixpoint baseMap
-
-conversions :: [Int] -> [(Int,Int)]
-conversions []       = []
-conversions (x:rest) = (map (\ y -> (x,y)) rest) ++ conversions rest
-
-generateTestBlock :: Handle -> String -> Level -> Bool -> [Int -> Int] -> IO ()
+generateTestBlock :: Handle ->
+                     String -> Operation -> Bool -> [Int -> Int] ->
+                     IO ()
 generateTestBlock hndl name level useRT addOns =
   do hPutStrLn hndl ("  mod " ++ name ++ " {")
      when useRT $
        do hPutStrLn hndl ("    use super::super::*;")
           hPutStrLn hndl ("    use testing::run_test;")
           hPutStrLn hndl ""
-     forM_ (sort (Map.toList finalMap)) $ \ (size, kind) ->
-       when (kind >= level) $
+     forM_ requirements $ \ (Req size kind) ->
+       when (kind == level) $
          hPutStrLn hndl ("    generate_" ++ name ++ 
                          "_tests!(U" ++ show size ++ ", " ++
                          "u" ++ show size ++
@@ -70,64 +119,70 @@ generateTestBlock hndl name level useRT addOns =
 generateInvocs :: IO ()
 generateInvocs =
   withFile "src/unsigned/invoc.rs" WriteMode $ \ hndl ->
-    do forM_ (sort (Map.toList finalMap)) $ \ item ->
-         case item of
-           (size, Base) ->
-             hPutStrLn hndl ("generate_number!(U" ++ show size ++ ", " ++
-                             show (size `div` 64) ++ ");")
-           (size, DivMul) ->
-             hPutStrLn hndl ("generate_number!(U" ++ show size ++ ", " ++
-                             show (size `div` 64) ++ ", U" ++
-                             show (size + 64) ++ ", U" ++
-                             show (size * 2) ++ ");")
-           (size, Barrett) ->
-             hPutStrLn hndl ("generate_number!(U" ++ show size ++ ", " ++
-                             show (size `div` 64) ++ ", U" ++
-                             show (size + 64) ++ ", U" ++
-                             show (size * 2) ++ ", U" ++
-                             show ((size * 2) + 64) ++ ", BarrettU" ++
-                             show size ++ ");")
+    do forM_ requirements $ \ (Req size oper) ->
+         case oper of
+           Add        -> hPutStrLn hndl ("addition_impls!(U" ++ show size ++ ", U" ++ show (size + 64) ++ ");")
+           BaseOps    -> hPutStrLn hndl ("base_impls!(U" ++ show size ++ ", " ++ show (size `div` 64) ++ ");")
+           Barretts   -> hPutStrLn hndl ("barrett_impl!(BarrettU" ++ show size ++ ", U" ++ show size ++ ", U" ++ show (size + 64) ++ ", U" ++ show (size * 2) ++ ", U" ++ show ((size * 2) + 64) ++ ");")
+           Div        -> hPutStrLn hndl ("div_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ");")
+           ModExp     -> hPutStrLn hndl ("modexp_impls!(U" ++ show size ++ ");")
+           ModMul     -> hPutStrLn hndl ("modmul_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ");")
+           ModSq      -> hPutStrLn hndl ("modsq_impls!(U" ++ show size ++ ");")
+           Mul        -> hPutStrLn hndl ("multiply_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ");")
+           Shifts     -> hPutStrLn hndl ("shift_impls!(U" ++ show size ++ ", " ++ show (size `div` 64) ++ ");")
+           Sub        -> hPutStrLn hndl ("subtraction_impls!(U" ++ show size ++ ", " ++ show (size `div` 64) ++ ");")
+           Convert to -> hPutStrLn hndl ("conversion_impls!(U" ++ show size ++ ", U" ++ show to ++ ");")
        hPutStrLn hndl ""
-       forM_ (conversions (Map.keys finalMap)) $ \ (a,b) ->
-         hPutStrLn hndl ("conversion_impls!(U" ++ show a ++ ", " ++
-                         "U" ++ show b ++ ");")
        hPutStrLn hndl "\n#[cfg(test)]"
        hPutStrLn hndl "mod tests {"
-       generateTestBlock hndl "base"        Base    True  []
-       generateTestBlock hndl "conversion"  Base    False []
-       generateTestBlock hndl "codec"       Base    False []
-       generateTestBlock hndl "cmp"         Base    True  []
-       generateTestBlock hndl "sub"         Base    True  []
-       generateTestBlock hndl "shiftl"      Base    True  []
-       generateTestBlock hndl "shiftr"      Base    True  []
-       generateTestBlock hndl "add"         DivMul  True  [(+ 64)]
-       generateTestBlock hndl "mul"         DivMul  True  [(* 2)]
-       generateTestBlock hndl "div"         DivMul  True  []
-       generateTestBlock hndl "barrett_gen" Barrett True  [(+ 64)]
-       generateTestBlock hndl "barrett_red" Barrett True  [(+ 64), (* 2)]
+       generateTestBlock hndl "base"        BaseOps  True  []
+       generateTestBlock hndl "conversion"  BaseOps  False []
+       generateTestBlock hndl "codec"       BaseOps  False []
+       generateTestBlock hndl "cmp"         BaseOps  True  []
+       generateTestBlock hndl "sub"         Sub      True  []
+       generateTestBlock hndl "shiftl"      Shifts   True  []
+       generateTestBlock hndl "shiftr"      Shifts   True  []
+       generateTestBlock hndl "add"         Add      True  [(+ 64)]
+       generateTestBlock hndl "mul"         Mul      True  [(* 2)]
+       generateTestBlock hndl "div"         Div      True  []
+       generateTestBlock hndl "barrett_gen" Barretts True  [(+ 64)]
+       generateTestBlock hndl "barrett_red" Barretts True  [(+ 64), (* 2)]
        hPutStrLn hndl "}"
 
 log :: String -> IO ()
 log str = hPutStr stderr str >> hFlush stderr
 
-generateTests :: Level -> String -> a -> (Int -> a -> (Map.Map String String, a)) -> IO ()
-generateTests minLevel directory init runner =
-  forM_  (sort (Map.toList finalMap)) $ \ (size, myLevel) ->
-    when (myLevel >= minLevel) $
-      do createDirectoryIfMissing True ("testdata" </> directory)
-         log $ "Generating " ++ show size ++ "-bit " ++ directory ++ " tests "
-         let dest = "testdata" </> directory </> ("U" ++ show size ++ ".tests") 
-         withFile dest WriteMode $ \ hndl ->
-           foldM_ (writer hndl size runner) init [0..numberOfTests]
-         log "done.\n"
+generateTests :: Operation -> String -> Database ->
+                 (Int -> Database -> (Map.Map String String, Integer, Database)) ->
+                 IO ()
+generateTests op directory init runner = do
+  forM_ (getSizes op requirements) $ \ size ->
+    do createDirectoryIfMissing True ("testdata" </> directory)
+       log $ "Generating " ++ show size ++ "-bit " ++ directory ++ " tests: 000%"
+       let dest = "testdata" </> directory </> ("U" ++ show size ++ ".tests") 
+       withFile dest WriteMode $ \ hndl ->
+         foldM_ (writer hndl size runner) init [0..numberOfTests]
+       log "\n"
  where
-  writer :: Handle -> Int -> (Int -> a -> (Map.Map String String, a)) -> a -> Int -> IO a
-  writer hndl size runner input _ =
-    do let (output, acc) = runner size input
-       forM_ (Map.toList output) $ \ (key, val) ->
-         do hPutStrLn hndl (key ++ ": " ++ val)
-            log "."
-       return acc
+  getSizes :: Operation -> [Requirement] -> [Int]
+  getSizes _    [] = []
+  getSizes oper ((Req size oper2) : rest)
+    | oper == oper2 = size : getSizes oper rest
+    | otherwise     = getSizes oper rest
+  --
+  writer hndl size runner db x =
+    do let (output, key, acc@(db',_)) = runner size db
+           before = Map.findWithDefault [] "RESULT" db'
+       if length (filter (== key) before) >= 10
+          then writer hndl size runner acc x
+          else do forM_ (Map.toList output) $ \ (key, val) ->
+                    do hPutStrLn hndl (key ++ ": " ++ val)
+                       let val = (x * 100) `div` numberOfTests
+                       log ("\b\b\b\b" ++ pad 3 ' ' (show val) ++ "%")
+                  return acc
+  --
+  pad x c str | length str < x = pad x c (c : str)
+              | otherwise      = str
 
 type Database = (Map.Map String [Integer], StdGen)
 
@@ -173,19 +228,23 @@ generateAllTheTests :: IO ()
 generateAllTheTests =
   do gen0 <- newStdGen
      let (db1, gen1) = emptyDatabase gen0
-     generateTests DivMul "add" db1 $ \ size memory0 ->
+     generateTests Add "add" db1 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (b, memory2) = generateNum memory1 "b" size
            c            = a + b
-       in (Map.fromList [("a", showX a), ("b", showX b),("c", showX c)], memory2)
+           res          = Map.fromList [("a", showX a), ("b", showX b),
+                                        ("c", showX c)]
+       in (res, c, memory2)
      let (db2, gen2) = emptyDatabase gen1
-     generateTests Barrett "barrett_gen" db2 $ \ size memory0 ->
+     generateTests Barretts "barrett_gen" db2 $ \ size memory0 ->
        let (m, memory1) = generateNum memory0 "m" size
            k            = computeK m
            u            = barrett m
-       in (Map.fromList [("m", showX m), ("k", showX k), ("u", showX u)],memory1)
+           res          = Map.fromList [("m", showX m), ("k", showX k),
+                                        ("u", showX u)]
+       in (res, u, memory1)
      let (db3, gen3) = emptyDatabase gen1
-     generateTests Barrett "barrett_reduce" db3 $ \ size memory0 ->
+     generateTests Barretts "barrett_reduce" db3 $ \ size memory0 ->
        let (m, memory1) = generateNum memory0 "m" size
            (x, memory2) = generateNum memory1 "x" (min size (2 * k * 64))
            k            = computeK m
@@ -194,9 +253,9 @@ generateAllTheTests =
            res          = Map.fromList [("m", showX m), ("x", showX x),
                                         ("k", showX k), ("u", showX u),
                                         ("r", showX r)]
-       in (res, memory2)
+       in (res, r, memory2)
      let (db4, gen4) = emptyDatabase gen2
-     generateTests Base "base" db4 $ \ size memory0 ->
+     generateTests BaseOps "base" db4 $ \ size memory0 ->
        let (x, memory1) = generateNum memory0 "x" size
            (m, memory2) = generateNum memory1 "m" size
            m'           = m `mod` (fromIntegral size `div` 64)
@@ -204,58 +263,60 @@ generateAllTheTests =
            res          = Map.fromList [("x", showX x),        ("z", showB (x == 0)),
                                         ("e", showB (even x)), ("o", showB (odd x)),
                                         ("m", showX m'),       ("r", showX r)]
-       in (res, memory2)
+       in (res, x, memory2)
      let (db5, gen5) = emptyDatabase gen3
-     generateTests Base "cmp" db5 $ \ size memory0 ->
+     generateTests BaseOps "cmp" db5 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (b, memory2) = generateNum memory1 "b" size
            res          = Map.fromList [("a", showX a), ("b", showX b),
                                         ("g", showB (a > b)), ("l", showB (a < b)),
                                         ("e", showB (a == b))]
-       in (res, memory2)
+       in (res, a, memory2)
      let (db6, gen6) = emptyDatabase gen4
-     generateTests DivMul "div" db6 $ \ size memory0 ->
+     generateTests Div "div" db6 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (b, memory2) = generateNum memory1 "b" size
            q            = a `div` b
            r            = a `mod` b
            res          = Map.fromList [("a", showX a), ("b", showX b),
                                         ("q", showX q), ("r", showX r)]
-       in (res, memory2)
+       in (res, q, memory2)
      let (db7, gen7) = emptyDatabase gen5
-     generateTests DivMul "mul" db7 $ \ size memory0 ->
+     generateTests Mul "mul" db7 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (b, memory2) = generateNum memory1 "b" size
            c            = a * b
            res          = Map.fromList [("a", showX a), ("b", showX b),
                                         ("c", showX c)]
-       in (res, memory2)
+       in (res, c, memory2)
      let (db8, gen8) = emptyDatabase gen6
-     generateTests Base "shiftl" db8 $ \ size memory0 ->
+     generateTests Shifts "shiftl" db8 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (l, memory2) = generateNum memory1 "l" size
            l'           = l `mod` fromIntegral (computeK a * 64)
            r            = modulate (a `shiftL` fromIntegral l') size
            res          = Map.fromList [("a", showX a), ("l", showX l'), ("r", showX r)]
-       in (res, memory2)
+       in (res, r, memory2)
      let (db9, gen9) = emptyDatabase gen6
-     generateTests Base "shiftr" db9 $ \ size memory0 ->
+     generateTests Shifts "shiftr" db9 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (l, memory2) = generateNum memory1 "l" size
            l'           = l `mod` fromIntegral (computeK a * 64)
            r            = modulate (a `shiftR` fromIntegral l') size
            res          = Map.fromList [("a", showX a), ("l", showX l'), ("r", showX r)]
-       in (res, memory2)
+       in (res, l, memory2)
      let (dbA, genA) = emptyDatabase gen7
-     generateTests Base "sub" dbA $ \ size memory0 ->
+     generateTests Sub "sub" dbA $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (b, memory2) = generateNum memory1 "b" size
            c            = modulate    (a - b)     size
-       in (Map.fromList [("a", showX a), ("b", showX b), ("c", showX c)], memory2)
+           res          = Map.fromList [("a", showX a), ("b", showX b),
+                                        ("c", showX c)]
+       in (res, c, memory2)
 
 main :: IO ()
 main =
   do args <- getArgs
-     let args' = if null args then ["invocs", "test"] else args
+     let args' = if null args then ["invocs", "tests"] else args
      when ("invocs" `elem` args') generateInvocs
      when ("tests"  `elem` args') generateAllTheTests

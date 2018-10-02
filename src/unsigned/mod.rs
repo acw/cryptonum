@@ -15,6 +15,10 @@ mod div;
 #[macro_use]
 mod formatter;
 #[macro_use]
+mod modexp;
+#[macro_use]
+mod modmul;
+#[macro_use]
 mod mul;
 #[macro_use]
 mod shifts;
@@ -27,6 +31,7 @@ use self::cmp::compare;
 use self::codec::{Encoder,Decoder,raw_decoder};
 use self::div::{DivMod,get_number_size};
 use self::formatter::tochar;
+use self::modmul::ModMul;
 use self::mul::multiply;
 use self::shifts::{shiftl,shiftr};
 use self::sub::subtract;
@@ -41,28 +46,20 @@ use std::ops::{Sub,SubAssign};
 #[cfg(test)]
 use quickcheck::{Arbitrary,Gen};
 
-macro_rules! generate_number
+macro_rules! base_impls
 {
     ($name: ident, $size: expr) => {
         generate_base!($name, $size);
         generate_base_conversions!($name);
         generate_codec!($name);
         generate_formatter!($name);
-
         cmp_impls!($name);
+    }
+}
 
-        subtraction_impls!($name, $size);
-        shift_impls!($name, $size);
-    };
-    ($name: ident, $size: expr, $plus1: ident, $times2: ident) => {
-        generate_number!($name, $size);
-        addition_impls!($name, $plus1);
-        multiply_impls!($name, $times2);
-        div_impls!($name, $times2);
-    };
-    ($name: ident, $size: expr, $plus1: ident, $times2: ident, $big: ident, $bar: ident) => {
-        generate_number!($name, $size, $plus1, $times2);
-        barrett_impl!($bar, $name, $plus1, $times2, $big);
+macro_rules! modsq_impls
+{
+    ($name: ident) => {
     }
 }
 
