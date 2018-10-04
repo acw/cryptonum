@@ -2,6 +2,7 @@ import Control.Monad(foldM_,forM_,when)
 import Data.Bits(shiftL,shiftR)
 import Data.List(sort)
 import qualified Data.Map.Strict as Map
+import GHC.Integer.GMP.Internals(powModInteger)
 import Numeric(showHex)
 import Prelude hiding (log)
 import System.Directory(createDirectoryIfMissing)
@@ -19,6 +20,7 @@ data Operation = Add
                | ModSq
                | Mul
                | Shifts
+               | Square
                | Sub
                | Convert Int
  deriving (Eq, Ord, Show)
@@ -33,7 +35,8 @@ needs = [ Need ModExp   (\ size -> [Req size ModMul
                                    ,Req size ModSq
                                    ,Req size Barretts])
         , Need ModSq    (\ size -> [Req (size * 2) Div
-                                   ,Req size Barretts])
+                                   ,Req size Barretts
+                                   ,Req size Square])
         , Need ModMul   (\ size -> [Req size Mul
                                    ,Req size Barretts
                                    ,Req size (Convert (size * 2))
@@ -127,9 +130,10 @@ generateInvocs =
            Div        -> hPutStrLn hndl ("div_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ");")
            ModExp     -> hPutStrLn hndl ("modexp_impls!(U" ++ show size ++ ");")
            ModMul     -> hPutStrLn hndl ("modmul_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ");")
-           ModSq      -> hPutStrLn hndl ("modsq_impls!(U" ++ show size ++ ");")
+           ModSq      -> hPutStrLn hndl ("modsq_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ");")
            Mul        -> hPutStrLn hndl ("multiply_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ");")
            Shifts     -> hPutStrLn hndl ("shift_impls!(U" ++ show size ++ ", " ++ show (size `div` 64) ++ ");")
+           Square     -> hPutStrLn hndl ("square_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ", " ++ show size ++ ");")
            Sub        -> hPutStrLn hndl ("subtraction_impls!(U" ++ show size ++ ", " ++ show (size `div` 64) ++ ");")
            Convert to -> hPutStrLn hndl ("conversion_impls!(U" ++ show size ++ ", U" ++ show to ++ ");")
        hPutStrLn hndl ""
@@ -147,6 +151,10 @@ generateInvocs =
        generateTestBlock hndl "div"         Div      True  []
        generateTestBlock hndl "barrett_gen" Barretts True  [(+ 64)]
        generateTestBlock hndl "barrett_red" Barretts True  [(+ 64), (* 2)]
+       generateTestBlock hndl "modsq"       ModSq    True  []
+       generateTestBlock hndl "modmul"      ModMul   True  []
+       generateTestBlock hndl "modexp"      ModExp   True  []
+       generateTestBlock hndl "square"      Square   True  [(* 2)]
        hPutStrLn hndl "}"
 
 log :: String -> IO ()
@@ -243,7 +251,7 @@ generateAllTheTests =
            res          = Map.fromList [("m", showX m), ("k", showX k),
                                         ("u", showX u)]
        in (res, u, memory1)
-     let (db3, gen3) = emptyDatabase gen1
+     let (db3, gen3) = emptyDatabase gen2
      generateTests Barretts "barrett_reduce" db3 $ \ size memory0 ->
        let (m, memory1) = generateNum memory0 "m" size
            (x, memory2) = generateNum memory1 "x" (min size (2 * k * 64))
@@ -254,7 +262,7 @@ generateAllTheTests =
                                         ("k", showX k), ("u", showX u),
                                         ("r", showX r)]
        in (res, r, memory2)
-     let (db4, gen4) = emptyDatabase gen2
+     let (db4, gen4) = emptyDatabase gen3
      generateTests BaseOps "base" db4 $ \ size memory0 ->
        let (x, memory1) = generateNum memory0 "x" size
            (m, memory2) = generateNum memory1 "m" size
@@ -264,7 +272,7 @@ generateAllTheTests =
                                         ("e", showB (even x)), ("o", showB (odd x)),
                                         ("m", showX m'),       ("r", showX r)]
        in (res, x, memory2)
-     let (db5, gen5) = emptyDatabase gen3
+     let (db5, gen5) = emptyDatabase gen4
      generateTests BaseOps "cmp" db5 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (b, memory2) = generateNum memory1 "b" size
@@ -272,7 +280,7 @@ generateAllTheTests =
                                         ("g", showB (a > b)), ("l", showB (a < b)),
                                         ("e", showB (a == b))]
        in (res, a, memory2)
-     let (db6, gen6) = emptyDatabase gen4
+     let (db6, gen6) = emptyDatabase gen5
      generateTests Div "div" db6 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (b, memory2) = generateNum memory1 "b" size
@@ -281,7 +289,7 @@ generateAllTheTests =
            res          = Map.fromList [("a", showX a), ("b", showX b),
                                         ("q", showX q), ("r", showX r)]
        in (res, q, memory2)
-     let (db7, gen7) = emptyDatabase gen5
+     let (db7, gen7) = emptyDatabase gen6
      generateTests Mul "mul" db7 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (b, memory2) = generateNum memory1 "b" size
@@ -289,7 +297,7 @@ generateAllTheTests =
            res          = Map.fromList [("a", showX a), ("b", showX b),
                                         ("c", showX c)]
        in (res, c, memory2)
-     let (db8, gen8) = emptyDatabase gen6
+     let (db8, gen8) = emptyDatabase gen7
      generateTests Shifts "shiftl" db8 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (l, memory2) = generateNum memory1 "l" size
@@ -297,7 +305,7 @@ generateAllTheTests =
            r            = modulate (a `shiftL` fromIntegral l') size
            res          = Map.fromList [("a", showX a), ("l", showX l'), ("r", showX r)]
        in (res, r, memory2)
-     let (db9, gen9) = emptyDatabase gen6
+     let (db9, gen9) = emptyDatabase gen8
      generateTests Shifts "shiftr" db9 $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (l, memory2) = generateNum memory1 "l" size
@@ -305,7 +313,7 @@ generateAllTheTests =
            r            = modulate (a `shiftR` fromIntegral l') size
            res          = Map.fromList [("a", showX a), ("l", showX l'), ("r", showX r)]
        in (res, l, memory2)
-     let (dbA, genA) = emptyDatabase gen7
+     let (dbA, genA) = emptyDatabase gen9
      generateTests Sub "sub" dbA $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (b, memory2) = generateNum memory1 "b" size
@@ -313,6 +321,38 @@ generateAllTheTests =
            res          = Map.fromList [("a", showX a), ("b", showX b),
                                         ("c", showX c)]
        in (res, c, memory2)
+     let (dbB, genB) = emptyDatabase genA
+     generateTests ModSq "modsq" dbB $ \ size memory0 ->
+       let (a, memory1) = generateNum memory0 "a" size
+           (m, memory2) = generateNum memory1 "m" size
+           c            = (a * a) `mod` m
+           res          = Map.fromList [("a", showX a), ("m", showX m),
+                                        ("c", showX c)]
+       in (res, c, memory2)
+     let (dbC, genC) = emptyDatabase genB
+     generateTests ModMul "modmul" dbC $ \ size memory0 ->
+       let (a, memory1) = generateNum memory0 "a" size
+           (b, memory2) = generateNum memory1 "b" size
+           (m, memory3) = generateNum memory2 "m" size
+           c            = (a * b) `mod` m
+           res          = Map.fromList [("a", showX a), ("b", showX b),
+                                        ("m", showX m), ("c", showX c)]
+       in (res, c, memory3)
+     let (dbD, genD) = emptyDatabase genC
+     generateTests ModExp "modexp" dbD $ \ size memory0 ->
+       let (b, memory1) = generateNum memory0 "b" size
+           (e, memory2) = generateNum memory1 "e" size
+           (m, memory3) = generateNum memory2 "m" size
+           r            = powModInteger b e m
+           res          = Map.fromList [("b", showX b), ("e", showX e),
+                                        ("m", showX m), ("r", showX r)]
+       in (res, r, memory3)
+     let (dbE, genE) = emptyDatabase genC
+     generateTests Square "square" dbE $ \ size memory0 ->
+       let (a, memory1) = generateNum memory0 "a" size
+           r            = modulate    (a * a)     (2 * size)
+           res          = Map.fromList [("a", showX a), ("r", showX r)]
+       in (res, r, memory1)
 
 main :: IO ()
 main =

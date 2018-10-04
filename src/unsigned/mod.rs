@@ -19,9 +19,13 @@ mod modexp;
 #[macro_use]
 mod modmul;
 #[macro_use]
+mod modsq;
+#[macro_use]
 mod mul;
 #[macro_use]
 mod shifts;
+#[macro_use]
+mod square;
 #[macro_use]
 mod sub;
 
@@ -31,9 +35,12 @@ use self::cmp::compare;
 use self::codec::{Encoder,Decoder,raw_decoder};
 use self::div::{DivMod,get_number_size};
 use self::formatter::tochar;
+use self::modexp::ModExp;
 use self::modmul::ModMul;
+use self::modsq::ModSquare;
 use self::mul::multiply;
 use self::shifts::{shiftl,shiftr};
+use self::square::Square;
 use self::sub::subtract;
 use std::cmp::{Ordering,min};
 use std::fmt;
@@ -54,12 +61,6 @@ macro_rules! base_impls
         generate_codec!($name);
         generate_formatter!($name);
         cmp_impls!($name);
-    }
-}
-
-macro_rules! modsq_impls
-{
-    ($name: ident) => {
     }
 }
 
