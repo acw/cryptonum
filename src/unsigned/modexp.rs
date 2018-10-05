@@ -3,9 +3,9 @@ pub trait ModExp<T> {
 }
 
 macro_rules! modexp_impls {
-    ($name: ident) => {
-        impl ModExp<$name> for $name {
-            fn modexp(&self, ine: &$name, m: &$name) -> $name {
+    ($name: ident, $other: ident) => {
+        impl ModExp<$other> for $name {
+            fn modexp(&self, ine: &$name, m: &$other) -> $name {
                 // S <- g
                 let mut s = self.clone();
                 // A <- 1
@@ -18,7 +18,6 @@ macro_rules! modexp_impls {
                     // If e is odd then A <- A * S
                     if e.value[0] & 1 != 0 {
                         a = a.modmul(&s, m);
-                        println!("Updating a to {:X}", a);
                     }
                     // e <- floor(e / 2)
                     let mut carry = 0;
@@ -35,8 +34,6 @@ macro_rules! modexp_impls {
             }
         }
     };
-    ($name: ident, $barrett: ident) => {
-    };
 }
 
 #[cfg(test)]
@@ -45,7 +42,7 @@ macro_rules! generate_modexp_tests {
         #[test]
         fn $lname() {
             let fname = format!("testdata/modexp/{}.tests", stringify!($name));
-            run_test(fname.to_string(), 4, |case| {
+            run_test(fname.to_string(), 6, |case| {
                 let (neg0, bbytes) = case.get("b").unwrap();
                 let (neg1, ebytes) = case.get("e").unwrap();
                 let (neg2, mbytes) = case.get("m").unwrap();
@@ -57,6 +54,38 @@ macro_rules! generate_modexp_tests {
                 let m = $name::from_bytes(mbytes);
                 let r = $name::from_bytes(rbytes);
                 assert_eq!(r, b.modexp(&e, &m));
+            });
+        }
+    };
+}
+
+#[cfg(test)]
+macro_rules! generate_barrett_modexp_tests {
+    ($name: ident, $lname: ident, $bname: ident) => {
+        #[test]
+        fn $lname() {
+            let fname = format!("testdata/modexp/{}.tests", stringify!($name));
+            run_test(fname.to_string(), 6, |case| {
+                let (neg0, bbytes) = case.get("b").unwrap();
+                let (neg1, ebytes) = case.get("e").unwrap();
+                let (neg2, mbytes) = case.get("m").unwrap();
+                let (neg3, rbytes) = case.get("r").unwrap();
+                let (neg4, kbytes) = case.get("k").unwrap();
+                let (neg5, ubytes) = case.get("u").unwrap();
+                assert!(!neg0 && !neg1 && !neg2 && !neg3 && !neg4 && !neg5);
+
+                let b    = $name::from_bytes(bbytes);
+                let e    = $name::from_bytes(ebytes);
+                let m    = $name::from_bytes(mbytes);
+                let r    = $name::from_bytes(rbytes);
+                let kbig = $name::from_bytes(kbytes);
+                let k    = usize::from(kbig);
+                let mu   = $bname::from_bytes(ubytes);
+                let bar  = $name::new_barrett(k, $bname::from(m), mu);
+
+                if k == b.value.len() {
+                    assert_eq!(r, b.modexp(&e, &bar));
+                }
             });
         }
     };

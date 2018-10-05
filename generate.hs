@@ -130,9 +130,10 @@ generateInvocs =
            BaseOps    -> hPutStrLn hndl ("base_impls!(U" ++ show size ++ ", " ++ show (size `div` 64) ++ ");")
            Barretts   -> hPutStrLn hndl ("barrett_impl!(BarrettU" ++ show size ++ ", U" ++ show size ++ ", U" ++ show (size + 64) ++ ", U" ++ show (size * 2) ++ ", U" ++ show ((size * 2) + 64) ++ ");")
            Div        -> hPutStrLn hndl ("div_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ");")
-           ModExp     -> hPutStrLn hndl ("modexp_impls!(U" ++ show size ++ ");")
-           ModMul     -> hPutStrLn hndl ("modmul_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ");")
-           ModSq      -> hPutStrLn hndl ("modsq_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ");")
+           ModExp     -> hPutStrLn hndl ("modexp_impls!(U" ++ show size ++ ", U" ++ show size ++ ");") >>
+                         hPutStrLn hndl ("modexp_impls!(U" ++ show size ++ ", BarrettU" ++ show size ++ ");")
+           ModMul     -> hPutStrLn hndl ("modmul_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ", BarrettU" ++ show size ++ ");")
+           ModSq      -> hPutStrLn hndl ("modsq_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ", BarrettU" ++ show size ++ ");")
            Mul        -> hPutStrLn hndl ("multiply_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ");")
            Shifts     -> hPutStrLn hndl ("shift_impls!(U" ++ show size ++ ", " ++ show (size `div` 64) ++ ");")
            Square     -> hPutStrLn hndl ("square_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ", " ++ show size ++ ");")
@@ -141,22 +142,25 @@ generateInvocs =
        hPutStrLn hndl ""
        hPutStrLn hndl "\n#[cfg(test)]"
        hPutStrLn hndl "mod tests {"
-       generateTestBlock hndl "base"        BaseOps  True  []
-       generateTestBlock hndl "conversion"  BaseOps  False []
-       generateTestBlock hndl "codec"       BaseOps  False []
-       generateTestBlock hndl "cmp"         BaseOps  True  []
-       generateTestBlock hndl "sub"         Sub      True  []
-       generateTestBlock hndl "shiftl"      Shifts   True  []
-       generateTestBlock hndl "shiftr"      Shifts   True  []
-       generateTestBlock hndl "add"         Add      True  [(+ 64)]
-       generateTestBlock hndl "mul"         Mul      True  [(* 2)]
-       generateTestBlock hndl "div"         Div      True  []
-       generateTestBlock hndl "barrett_gen" Barretts True  [(+ 64)]
-       generateTestBlock hndl "barrett_red" Barretts True  [(+ 64), (* 2)]
-       generateTestBlock hndl "modsq"       ModSq    True  []
-       generateTestBlock hndl "modmul"      ModMul   True  []
-       generateTestBlock hndl "modexp"      ModExp   True  []
-       generateTestBlock hndl "square"      Square   True  [(* 2)]
+       generateTestBlock hndl "base"           BaseOps  True  []
+       generateTestBlock hndl "conversion"     BaseOps  False []
+       generateTestBlock hndl "codec"          BaseOps  False []
+       generateTestBlock hndl "cmp"            BaseOps  True  []
+       generateTestBlock hndl "sub"            Sub      True  []
+       generateTestBlock hndl "shiftl"         Shifts   True  []
+       generateTestBlock hndl "shiftr"         Shifts   True  []
+       generateTestBlock hndl "add"            Add      True  [(+ 64)]
+       generateTestBlock hndl "mul"            Mul      True  [(* 2)]
+       generateTestBlock hndl "div"            Div      True  []
+       generateTestBlock hndl "barrett_gen"    Barretts True  [(+ 64)]
+       generateTestBlock hndl "barrett_red"    Barretts True  [(+ 64), (* 2)]
+       generateTestBlock hndl "modsq"          ModSq    True  []
+       generateTestBlock hndl "modmul"         ModMul   True  []
+       generateTestBlock hndl "modexp"         ModExp   True  []
+       generateTestBlock hndl "square"         Square   True  [(* 2)]
+       generateTestBlock hndl "barrett_modsq"  Barretts True  [(+ 64)]
+       generateTestBlock hndl "barrett_modmul" Barretts True  [(+ 64)]
+       generateTestBlock hndl "barrett_modexp" Barretts True  [(+ 64)]
        hPutStrLn hndl "}"
 
 log :: String -> IO ()
@@ -327,29 +331,38 @@ generateAllTheTests =
      generateTests ModSq "modsq" dbB $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (m, memory2) = generateNum memory1 "m" size
+           k            = computeK m
+           u            = barrett m
            c            = (a * a) `mod` m
            res          = Map.fromList [("a", showX a), ("m", showX m),
-                                        ("c", showX c)]
+                                        ("c", showX c), ("u", showX u),
+                                        ("k", showX k)]
        in (res, c, memory2)
      let (dbC, genC) = emptyDatabase genB
      generateTests ModMul "modmul" dbC $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            (b, memory2) = generateNum memory1 "b" size
            (m, memory3) = generateNum memory2 "m" size
+           k            = computeK m
+           u            = barrett m
            c            = (a * b) `mod` m
            res          = Map.fromList [("a", showX a), ("b", showX b),
-                                        ("m", showX m), ("c", showX c)]
+                                        ("m", showX m), ("c", showX c),
+                                        ("u", showX u), ("k", showX k)]
        in (res, c, memory3)
      let (dbD, genD) = emptyDatabase genC
      generateTests ModExp "modexp" dbD $ \ size memory0 ->
        let (b, memory1) = generateNum memory0 "b" size
            (e, memory2) = generateNum memory1 "e" size
            (m, memory3) = generateNum memory2 "m" size
+           k            = computeK m
+           u            = barrett m
            r            = powModInteger b e m
            res          = Map.fromList [("b", showX b), ("e", showX e),
-                                        ("m", showX m), ("r", showX r)]
+                                        ("m", showX m), ("r", showX r),
+                                        ("u", showX u), ("k", showX k)]
        in (res, r, memory3)
-     let (dbE, genE) = emptyDatabase genC
+     let (dbE, genE) = emptyDatabase genD
      generateTests Square "square" dbE $ \ size memory0 ->
        let (a, memory1) = generateNum memory0 "a" size
            r            = modulate    (a * a)     (2 * size)

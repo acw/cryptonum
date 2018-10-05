@@ -85,10 +85,12 @@ macro_rules! generate_sub_tests {
                 let (neg2, cbytes) = case.get("c").unwrap();
                 assert!(!neg0 && !neg1 && !neg2);
 
-                let a = $name::from_bytes(abytes);
-                let b = $name::from_bytes(bbytes);
-                let c = $name::from_bytes(cbytes);
-                assert_eq!(c, a - b);
+                let mut a = $name::from_bytes(abytes);
+                let b     = $name::from_bytes(bbytes);
+                let c     = $name::from_bytes(cbytes);
+                assert_eq!(c, &a - &b);
+                a -= b;
+                assert_eq!(c, a);
             });
         }
     };
