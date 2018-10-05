@@ -50,8 +50,10 @@ needs = [ Need ModExp   (\ size -> [Req size ModMul
                                    ,Req (size + 64) Mul
                                    ,Req (size * 2) (Convert ((size * 2) + 64))
                                    ,Req ((size * 2) + 64) Shifts
+                                   ,Req ((size * 2) + 128) Shifts
                                    ,Req ((size * 2) + 64) Div
                                    ,Req (size + 64) (Convert (size * 2))
+                                   ,Req (size + 64) (Convert ((size * 2) + 128))
                                    ,Req ((size * 2) + 64)
                                         (Convert ((size * 2) + 128))
                                    ])
@@ -254,7 +256,7 @@ generateAllTheTests =
      let (db3, gen3) = emptyDatabase gen2
      generateTests Barretts "barrett_reduce" db3 $ \ size memory0 ->
        let (m, memory1) = generateNum memory0 "m" size
-           (x, memory2) = generateNum memory1 "x" (min size (2 * k * 64))
+           (x, memory2) = generateNum memory1 "x" (min (2 * size) (2 * k * 64))
            k            = computeK m
            u            = barrett m
            r            = x `mod` m
