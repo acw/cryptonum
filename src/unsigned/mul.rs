@@ -70,18 +70,28 @@ macro_rules! generate_mul_tests
     ($name: ident, $lname: ident, $dbl: ident) => {
         #[test]
         fn $lname() {
-            let fname = format!("testdata/mul/{}.tests", stringify!($name));
-            run_test(fname.to_string(), 3, |case| {
-                let (neg0, abytes) = case.get("a").unwrap();
-                let (neg1, bbytes) = case.get("b").unwrap();
-                let (neg2, cbytes) = case.get("c").unwrap();
-                assert!(!neg0 && !neg1 && !neg2);
-
-                let a = $name::from_bytes(abytes);
-                let b = $name::from_bytes(bbytes);
-                let c = $dbl::from_bytes(cbytes);
-                assert_eq!(c, &a * &b);
-            });
+            generate_mul_tests!(body $name, $lname, $dbl);
         }
+    };
+    (ignore $name: ident, $lname: ident, $dbl: ident) => {
+        #[test]
+        #[ignore]
+        fn $lname() {
+            generate_mul_tests!(body $name, $lname, $dbl);
+        }
+    };
+    (body $name: ident, $lname: ident, $dbl: ident) => {
+        let fname = format!("testdata/mul/{}.tests", stringify!($name));
+        run_test(fname.to_string(), 3, |case| {
+            let (neg0, abytes) = case.get("a").unwrap();
+            let (neg1, bbytes) = case.get("b").unwrap();
+            let (neg2, cbytes) = case.get("c").unwrap();
+            assert!(!neg0 && !neg1 && !neg2);
+
+            let a = $name::from_bytes(abytes);
+            let b = $name::from_bytes(bbytes);
+            let c = $dbl::from_bytes(cbytes);
+            assert_eq!(c, &a * &b);
+        });
     };
 }

@@ -57,16 +57,26 @@ macro_rules! generate_square_tests {
     ($name: ident, $lname: ident, $dbl: ident) => {
         #[test]
         fn $lname() {
-            let fname = format!("testdata/square/{}.tests", stringify!($name));
-            run_test(fname.to_string(), 2, |case| {
-                let (neg0, abytes) = case.get("a").unwrap();
-                let (neg1, rbytes) = case.get("r").unwrap();
-                assert!(!neg0 && !neg1);
-
-                let a = $name::from_bytes(abytes);
-                let r = $dbl::from_bytes(rbytes);
-                assert_eq!(r, a.square());
-            });
+            generate_square_tests!(body $name, $lname, $dbl);
         }
+    };
+    (ignore $name: ident, $lname: ident, $dbl: ident) => {
+        #[test]
+        #[ignore]
+        fn $lname() {
+            generate_square_tests!(body $name, $lname, $dbl);
+        }
+    };
+    (body $name: ident, $lname: ident, $dbl: ident) => {
+        let fname = format!("testdata/square/{}.tests", stringify!($name));
+        run_test(fname.to_string(), 2, |case| {
+            let (neg0, abytes) = case.get("a").unwrap();
+            let (neg1, rbytes) = case.get("r").unwrap();
+            assert!(!neg0 && !neg1);
+
+            let a = $name::from_bytes(abytes);
+            let r = $dbl::from_bytes(rbytes);
+            assert_eq!(r, a.square());
+        });
     };
 }

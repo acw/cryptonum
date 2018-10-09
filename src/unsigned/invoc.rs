@@ -470,22 +470,22 @@ mod tests {
     generate_base_tests!(U15360, u15360);
     generate_base_tests!(U15424, u15424);
     generate_base_tests!(U15488, u15488);
-    generate_base_tests!(U16384, u16384);
-    generate_base_tests!(U16448, u16448);
-    generate_base_tests!(U16512, u16512);
-    generate_base_tests!(U16576, u16576);
-    generate_base_tests!(U30720, u30720);
-    generate_base_tests!(U30784, u30784);
-    generate_base_tests!(U30848, u30848);
-    generate_base_tests!(U30912, u30912);
-    generate_base_tests!(U32768, u32768);
-    generate_base_tests!(U32832, u32832);
-    generate_base_tests!(U32896, u32896);
-    generate_base_tests!(U32960, u32960);
-    generate_base_tests!(U61440, u61440);
-    generate_base_tests!(U61504, u61504);
-    generate_base_tests!(U61568, u61568);
-    generate_base_tests!(U61632, u61632);
+    generate_base_tests!(ignore U16384, u16384);
+    generate_base_tests!(ignore U16448, u16448);
+    generate_base_tests!(ignore U16512, u16512);
+    generate_base_tests!(ignore U16576, u16576);
+    generate_base_tests!(ignore U30720, u30720);
+    generate_base_tests!(ignore U30784, u30784);
+    generate_base_tests!(ignore U30848, u30848);
+    generate_base_tests!(ignore U30912, u30912);
+    generate_base_tests!(ignore U32768, u32768);
+    generate_base_tests!(ignore U32832, u32832);
+    generate_base_tests!(ignore U32896, u32896);
+    generate_base_tests!(ignore U32960, u32960);
+    generate_base_tests!(ignore U61440, u61440);
+    generate_base_tests!(ignore U61504, u61504);
+    generate_base_tests!(ignore U61568, u61568);
+    generate_base_tests!(ignore U61632, u61632);
   }
   mod conversion {
     generate_conversion_tests!(U192, u192);
@@ -680,22 +680,22 @@ mod tests {
     generate_cmp_tests!(U15360, u15360);
     generate_cmp_tests!(U15424, u15424);
     generate_cmp_tests!(U15488, u15488);
-    generate_cmp_tests!(U16384, u16384);
-    generate_cmp_tests!(U16448, u16448);
-    generate_cmp_tests!(U16512, u16512);
-    generate_cmp_tests!(U16576, u16576);
-    generate_cmp_tests!(U30720, u30720);
-    generate_cmp_tests!(U30784, u30784);
-    generate_cmp_tests!(U30848, u30848);
-    generate_cmp_tests!(U30912, u30912);
-    generate_cmp_tests!(U32768, u32768);
-    generate_cmp_tests!(U32832, u32832);
-    generate_cmp_tests!(U32896, u32896);
-    generate_cmp_tests!(U32960, u32960);
-    generate_cmp_tests!(U61440, u61440);
-    generate_cmp_tests!(U61504, u61504);
-    generate_cmp_tests!(U61568, u61568);
-    generate_cmp_tests!(U61632, u61632);
+    generate_cmp_tests!(ignore U16384, u16384);
+    generate_cmp_tests!(ignore U16448, u16448);
+    generate_cmp_tests!(ignore U16512, u16512);
+    generate_cmp_tests!(ignore U16576, u16576);
+    generate_cmp_tests!(ignore U30720, u30720);
+    generate_cmp_tests!(ignore U30784, u30784);
+    generate_cmp_tests!(ignore U30848, u30848);
+    generate_cmp_tests!(ignore U30912, u30912);
+    generate_cmp_tests!(ignore U32768, u32768);
+    generate_cmp_tests!(ignore U32832, u32832);
+    generate_cmp_tests!(ignore U32896, u32896);
+    generate_cmp_tests!(ignore U32960, u32960);
+    generate_cmp_tests!(ignore U61440, u61440);
+    generate_cmp_tests!(ignore U61504, u61504);
+    generate_cmp_tests!(ignore U61568, u61568);
+    generate_cmp_tests!(ignore U61632, u61632);
   }
   mod sub {
     use super::super::*;
@@ -724,19 +724,19 @@ mod tests {
     generate_sub_tests!(U8192, u8192);
     generate_sub_tests!(U8256, u8256);
     generate_sub_tests!(U8320, u8320);
-    generate_sub_tests!(U12288, u12288);
-    generate_sub_tests!(U12416, u12416);
-    generate_sub_tests!(U15424, u15424);
-    generate_sub_tests!(U16384, u16384);
-    generate_sub_tests!(U16448, u16448);
-    generate_sub_tests!(U16512, u16512);
-    generate_sub_tests!(U30720, u30720);
-    generate_sub_tests!(U30784, u30784);
-    generate_sub_tests!(U30848, u30848);
-    generate_sub_tests!(U32768, u32768);
-    generate_sub_tests!(U32896, u32896);
-    generate_sub_tests!(U61440, u61440);
-    generate_sub_tests!(U61568, u61568);
+    generate_sub_tests!(ignore U12288, u12288);
+    generate_sub_tests!(ignore U12416, u12416);
+    generate_sub_tests!(ignore U15424, u15424);
+    generate_sub_tests!(ignore U16384, u16384);
+    generate_sub_tests!(ignore U16448, u16448);
+    generate_sub_tests!(ignore U16512, u16512);
+    generate_sub_tests!(ignore U30720, u30720);
+    generate_sub_tests!(ignore U30784, u30784);
+    generate_sub_tests!(ignore U30848, u30848);
+    generate_sub_tests!(ignore U32768, u32768);
+    generate_sub_tests!(ignore U32896, u32896);
+    generate_sub_tests!(ignore U61440, u61440);
+    generate_sub_tests!(ignore U61568, u61568);
   }
   mod shiftl {
     use super::super::*;
@@ -767,15 +767,15 @@ mod tests {
     generate_shiftl_tests!(U8192, u8192);
     generate_shiftl_tests!(U8256, u8256);
     generate_shiftl_tests!(U8320, u8320);
-    generate_shiftl_tests!(U15360, u15360);
-    generate_shiftl_tests!(U15424, u15424);
-    generate_shiftl_tests!(U15488, u15488);
-    generate_shiftl_tests!(U16384, u16384);
-    generate_shiftl_tests!(U16448, u16448);
-    generate_shiftl_tests!(U16512, u16512);
-    generate_shiftl_tests!(U30720, u30720);
-    generate_shiftl_tests!(U30784, u30784);
-    generate_shiftl_tests!(U30848, u30848);
+    generate_shiftl_tests!(ignore U15360, u15360);
+    generate_shiftl_tests!(ignore U15424, u15424);
+    generate_shiftl_tests!(ignore U15488, u15488);
+    generate_shiftl_tests!(ignore U16384, u16384);
+    generate_shiftl_tests!(ignore U16448, u16448);
+    generate_shiftl_tests!(ignore U16512, u16512);
+    generate_shiftl_tests!(ignore U30720, u30720);
+    generate_shiftl_tests!(ignore U30784, u30784);
+    generate_shiftl_tests!(ignore U30848, u30848);
   }
   mod shiftr {
     use super::super::*;
@@ -806,15 +806,15 @@ mod tests {
     generate_shiftr_tests!(U8192, u8192);
     generate_shiftr_tests!(U8256, u8256);
     generate_shiftr_tests!(U8320, u8320);
-    generate_shiftr_tests!(U15360, u15360);
-    generate_shiftr_tests!(U15424, u15424);
-    generate_shiftr_tests!(U15488, u15488);
-    generate_shiftr_tests!(U16384, u16384);
-    generate_shiftr_tests!(U16448, u16448);
-    generate_shiftr_tests!(U16512, u16512);
-    generate_shiftr_tests!(U30720, u30720);
-    generate_shiftr_tests!(U30784, u30784);
-    generate_shiftr_tests!(U30848, u30848);
+    generate_shiftr_tests!(ignore U15360, u15360);
+    generate_shiftr_tests!(ignore U15424, u15424);
+    generate_shiftr_tests!(ignore U15488, u15488);
+    generate_shiftr_tests!(ignore U16384, u16384);
+    generate_shiftr_tests!(ignore U16448, u16448);
+    generate_shiftr_tests!(ignore U16512, u16512);
+    generate_shiftr_tests!(ignore U30720, u30720);
+    generate_shiftr_tests!(ignore U30784, u30784);
+    generate_shiftr_tests!(ignore U30848, u30848);
   }
   mod add {
     use super::super::*;
@@ -843,19 +843,19 @@ mod tests {
     generate_add_tests!(U8192, u8192, U8256);
     generate_add_tests!(U8256, u8256, U8320);
     generate_add_tests!(U8320, u8320, U8384);
-    generate_add_tests!(U12288, u12288, U12352);
-    generate_add_tests!(U12416, u12416, U12480);
-    generate_add_tests!(U15424, u15424, U15488);
-    generate_add_tests!(U16384, u16384, U16448);
-    generate_add_tests!(U16448, u16448, U16512);
-    generate_add_tests!(U16512, u16512, U16576);
-    generate_add_tests!(U30720, u30720, U30784);
-    generate_add_tests!(U30784, u30784, U30848);
-    generate_add_tests!(U30848, u30848, U30912);
-    generate_add_tests!(U32768, u32768, U32832);
-    generate_add_tests!(U32896, u32896, U32960);
-    generate_add_tests!(U61440, u61440, U61504);
-    generate_add_tests!(U61568, u61568, U61632);
+    generate_add_tests!(ignore U12288, u12288, U12352);
+    generate_add_tests!(ignore U12416, u12416, U12480);
+    generate_add_tests!(ignore U15424, u15424, U15488);
+    generate_add_tests!(ignore U16384, u16384, U16448);
+    generate_add_tests!(ignore U16448, u16448, U16512);
+    generate_add_tests!(ignore U16512, u16512, U16576);
+    generate_add_tests!(ignore U30720, u30720, U30784);
+    generate_add_tests!(ignore U30784, u30784, U30848);
+    generate_add_tests!(ignore U30848, u30848, U30912);
+    generate_add_tests!(ignore U32768, u32768, U32832);
+    generate_add_tests!(ignore U32896, u32896, U32960);
+    generate_add_tests!(ignore U61440, u61440, U61504);
+    generate_add_tests!(ignore U61568, u61568, U61632);
   }
   mod mul {
     use super::super::*;
@@ -887,12 +887,12 @@ mod tests {
     generate_mul_tests!(U7744, u7744, U15488);
     generate_mul_tests!(U8192, u8192, U16384);
     generate_mul_tests!(U8256, u8256, U16512);
-    generate_mul_tests!(U15360, u15360, U30720);
-    generate_mul_tests!(U15424, u15424, U30848);
-    generate_mul_tests!(U16384, u16384, U32768);
-    generate_mul_tests!(U16448, u16448, U32896);
-    generate_mul_tests!(U30720, u30720, U61440);
-    generate_mul_tests!(U30784, u30784, U61568);
+    generate_mul_tests!(ignore U15360, u15360, U30720);
+    generate_mul_tests!(ignore U15424, u15424, U30848);
+    generate_mul_tests!(ignore U16384, u16384, U32768);
+    generate_mul_tests!(ignore U16448, u16448, U32896);
+    generate_mul_tests!(ignore U30720, u30720, U61440);
+    generate_mul_tests!(ignore U30784, u30784, U61568);
   }
   mod div {
     use super::super::*;
@@ -909,19 +909,19 @@ mod tests {
     generate_div_tests!(U1152, u1152);
     generate_div_tests!(U1216, u1216);
     generate_div_tests!(U2048, u2048);
-    generate_div_tests!(U2112, u2112);
-    generate_div_tests!(U4096, u4096);
-    generate_div_tests!(U4160, u4160);
-    generate_div_tests!(U6144, u6144);
-    generate_div_tests!(U6208, u6208);
-    generate_div_tests!(U8192, u8192);
-    generate_div_tests!(U8256, u8256);
-    generate_div_tests!(U15360, u15360);
-    generate_div_tests!(U15424, u15424);
-    generate_div_tests!(U16384, u16384);
-    generate_div_tests!(U16448, u16448);
-    generate_div_tests!(U30720, u30720);
-    generate_div_tests!(U30784, u30784);
+    generate_div_tests!(ignore U2112, u2112);
+    generate_div_tests!(ignore U4096, u4096);
+    generate_div_tests!(ignore U4160, u4160);
+    generate_div_tests!(ignore U6144, u6144);
+    generate_div_tests!(ignore U6208, u6208);
+    generate_div_tests!(ignore U8192, u8192);
+    generate_div_tests!(ignore U8256, u8256);
+    generate_div_tests!(ignore U15360, u15360);
+    generate_div_tests!(ignore U15424, u15424);
+    generate_div_tests!(ignore U16384, u16384);
+    generate_div_tests!(ignore U16448, u16448);
+    generate_div_tests!(ignore U30720, u30720);
+    generate_div_tests!(ignore U30784, u30784);
   }
   mod barrett_gen {
     use super::super::*;
@@ -933,12 +933,12 @@ mod tests {
     generate_barrett_gen_tests!(U512, u512, U576);
     generate_barrett_gen_tests!(U576, u576, U640);
     generate_barrett_gen_tests!(U1024, u1024, U1088);
-    generate_barrett_gen_tests!(U2048, u2048, U2112);
-    generate_barrett_gen_tests!(U3072, u3072, U3136);
-    generate_barrett_gen_tests!(U4096, u4096, U4160);
-    generate_barrett_gen_tests!(U7680, u7680, U7744);
-    generate_barrett_gen_tests!(U8192, u8192, U8256);
-    generate_barrett_gen_tests!(U15360, u15360, U15424);
+    generate_barrett_gen_tests!(ignore U2048, u2048, U2112);
+    generate_barrett_gen_tests!(ignore U3072, u3072, U3136);
+    generate_barrett_gen_tests!(ignore U4096, u4096, U4160);
+    generate_barrett_gen_tests!(ignore U7680, u7680, U7744);
+    generate_barrett_gen_tests!(ignore U8192, u8192, U8256);
+    generate_barrett_gen_tests!(ignore U15360, u15360, U15424);
   }
   mod barrett_red {
     use super::super::*;
@@ -952,10 +952,10 @@ mod tests {
     generate_barrett_red_tests!(U1024, u1024, U1088, U2048);
     generate_barrett_red_tests!(U2048, u2048, U2112, U4096);
     generate_barrett_red_tests!(U3072, u3072, U3136, U6144);
-    generate_barrett_red_tests!(U4096, u4096, U4160, U8192);
-    generate_barrett_red_tests!(U7680, u7680, U7744, U15360);
-    generate_barrett_red_tests!(U8192, u8192, U8256, U16384);
-    generate_barrett_red_tests!(U15360, u15360, U15424, U30720);
+    generate_barrett_red_tests!(ignore U4096, u4096, U4160, U8192);
+    generate_barrett_red_tests!(ignore U7680, u7680, U7744, U15360);
+    generate_barrett_red_tests!(ignore U8192, u8192, U8256, U16384);
+    generate_barrett_red_tests!(ignore U15360, u15360, U15424, U30720);
   }
   mod modsq {
     use super::super::*;
@@ -969,10 +969,10 @@ mod tests {
     generate_modsq_tests!(U1024, u1024);
     generate_modsq_tests!(U2048, u2048);
     generate_modsq_tests!(U3072, u3072);
-    generate_modsq_tests!(U4096, u4096);
-    generate_modsq_tests!(U7680, u7680);
-    generate_modsq_tests!(U8192, u8192);
-    generate_modsq_tests!(U15360, u15360);
+    generate_modsq_tests!(ignore U4096, u4096);
+    generate_modsq_tests!(ignore U7680, u7680);
+    generate_modsq_tests!(ignore U8192, u8192);
+    generate_modsq_tests!(ignore U15360, u15360);
   }
   mod modmul {
     use super::super::*;
@@ -986,10 +986,10 @@ mod tests {
     generate_modmul_tests!(U1024, u1024);
     generate_modmul_tests!(U2048, u2048);
     generate_modmul_tests!(U3072, u3072);
-    generate_modmul_tests!(U4096, u4096);
-    generate_modmul_tests!(U7680, u7680);
-    generate_modmul_tests!(U8192, u8192);
-    generate_modmul_tests!(U15360, u15360);
+    generate_modmul_tests!(ignore U4096, u4096);
+    generate_modmul_tests!(ignore U7680, u7680);
+    generate_modmul_tests!(ignore U8192, u8192);
+    generate_modmul_tests!(ignore U15360, u15360);
   }
   mod modexp {
     use super::super::*;
@@ -998,15 +998,15 @@ mod tests {
     generate_modexp_tests!(U192, u192);
     generate_modexp_tests!(U256, u256);
     generate_modexp_tests!(U384, u384);
-    generate_modexp_tests!(U512, u512);
-    generate_modexp_tests!(U576, u576);
-    generate_modexp_tests!(U1024, u1024);
-    generate_modexp_tests!(U2048, u2048);
-    generate_modexp_tests!(U3072, u3072);
-    generate_modexp_tests!(U4096, u4096);
-    generate_modexp_tests!(U7680, u7680);
-    generate_modexp_tests!(U8192, u8192);
-    generate_modexp_tests!(U15360, u15360);
+    generate_modexp_tests!(ignore U512, u512);
+    generate_modexp_tests!(ignore U576, u576);
+    generate_modexp_tests!(ignore U1024, u1024);
+    generate_modexp_tests!(ignore U2048, u2048);
+    generate_modexp_tests!(ignore U3072, u3072);
+    generate_modexp_tests!(ignore U4096, u4096);
+    generate_modexp_tests!(ignore U7680, u7680);
+    generate_modexp_tests!(ignore U8192, u8192);
+    generate_modexp_tests!(ignore U15360, u15360);
   }
   mod square {
     use super::super::*;
@@ -1020,10 +1020,10 @@ mod tests {
     generate_square_tests!(U1024, u1024, U2048);
     generate_square_tests!(U2048, u2048, U4096);
     generate_square_tests!(U3072, u3072, U6144);
-    generate_square_tests!(U4096, u4096, U8192);
-    generate_square_tests!(U7680, u7680, U15360);
-    generate_square_tests!(U8192, u8192, U16384);
-    generate_square_tests!(U15360, u15360, U30720);
+    generate_square_tests!(ignore U4096, u4096, U8192);
+    generate_square_tests!(ignore U7680, u7680, U15360);
+    generate_square_tests!(ignore U8192, u8192, U16384);
+    generate_square_tests!(ignore U15360, u15360, U30720);
   }
   mod barrett_modsq {
     use super::super::*;
@@ -1037,10 +1037,10 @@ mod tests {
     generate_barrett_modsq_tests!(U1024, u1024, U1088);
     generate_barrett_modsq_tests!(U2048, u2048, U2112);
     generate_barrett_modsq_tests!(U3072, u3072, U3136);
-    generate_barrett_modsq_tests!(U4096, u4096, U4160);
-    generate_barrett_modsq_tests!(U7680, u7680, U7744);
-    generate_barrett_modsq_tests!(U8192, u8192, U8256);
-    generate_barrett_modsq_tests!(U15360, u15360, U15424);
+    generate_barrett_modsq_tests!(ignore U4096, u4096, U4160);
+    generate_barrett_modsq_tests!(ignore U7680, u7680, U7744);
+    generate_barrett_modsq_tests!(ignore U8192, u8192, U8256);
+    generate_barrett_modsq_tests!(ignore U15360, u15360, U15424);
   }
   mod barrett_modmul {
     use super::super::*;
@@ -1054,10 +1054,10 @@ mod tests {
     generate_barrett_modmul_tests!(U1024, u1024, U1088);
     generate_barrett_modmul_tests!(U2048, u2048, U2112);
     generate_barrett_modmul_tests!(U3072, u3072, U3136);
-    generate_barrett_modmul_tests!(U4096, u4096, U4160);
-    generate_barrett_modmul_tests!(U7680, u7680, U7744);
-    generate_barrett_modmul_tests!(U8192, u8192, U8256);
-    generate_barrett_modmul_tests!(U15360, u15360, U15424);
+    generate_barrett_modmul_tests!(ignore U4096, u4096, U4160);
+    generate_barrett_modmul_tests!(ignore U7680, u7680, U7744);
+    generate_barrett_modmul_tests!(ignore U8192, u8192, U8256);
+    generate_barrett_modmul_tests!(ignore U15360, u15360, U15424);
   }
   mod barrett_modexp {
     use super::super::*;
@@ -1068,12 +1068,12 @@ mod tests {
     generate_barrett_modexp_tests!(U384, u384, U448);
     generate_barrett_modexp_tests!(U512, u512, U576);
     generate_barrett_modexp_tests!(U576, u576, U640);
-    generate_barrett_modexp_tests!(U1024, u1024, U1088);
-    generate_barrett_modexp_tests!(U2048, u2048, U2112);
-    generate_barrett_modexp_tests!(U3072, u3072, U3136);
-    generate_barrett_modexp_tests!(U4096, u4096, U4160);
-    generate_barrett_modexp_tests!(U7680, u7680, U7744);
-    generate_barrett_modexp_tests!(U8192, u8192, U8256);
-    generate_barrett_modexp_tests!(U15360, u15360, U15424);
+    generate_barrett_modexp_tests!(ignore U1024, u1024, U1088);
+    generate_barrett_modexp_tests!(ignore U2048, u2048, U2112);
+    generate_barrett_modexp_tests!(ignore U3072, u3072, U3136);
+    generate_barrett_modexp_tests!(ignore U4096, u4096, U4160);
+    generate_barrett_modexp_tests!(ignore U7680, u7680, U7744);
+    generate_barrett_modexp_tests!(ignore U8192, u8192, U8256);
+    generate_barrett_modexp_tests!(ignore U15360, u15360, U15424);
   }
 }

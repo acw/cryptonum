@@ -104,9 +104,9 @@ numberOfTests :: Int
 numberOfTests = 1000
 
 generateTestBlock :: Handle ->
-                     String -> Operation -> Bool -> [Int -> Int] ->
+                     String -> Operation -> Bool -> Int -> [Int -> Int] ->
                      IO ()
-generateTestBlock hndl name level useRT addOns =
+generateTestBlock hndl name level useRT ignoreAt addOns =
   do hPutStrLn hndl ("  mod " ++ name ++ " {")
      when useRT $
        do hPutStrLn hndl ("    use super::super::*;")
@@ -115,7 +115,9 @@ generateTestBlock hndl name level useRT addOns =
      forM_ requirements $ \ (Req size kind) ->
        when (kind == level) $
          hPutStrLn hndl ("    generate_" ++ name ++ 
-                         "_tests!(U" ++ show size ++ ", " ++
+                         "_tests!(" ++
+                         (if size >= ignoreAt then "ignore " else "") ++
+                         "U" ++ show size ++ ", " ++
                          "u" ++ show size ++
                          concatMap (\ f -> ", U" ++ show (f size)) addOns ++
                          ");")
@@ -142,25 +144,25 @@ generateInvocs =
        hPutStrLn hndl ""
        hPutStrLn hndl "\n#[cfg(test)]"
        hPutStrLn hndl "mod tests {"
-       generateTestBlock hndl "base"           BaseOps  True  []
-       generateTestBlock hndl "conversion"     BaseOps  False []
-       generateTestBlock hndl "codec"          BaseOps  False []
-       generateTestBlock hndl "cmp"            BaseOps  True  []
-       generateTestBlock hndl "sub"            Sub      True  []
-       generateTestBlock hndl "shiftl"         Shifts   True  []
-       generateTestBlock hndl "shiftr"         Shifts   True  []
-       generateTestBlock hndl "add"            Add      True  [(+ 64)]
-       generateTestBlock hndl "mul"            Mul      True  [(* 2)]
-       generateTestBlock hndl "div"            Div      True  []
-       generateTestBlock hndl "barrett_gen"    Barretts True  [(+ 64)]
-       generateTestBlock hndl "barrett_red"    Barretts True  [(+ 64), (* 2)]
-       generateTestBlock hndl "modsq"          ModSq    True  []
-       generateTestBlock hndl "modmul"         ModMul   True  []
-       generateTestBlock hndl "modexp"         ModExp   True  []
-       generateTestBlock hndl "square"         Square   True  [(* 2)]
-       generateTestBlock hndl "barrett_modsq"  Barretts True  [(+ 64)]
-       generateTestBlock hndl "barrett_modmul" Barretts True  [(+ 64)]
-       generateTestBlock hndl "barrett_modexp" Barretts True  [(+ 64)]
+       generateTestBlock hndl "base"           BaseOps  True  16384 []
+       generateTestBlock hndl "conversion"     BaseOps  False 90000 []
+       generateTestBlock hndl "codec"          BaseOps  False 90000 []
+       generateTestBlock hndl "cmp"            BaseOps  True  16384 []
+       generateTestBlock hndl "sub"            Sub      True  9000  []
+       generateTestBlock hndl "shiftl"         Shifts   True  9000  []
+       generateTestBlock hndl "shiftr"         Shifts   True  9000  []
+       generateTestBlock hndl "add"            Add      True  9000  [(+ 64)]
+       generateTestBlock hndl "mul"            Mul      True  9000  [(* 2)]
+       generateTestBlock hndl "div"            Div      True  2049  []
+       generateTestBlock hndl "barrett_gen"    Barretts True  2000  [(+ 64)]
+       generateTestBlock hndl "barrett_red"    Barretts True  4000  [(+ 64), (* 2)]
+       generateTestBlock hndl "modsq"          ModSq    True  4000  []
+       generateTestBlock hndl "modmul"         ModMul   True  4000  []
+       generateTestBlock hndl "modexp"         ModExp   True  512   []
+       generateTestBlock hndl "square"         Square   True  4000  [(* 2)]
+       generateTestBlock hndl "barrett_modsq"  Barretts True  4000  [(+ 64)]
+       generateTestBlock hndl "barrett_modmul" Barretts True  4000  [(+ 64)]
+       generateTestBlock hndl "barrett_modexp" Barretts True  1024  [(+ 64)]
        hPutStrLn hndl "}"
 
 log :: String -> IO ()

@@ -103,24 +103,34 @@ macro_rules! generate_add_tests {
     ($name: ident, $lname: ident, $plus1: ident) => {
         #[test]
         fn $lname() {
-            let fname = format!("testdata/add/{}.tests", stringify!($name));
-            run_test(fname.to_string(), 3, |case| {
-                let (neg0, abytes) = case.get("a").unwrap();
-                let (neg1, bbytes) = case.get("b").unwrap();
-                let (neg2, cbytes) = case.get("c").unwrap();
-                assert!(!neg0 && !neg1 && !neg2);
-
-                let a = $name::from_bytes(abytes);
-                let b = $name::from_bytes(bbytes);
-                let c = $plus1::from_bytes(cbytes);
-                assert_eq!(c, &a + &b);
-
-                if c.value[c.value.len()-1] == 0 {
-                    let mut aprime = a.clone();
-                    aprime += b;
-                    assert_eq!($name::from(c), aprime);
-                }
-            });
+            generate_add_tests!(body $name, $lname, $plus1);
         }
+    };
+    (ignore $name: ident, $lname: ident, $plus1: ident) => {
+        #[test]
+        #[ignore]
+        fn $lname() {
+            generate_add_tests!(body $name, $lname, $plus1);
+        }
+    };
+    (body $name: ident, $lname: ident, $plus1: ident) => {
+        let fname = format!("testdata/add/{}.tests", stringify!($name));
+        run_test(fname.to_string(), 3, |case| {
+            let (neg0, abytes) = case.get("a").unwrap();
+            let (neg1, bbytes) = case.get("b").unwrap();
+            let (neg2, cbytes) = case.get("c").unwrap();
+            assert!(!neg0 && !neg1 && !neg2);
+
+            let a = $name::from_bytes(abytes);
+            let b = $name::from_bytes(bbytes);
+            let c = $plus1::from_bytes(cbytes);
+            assert_eq!(c, &a + &b);
+
+            if c.value[c.value.len()-1] == 0 {
+                let mut aprime = a.clone();
+                aprime += b;
+                assert_eq!($name::from(c), aprime);
+            }
+        });
     };
 }
