@@ -185,7 +185,7 @@ generateTests op directory init runner = do
     | otherwise     = getSizes oper rest
   --
   writer hndl size runner db x =
-    do let (output, key, acc@(db',_)) = runner size db
+    do let (output, key, acc@(db',gen')) = runner size db
            before = Map.findWithDefault [] "RESULT" db'
        if length (filter (== key) before) >= 10
           then writer hndl size runner acc x
@@ -193,7 +193,7 @@ generateTests op directory init runner = do
                     do hPutStrLn hndl (key ++ ": " ++ val)
                        let val = (x * 100) `div` numberOfTests
                        log ("\b\b\b\b" ++ pad 3 ' ' (show val) ++ "%")
-                  return acc
+                  return (Map.insert "RESULT" (key : before) db', gen')
   --
   pad x c str | length str < x = pad x c (c : str)
               | otherwise      = str
