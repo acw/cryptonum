@@ -4,6 +4,7 @@
 #[macro_use]
 extern crate quickcheck;
 
+pub mod signed;
 pub mod unsigned;
 #[cfg(test)]
 pub mod testing;

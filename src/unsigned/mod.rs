@@ -29,18 +29,23 @@ mod square;
 #[macro_use]
 mod sub;
 
-use self::add::{addition,unsafe_addition};
-use self::base::CryptoNum;
+pub use self::base::CryptoNum;
+pub use self::codec::{Encoder,Decoder};
+pub use self::div::DivMod;
+pub use self::modexp::ModExp;
+pub use self::modmul::ModMul;
+pub use self::modsq::ModSquare;
+pub use self::square::Square;
+
+pub(crate) use self::add::unsafe_addition;
+
+use self::add::addition;
 use self::cmp::compare;
-use self::codec::{Encoder,Decoder,raw_decoder};
-use self::div::{DivMod,get_number_size};
+use self::codec::raw_decoder;
+use self::div::get_number_size;
 use self::formatter::tochar;
-use self::modexp::ModExp;
-use self::modmul::ModMul;
-use self::modsq::ModSquare;
 use self::mul::multiply;
 use self::shifts::{shiftl,shiftr};
-use self::square::Square;
 use self::sub::subtract;
 use std::cmp::{Ordering,min};
 use std::fmt;
