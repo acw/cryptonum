@@ -229,7 +229,7 @@ generateInvocs = do
            SignedShift  -> hPutStrLn hndl ("shift_impls!(I" ++ show size ++ ", U" ++ show size ++ ");")
            SignedSub    -> hPutStrLn hndl ("subtraction_impls!(I" ++ show size ++ ", I" ++ show (size + 64) ++ ", U" ++ show (size + 64) ++ ");")
            EGCD         -> hPutStrLn hndl ("egcd_impls!(I" ++ show (size + 64) ++ ", U" ++ show size ++ ", I" ++ show size ++ ");")
-           ModInv       -> hPutStrLn hndl ("modinv_impls!(I" ++ show size ++ ");")
+           ModInv       -> hPutStrLn hndl ("modinv_impls!(U" ++ show size ++ ", I" ++ show (size + 64) ++ ", U" ++ show (size + 64) ++ ");")
            SigConvert v -> hPutStrLn hndl ("conversion_impls!(I" ++ show size ++ ", U" ++ show size ++ ", I" ++ show v ++ ", U" ++ show v ++ ");")
            _            -> return ()
        hPutStrLn hndl ""
@@ -243,7 +243,7 @@ generateInvocs = do
        generateSigTestBlock hndl "sigshiftl"     SignedShift True  16384 []       []
        generateSigTestBlock hndl "sigshiftr"     SignedShift True  16384 []       []
        generateSigTestBlock hndl "egcd"          EGCD        True  1024  [(+ 64)] [(+ 64)]
-       generateSigTestBlock hndl "modinv"        ModInv      True  9000  []       []
+       generateSigTestBlock hndl "modinv"        ModInv      True  2048  []       []
        hPutStrLn hndl "}"
 
 log :: String -> IO ()
@@ -517,13 +517,15 @@ generateAllTheTests =
                                          ("v", showX v)]
        in assert (v == gcd x y) (res, v, memory2)
      let (dbM, genM) = emptyDatabase genL
-     generateTests "I" ModInv "modinv" dbM $ \ size memory0 ->
-       let (a, memory1) = genSign (generateNum memory0 "a" size)
-           (b, memory2) = genSign (generateNum memory1 "b" size)
-           c            = recipModInteger a b
-           res          = Map.fromList [("a", showX a), ("b", showX b),
-                                        ("c", showX c)]
-       in (res, c, memory2)
+     generateTests "I" ModInv "modinv" dbM $ \ size memoryIn ->
+       let attempt memory0 =
+             let (a, memory1) = generateNum memory0 "a" size
+                 (b, memory2) = generateNum memory1 "b" size
+                 c            = recipModInteger a b
+                 res          = Map.fromList [("a", showX a), ("b", showX b),
+                                              ("c", showX c)]
+             in if c == 0 then attempt memory2 else (res, c, memory2)
+       in attempt memoryIn
 
 data AlgState = AlgState {
     u    :: Integer,

@@ -23,5 +23,6 @@ use std::ops::{Sub,SubAssign};
 use unsigned::*;
 
 pub use self::egcd::EGCD;
+pub use self::modinv::ModInv;
 
 include!("invoc.rs");

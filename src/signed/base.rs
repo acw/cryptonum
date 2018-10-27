@@ -18,6 +18,10 @@ macro_rules! signed_impls {
             pub fn abs(&self) -> $sname {
                 $sname{ negative: false, value: self.value.clone() }
             }
+
+            pub fn is_negative(&self) -> bool {
+                self.negative
+            }
         }
  
         impl From<$sname> for $name {
