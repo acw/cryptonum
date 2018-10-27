@@ -8,11 +8,19 @@ macro_rules! signed_impls {
 
         impl $sname {
             pub fn new(negative: bool, value: $name) -> $sname {
+                if value.is_zero() {
+                    $sname{ negative: false, value: value }
+                } else {
                 $sname{ negative: negative, value: value }
+            }
             }
  
             pub fn negate(&self) -> $sname {
+                if self.value.is_zero() {
+                    self.clone()
+                } else {
                 $sname{ negative: !self.negative, value: self.value.clone() }
+            }
             }
  
             pub fn abs(&self) -> $sname {
