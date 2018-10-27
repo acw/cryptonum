@@ -1,6 +1,9 @@
+/// Concurrent div/mod operations for a number, so that you don't
+/// have to do them separately.
 pub trait DivMod
  where Self: Sized
 {
+    /// Compute the quotient and remainder of a and b.
     fn divmod(&self, rhs: &Self) -> (Self, Self);
 }
 

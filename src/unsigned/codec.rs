@@ -1,7 +1,9 @@
+/// Conversion from bytes into the numeric type.
 pub trait Decoder {
     fn from_bytes(x: &[u8]) -> Self;
 }
 
+/// Conversion from the numeric types into a byte buffer.
 pub trait Encoder {
     fn to_bytes(&self) -> Vec<u8>;
 }

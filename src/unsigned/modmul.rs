@@ -1,4 +1,8 @@
+/// Modular multiplication of the type.
 pub trait ModMul<T> {
+    /// Modular multiplication using the given modulus type. If it's possible,
+    /// we suggest using Barrett values, which are much faster than doing
+    /// modulo with the number types.
     fn modmul(&self, x: &Self, m: &T) -> Self;
 }
 

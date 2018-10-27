@@ -1,8 +1,15 @@
+/// A trait definition for large numbers.
 pub trait CryptoNum {
+    /// Generate a new value of the given type.
     fn zero() -> Self;
+    /// Test if the number is zero.
     fn is_zero(&self) -> bool;
+    /// Test if the number is even.
     fn is_even(&self) -> bool;
+    /// Test if the number is odd.
     fn is_odd(&self) -> bool;
+    /// Mask off the high parts of the number. In particular, it
+    /// zeros the bits above (len * 64).
     fn mask(&mut self, len: usize);
 }
 

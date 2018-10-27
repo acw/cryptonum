@@ -1,4 +1,8 @@
+/// Modular exponentiation for a value.
 pub trait ModExp<T> {
+    /// Modular exponentiation using the given modulus type. If it's possible,
+    /// we suggest using Barrett values, which are much faster than doing
+    /// modulo with the number types.
     fn modexp(&self, e: &Self, m: &T) -> Self;
 }
 

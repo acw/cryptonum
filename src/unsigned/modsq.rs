@@ -1,4 +1,8 @@
+/// Modular squaring
 pub trait ModSquare<T> {
+    /// Modular squaring using the given modulus type. If it's possible,
+    /// we suggest using Barrett values, which are much faster than doing
+    /// modulo with the number types.
     fn modsq(&self, m: &T) -> Self;
 }
 

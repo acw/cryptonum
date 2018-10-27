@@ -1,3 +1,4 @@
+/// Squaring of large numbers.
 pub trait Square<Output> {
     fn square(&self) -> Output;
 }

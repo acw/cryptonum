@@ -7,26 +7,33 @@ macro_rules! signed_impls {
         }
 
         impl $sname {
+            /// Generate a new signed number from an unsigned number and a
+            /// boolean describing whether or not the new number is negative.
+            /// Note that if the value is zero, the value of the negative flag
+            /// will be ignored.
             pub fn new(negative: bool, value: $name) -> $sname {
                 if value.is_zero() {
                     $sname{ negative: false, value: value }
                 } else {
-                $sname{ negative: negative, value: value }
+                    $sname{ negative: negative, value: value }
+                }
             }
-            }
- 
+
+            /// Return a new number that is the negated version of this number.
             pub fn negate(&self) -> $sname {
                 if self.value.is_zero() {
                     self.clone()
                 } else {
-                $sname{ negative: !self.negative, value: self.value.clone() }
+                    $sname{ negative: !self.negative, value: self.value.clone() }
+                }
             }
-            }
- 
+
+            /// Return the absolute value of the number.
             pub fn abs(&self) -> $sname {
                 $sname{ negative: false, value: self.value.clone() }
             }
 
+            /// Return true iff the value is negative and not zero.
             pub fn is_negative(&self) -> bool {
                 self.negative
             }

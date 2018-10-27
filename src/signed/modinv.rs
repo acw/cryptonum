@@ -1,4 +1,8 @@
+/// Computations of the modular inverse.
 pub trait ModInv: Sized {
+    /// Compute the modular inverse of this number under the given
+    /// modulus, if it exists. If self is a, the modulus / argument
+    /// is phi, and the result is Some(m), then (a * m) % phi = 1.
     fn modinv(&self, phi: &Self) -> Option<Self>;
 }
 

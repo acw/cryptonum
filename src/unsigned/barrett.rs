@@ -7,6 +7,9 @@ macro_rules! barrett_impl {
        }
 
        impl $bar {
+           /// Generate a new Barrett number from the given input. This operation
+           /// is relatively slow, so you should only do it if you plan to use 
+           /// reduce() multiple times with the ame number.
            pub fn new(m: $name) -> $bar {
                // Step #1: Figure out k
                let mut k = 0;
@@ -27,7 +30,9 @@ macro_rules! barrett_impl {
                // Done!
                $bar { k: k, m: resm, mu: mu }
            }
-           
+
+           // Reduce the input by this value; in other words, perform a mod
+           // operation.
            pub fn reduce(&self, x: &$dbl) -> $name {
                // 1. q1←⌊x/bk−1⌋, q2←q1 · μ, q3←⌊q2/bk+1⌋.
                let     q1: $name64 = $name64::from(x >> ((self.k - 1) * 64));
@@ -58,6 +63,7 @@ macro_rules! barrett_impl {
        }
 
        impl $name {
+           /// Generate a Barrett number from this number.
            pub fn generate_barrett(&self) -> $bar {
                $bar::new(self.clone())
            }

@@ -1,4 +1,8 @@
+/// GCD computations, with extended information
 pub trait EGCD<T> {
+    /// Compute the extended GCD for this value and the given value.
+    /// If the inputs to this function are x (self) and y (the argument),
+    /// and the results are (a, b, g), then (a * x) + (b * y) = g.
     fn egcd(&self, rhs: &Self) -> (T, T, T);
 }
 
