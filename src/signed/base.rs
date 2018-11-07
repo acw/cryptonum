@@ -85,16 +85,18 @@ macro_rules! signed_impls {
             }
         }
 
-//        #[cfg(test)]
-//        impl Arbitrary for $sname {
-//            fn arbitrary<G: Gen>(g: &mut G) -> $name {
-//                let neg = g.gen::<bool>();
-//                let val = g.gen::<$name>();
-//                $sname{ negative: neg, value: val }
-//            }
-//        }
-
         #[cfg(test)]
+        impl Arbitrary for $sname {
+            fn arbitrary<G>(g: &mut G) -> $sname
+              where G: Gen
+            {
+                let neg = bool::arbitrary(g);
+                let val = $name::arbitrary(g);
+                let neg2 = if val.is_zero() { false } else { neg };
+                $sname{ negative: neg2, value: val }
+            }
+        }
+
         impl fmt::Debug for $sname {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 if self.negative {

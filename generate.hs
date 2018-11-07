@@ -135,7 +135,7 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req (size + 64) SignedAdd,
                                        Req (size + 64) SignedSub,
                                        Req (size + 64) SignedCmp
-                                       ])
+                                      ])
         , Need ModInv      (\ size -> [Req size BaseOps,
                                        Req (size + 64) SignedBase,
                                        Req (size + 64) BaseOps,
@@ -143,7 +143,7 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req size EGCD,
                                        Req (size + 64) SignedAdd,
                                        Req size Barretts
-                                       ])
+                                      ])
         ]
 -- needs = [ Need ModExp      (\ size -> [Req size ModMul
 --                                       ,Req size ModSq
@@ -219,6 +219,9 @@ rsaSizes =  [512,1024,2048,3072,4096,8192,15360]
 
 baseRequirements :: [Requirement]
 baseRequirements = concatMap (\ x -> [Req x RSA]) rsaSizes
+                ++ [Req 192 Add, Req 256 Add, Req 384 Add] -- used for testing
+                ++ [Req 192 Mul, Req 384 Mul] -- used for testing
+                ++ [Req 448 (Convert 512)] -- used for testing
 
 requirements :: [Requirement]
 requirements = go baseRequirements

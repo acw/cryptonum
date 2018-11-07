@@ -4,4 +4,4 @@ version = "0.1.0"
 authors = ["awick"]
 
 [dependencies]
-quickcheck = "0.7.1"
+quickcheck = "^0.7.2"

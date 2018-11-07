@@ -26,6 +26,8 @@ mod shift;
 #[macro_use]
 mod subtraction;
 
+#[cfg(test)]
+use quickcheck::{Arbitrary,Gen};
 use std::cmp::{Ord,Ordering,PartialOrd};
 use std::fmt;
 use std::ops::{Add,AddAssign};

@@ -60,16 +60,19 @@ macro_rules! add_impls
                         value: &self.value + &rhs.value
                     }
                 } else {
-                    if self.value > rhs.value {
-                        $bigger {
-                            negative: self.negative,
-                            value: $ubigger::from(&self.value - &rhs.value)
-                        }
-                    } else {
-                        $bigger {
-                            negative: rhs.negative,
-                            value: $ubigger::from(&rhs.value - &self.value)
-                        }
+                    match self.value.cmp(&rhs.value) {
+                        Ordering::Greater =>
+                            $bigger {
+                                negative: self.negative,
+                                value: $ubigger::from(&self.value - &rhs.value)
+                            },
+                        Ordering::Less =>
+                            $bigger {
+                                negative: rhs.negative,
+                                value: $ubigger::from(&rhs.value - &self.value)
+                            },
+                        Ordering::Equal =>
+                            $bigger::zero()
                     }
                 }
             }
