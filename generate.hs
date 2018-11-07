@@ -35,6 +35,7 @@ data Operation = Add
                | SigConvert Int
                | EGCD
                | ModInv
+               | RSA
  deriving (Eq, Ord, Show)
 
 data Requirement = Req Int Operation
@@ -43,47 +44,91 @@ data Requirement = Req Int Operation
 data Need = Need Operation (Int -> [Requirement])
 
 needs :: [Need]
-needs = [ Need ModExp      (\ size -> [Req size ModMul
-                                      ,Req size ModSq
-                                      ,Req size Barretts])
-        , Need ModSq       (\ size -> [Req (size * 2) Div
-                                      ,Req size Barretts
-                                      ,Req size Square])
-        , Need ModMul      (\ size -> [Req size Mul
-                                      ,Req size Barretts
-                                      ,Req size (Convert (size * 2))
-                                      ,Req (size * 2) Div])
-        , Need Barretts    (\ size -> [Req (size + 64) BaseOps
-                                      ,Req size (Convert (size + 64))
-                                      ,Req (size + 64) (Convert ((size * 2) + 64))
-                                      ,Req size (Convert ((size * 2) + 64))
-                                      ,Req ((size * 2) + 64) Add
-                                      ,Req ((size * 2) + 64) Sub
-                                      ,Req (size + 64) Mul
-                                      ,Req (size * 2) (Convert ((size * 2) + 64))
-                                      ,Req ((size * 2) + 64) Shifts
-                                      ,Req ((size * 2) + 128) Shifts
-                                      ,Req ((size * 2) + 64) Div
-                                      ,Req (size + 64) (Convert (size * 2))
-                                      ,Req (size + 64) (Convert ((size * 2) + 128))
-                                      ,Req ((size * 2) + 64)
-                                           (Convert ((size * 2) + 128))
+needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
+                                       Req (size `div` 2) Mul,
+                                       Req size           BaseOps,
+                                       Req size           ModInv,
+                                       Req size           ModExp
                                       ])
-        , Need Div         (\ size -> [Req size (Convert (size * 2))
-                                      ,Req 192 BaseOps
-                                      ,Req 384 BaseOps
-                                      ,Req 192 Mul
-                                      ,Req size Mul
-                                      ,Req size Shifts
-                                      ,Req (size * 2) Sub
+        , Need Add         (\ size -> [Req size BaseOps,
+                                       Req (size + 64) BaseOps,
+                                       Req size (Convert (size + 64))
                                       ])
-        , Need Mul         (\ size -> [Req (size * 2) BaseOps])
-        , Need Sub         (\ size -> [Req size Add])
-        , Need Add         (\ size -> [Req (size + 64) BaseOps
-                                      ,Req size (Convert (size + 64))])
-        , Need ModInv      (\ size -> [Req size SignedBase,
-                                       Req size EGCD])
-        , Need EGCD        (\ size -> [Req size BaseOps,
+        , Need Barretts    (\ size -> [Req size BaseOps,
+                                       Req (size + 64) BaseOps,
+                                       Req (size * 2) BaseOps,
+                                       Req ((size * 2) + 64) BaseOps,
+                                       Req size (Convert ((size * 2) + 64)),
+                                       Req (size + 64) Mul,
+                                       Req ((size * 2) + 64) Add,
+                                       Req ((size * 2) + 64) Sub,
+                                       Req (size + 64) (Convert ((size * 2) + 64)),
+                                       Req ((size * 2) + 64) (Convert ((size + 64) * 2)),
+                                       Req (size * 2) (Convert ((size * 2) + 64)),
+                                       Req (size + 64) (Convert ((size + 64) * 2)),
+                                       Req (size + 64) (Convert (size * 2)),
+                                       Req (size * 2) Shifts,
+                                       Req ((size + 64) * 2) Shifts,
+                                       Req ((size * 2) + 64) Div
+                                      ])
+        , Need Div         (\ size -> [Req size BaseOps,
+                                       Req (size * 2) BaseOps,
+                                       Req size (Convert (size * 2)),
+                                       Req (size * 2) Sub,
+                                       Req size Mul,
+                                       Req 192 BaseOps,
+                                       Req 192 Mul,
+                                       Req 384 BaseOps
+                                      ])
+        , Need ModExp      (\ size -> [Req size BaseOps,
+                                       Req size Barretts,
+                                       Req size ModSq,
+                                       Req size ModMul
+                                      ])
+        , Need ModMul      (\ size -> [Req size BaseOps,
+                                       Req (size * 2) BaseOps,
+                                       Req size Barretts,
+                                       Req size Mul
+                                      ])
+        , Need ModSq       (\ size -> [Req size BaseOps,
+                                       Req (size * 2) BaseOps,
+                                       Req size Barretts,
+                                       Req size Square,
+                                       Req (size * 2) Div,
+                                       Req size (Convert (size * 2))
+                                      ])
+        , Need Mul         (\ size -> [Req size BaseOps,
+                                       Req (size * 2) BaseOps,
+                                       Req size (Convert (size * 2))
+                                      ])
+        , Need Shifts      (\ size -> [Req size BaseOps
+                                      ])
+        , Need Square      (\ size -> [Req size BaseOps,
+                                       Req (size * 2) BaseOps
+                                      ])
+        , Need Sub         (\ size -> [Req size BaseOps
+                                      ])
+        , Need SignedAdd   (\ size -> [Req size SignedBase,
+                                       Req (size + 64) SignedBase,
+                                       Req (size + 64) BaseOps
+                                      ])
+        , Need SignedBase  (\ size -> [Req size BaseOps])
+        , Need SignedCmp   (\ size -> [Req size BaseOps])
+        , Need SignedShift (\ size -> [Req size SignedBase,
+                                       Req size BaseOps,
+                                       Req size Shifts,
+                                       Req size Add
+                                      ])
+        , Need SignedSub   (\ size -> [Req size SignedBase,
+                                       Req (size + 64) SignedBase,
+                                       Req (size + 64) BaseOps,
+                                       Req size Add,
+                                       Req size Sub,
+                                       Req size (Convert (size + 64)),
+                                       Req size (SigConvert (size + 64))
+                                      ])
+        , Need EGCD        (\ size -> [Req size SignedBase,
+                                       Req size BaseOps,
                                        Req (size + 64) SignedBase,
                                        Req size (SigConvert (size + 64)),
                                        Req (size + 64) SignedShift,
@@ -91,17 +136,77 @@ needs = [ Need ModExp      (\ size -> [Req size ModMul
                                        Req (size + 64) SignedSub,
                                        Req (size + 64) SignedCmp
                                        ])
-        , Need SignedShift (\ size -> [Req size Shifts, Req size Add])
-        , Need SignedAdd   (\ size -> [Req size Sub,
-                                       Req (size + 64) Add,
+        , Need ModInv      (\ size -> [Req size BaseOps,
                                        Req (size + 64) SignedBase,
-                                       Req size (SigConvert (size + 64))
-                                       ])
-        , Need SignedSub   (\ size -> [Req (size + 64) SignedBase,
-                                       Req size (SigConvert (size + 64)),
-                                       Req size Sub
+                                       Req (size + 64) BaseOps,
+                                       Req size (Convert (size + 64)),
+                                       Req size EGCD,
+                                       Req (size + 64) SignedAdd,
+                                       Req size Barretts
                                        ])
         ]
+-- needs = [ Need ModExp      (\ size -> [Req size ModMul
+--                                       ,Req size ModSq
+--                                       ,Req size Barretts])
+--         , Need ModSq       (\ size -> [Req (size * 2) Div
+--                                       ,Req size Barretts
+--                                       ,Req size Square])
+--         , Need ModMul      (\ size -> [Req size Mul
+--                                       ,Req size Barretts
+--                                       ,Req size (Convert (size * 2))
+--                                       ,Req (size * 2) Div])
+--         , Need Barretts    (\ size -> [Req (size + 64) BaseOps
+--                                       ,Req size (Convert (size + 64))
+--                                       ,Req (size + 64) (Convert ((size * 2) + 64))
+--                                       ,Req size (Convert ((size * 2) + 64))
+--                                       ,Req ((size * 2) + 64) Add
+--                                       ,Req ((size * 2) + 64) Sub
+--                                       ,Req (size + 64) Mul
+--                                       ,Req (size * 2) (Convert ((size * 2) + 64))
+--                                       ,Req ((size * 2) + 64) Shifts
+--                                       ,Req ((size * 2) + 128) Shifts
+--                                       ,Req ((size * 2) + 64) Div
+--                                       ,Req (size + 64) (Convert (size * 2))
+--                                       ,Req (size + 64) (Convert ((size * 2) + 128))
+--                                       ,Req ((size * 2) + 64)
+--                                            (Convert ((size * 2) + 128))
+--                                       ])
+--         , Need Div         (\ size -> [Req size (Convert (size * 2))
+--                                       ,Req 192 BaseOps
+--                                       ,Req 384 BaseOps
+--                                       ,Req 192 Mul
+--                                       ,Req size Mul
+--                                       ,Req size Shifts
+--                                       ,Req (size * 2) Sub
+--                                       ])
+--         , Need Mul         (\ size -> [Req (size * 2) BaseOps])
+--         , Need Sub         (\ size -> [Req size Add])
+--         , Need Add         (\ size -> [Req (size + 64) BaseOps
+--                                       ,Req size (Convert (size + 64))])
+--         , Need ModInv      (\ size -> [Req size SignedBase,
+--                                        Req size EGCD])
+--         , Need EGCD        (\ size -> [Req size BaseOps,
+--                                        Req (size + 64) SignedBase,
+--                                        Req size (SigConvert (size + 64)),
+--                                        Req (size + 64) SignedShift,
+--                                        Req (size + 64) SignedAdd,
+--                                        Req (size + 64) SignedSub,
+--                                        Req (size + 64) SignedCmp
+--                                        ])
+--         , Need SignedShift (\ size -> [Req size Shifts, Req size Add])
+--         , Need SignedAdd   (\ size -> [Req size Sub,
+--                                        Req (size + 64) Add,
+--                                        Req (size + 64) SignedBase,
+--                                        Req size (SigConvert (size + 64))
+--                                        ])
+--         , Need SignedSub   (\ size -> [Req (size + 64) SignedBase,
+--                                        Req size (SigConvert (size + 64)),
+--                                        Req size Sub
+--                                        ])
+--         , Need RSA         (\ size -> [Req size ModExp, Req size ModInv,
+--                                        Req (size `div` 2) Sub,
+--                                        Req (size `div` 2) Mul])
+--         ]
 
 newRequirements :: Requirement -> [Requirement]
 newRequirements (Req size op) = concatMap go needs ++ [Req size BaseOps]
@@ -109,11 +214,11 @@ newRequirements (Req size op) = concatMap go needs ++ [Req size BaseOps]
   go (Need op2 generator) | op == op2 = generator size
                           | otherwise = []
 
-bitSizes :: [Int]
-bitSizes =  [192,256,384,512,576,1024,2048,3072,4096,7680,8192,15360]
+rsaSizes :: [Int]
+rsaSizes =  [512,1024,2048,3072,4096,8192,15360]
 
 baseRequirements :: [Requirement]
-baseRequirements = concatMap (\ x -> [Req x ModExp, Req x ModInv]) bitSizes
+baseRequirements = concatMap (\ x -> [Req x RSA]) rsaSizes
 
 requirements :: [Requirement]
 requirements = go baseRequirements
@@ -216,9 +321,9 @@ generateInvocs = do
        generateTestBlock hndl "modmul"         ModMul   True  4000  []
        generateTestBlock hndl "modexp"         ModExp   True  512   []
        generateTestBlock hndl "square"         Square   True  4000  [(* 2)]
-       generateTestBlock hndl "barrett_modsq"  Barretts True  4000  [(+ 64)]
-       generateTestBlock hndl "barrett_modmul" Barretts True  4000  [(+ 64)]
-       generateTestBlock hndl "barrett_modexp" Barretts True  1024  [(+ 64)]
+       generateTestBlock hndl "barrett_modsq"  ModSq    True  4000  [(+ 64)]
+       generateTestBlock hndl "barrett_modmul" ModMul   True  4000  [(+ 64)]
+       generateTestBlock hndl "barrett_modexp" ModExp   True  1024  [(+ 64)]
        hPutStrLn hndl "}"
   withFile "src/signed/invoc.rs" WriteMode $ \ hndl ->
     do forM_ requirements $ \ (Req size oper) ->
