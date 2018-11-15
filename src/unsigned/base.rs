@@ -8,6 +8,8 @@ pub trait CryptoNum {
     fn is_even(&self) -> bool;
     /// Test if the number is odd.
     fn is_odd(&self) -> bool;
+    /// The size of this number in bits.
+    fn bit_length() -> usize;
     /// Mask off the high parts of the number. In particular, it
     /// zeros the bits above (len * 64).
     fn mask(&mut self, len: usize);
@@ -24,6 +26,10 @@ macro_rules! generate_base
         impl CryptoNum for $name {
             fn zero() -> $name {
                 $name{ value: [0; $size] }
+            }
+
+            fn bit_length() -> usize {
+                return $size * 64;
             }
 
             fn is_zero(&self) -> bool {
@@ -58,7 +64,6 @@ macro_rules! generate_base
             }
         }
 
-        #[cfg(test)]
         impl fmt::Debug for $name {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 f.write_str(stringify!($name))?;

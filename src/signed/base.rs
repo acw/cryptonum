@@ -67,6 +67,10 @@ macro_rules! signed_impls {
             fn zero() -> $sname {
                 $sname{ negative: false, value: $name::zero() }
             }
+
+            fn bit_length() -> usize {
+                $name::bit_length()
+            }
  
             fn is_zero(&self) -> bool {
                 self.value.is_zero()
