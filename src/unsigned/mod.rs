@@ -38,6 +38,10 @@ mod modsq;
 #[macro_use]
 mod mul;
 #[macro_use]
+mod primes;
+#[macro_use]
+mod rand;
+#[macro_use]
 mod shifts;
 #[macro_use]
 mod square;
@@ -50,16 +54,21 @@ pub use self::div::DivMod;
 pub use self::modexp::ModExp;
 pub use self::modmul::ModMul;
 pub use self::modsq::ModSquare;
+pub use self::primes::PrimeGen;
 pub use self::square::Square;
 
 pub(crate) use self::add::unsafe_addition;
 
+use rand::{Rng,RngCore};
+use rand::distributions::{Distribution,Standard};
+use rand::distributions::uniform::*;
 use self::add::addition;
 use self::cmp::compare;
 use self::codec::raw_decoder;
 use self::div::get_number_size;
 use self::formatter::tochar;
 use self::mul::multiply;
+use self::primes::SMALL_PRIMES;
 use self::shifts::{shiftl,shiftr};
 use self::sub::subtract;
 use std::cmp::{Ordering,min};

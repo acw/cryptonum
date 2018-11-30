@@ -4,6 +4,11 @@ pub trait EGCD<T> {
     /// If the inputs to this function are x (self) and y (the argument),
     /// and the results are (a, b, g), then (a * x) + (b * y) = g.
     fn egcd(&self, rhs: &Self) -> (T, T, T);
+    /// Compute whether or not the given number and the provided number
+    /// have a GCD of 1. This is a slightly faster version of calling
+    /// `egcd` and testing the result, because it can ignore some
+    /// intermediate values.
+    fn gcd_is_one(&self, &Self) -> bool;
 }
 
 macro_rules! egcd_impls {
@@ -86,6 +91,47 @@ macro_rules! egcd_impls {
                     }
                 }
             }
+
+            fn gcd_is_one(&self, b: &$name) -> bool {
+                let mut u = self.clone();
+                let mut v = b.clone();
+                let one = $name::from(1u64);
+
+                if u.is_zero() {
+                    return v == one;
+                }
+
+                if v.is_zero() {
+                    return u == one;
+                }
+
+                if u.is_even() && v.is_even() {
+                    return false;
+                }
+
+                while u.is_even() {
+                    u >>= 1;
+                }
+
+                loop {
+                    while v.is_even() {
+                        v >>= 1;
+                    }
+                    // u and v guaranteed to be odd right now.
+                    if u > v {
+                        // make sure that v > u, so that our subtraction works
+                        // out.
+                        let t = u;
+                        u = v;
+                        v = t;
+        }
+                    v = v - &u;
+
+                    if v.is_zero() {
+                        return u == one;
+                    }
+                }
+            }
         }
     };
 }
@@ -124,6 +170,7 @@ macro_rules! generate_egcd_tests {
             assert_eq!(v, myv, "GCD test");
             assert_eq!(a, mya, "X factor test");
             assert_eq!(b, myb, "Y factor tst");
+            assert_eq!(x.gcd_is_one(&y), (myv == $sname64::from(1i64)));
         });
      };
 }
