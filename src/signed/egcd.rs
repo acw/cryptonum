@@ -124,7 +124,7 @@ macro_rules! egcd_impls {
                         let t = u;
                         u = v;
                         v = t;
-        }
+                    }
                     v = v - &u;
 
                     if v.is_zero() {
@@ -152,7 +152,7 @@ macro_rules! generate_egcd_tests {
         }
     };
     (body $sname: ident, $uname: ident, $tname: ident, $sname64: ident, $uname64: ident) => {
-        let fname = format!("testdata/egcd/{}.tests", stringify!($sname));
+        let fname = build_test_path("egcd", stringify!($sname));
         run_test(fname.to_string(), 5, |case| {
             let (negx, xbytes) = case.get("x").unwrap();
             let (negy, ybytes) = case.get("y").unwrap();

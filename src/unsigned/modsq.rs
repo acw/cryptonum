@@ -42,7 +42,7 @@ macro_rules! generate_modsq_tests {
         }
     };
     (body $name: ident, $lname: ident) => {
-        let fname = format!("testdata/modsq/{}.tests", stringify!($name));
+        let fname = build_test_path("modsq", stringify!($name));
         run_test(fname.to_string(), 5, |case| {
             let (neg0, abytes) = case.get("a").unwrap();
             let (neg1, mbytes) = case.get("m").unwrap();
@@ -73,7 +73,7 @@ macro_rules! generate_barrett_modsq_tests {
         }
     };
     (body $name: ident, $lname: ident, $bname: ident) => {
-        let fname = format!("testdata/modsq/{}.tests", stringify!($name));
+        let fname = build_test_path("modsq", stringify!($name));
         run_test(fname.to_string(), 5, |case| {
             let (neg0, abytes) = case.get("a").unwrap();
             let (neg1, mbytes) = case.get("m").unwrap();

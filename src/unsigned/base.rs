@@ -29,7 +29,7 @@ macro_rules! generate_base
             }
 
             fn bit_length() -> usize {
-                return $size * 64;
+                $size * 64
             }
 
             fn is_zero(&self) -> bool {
@@ -92,7 +92,7 @@ macro_rules! generate_base_tests
         }
     };
     (body $name: ident, $lname: ident) => {
-        let fname = format!("testdata/base/{}.tests", stringify!($name));
+        let fname = build_test_path("base", stringify!($name));
         run_test(fname.to_string(), 6, |case| {
             let (neg0, xbytes) = case.get("x").unwrap();
             let (neg1, mbytes) = case.get("m").unwrap();

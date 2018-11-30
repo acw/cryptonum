@@ -3,6 +3,16 @@ use std::fs::File;
 use std::io::Read;
 use std::str::Lines;
 
+pub fn build_test_path(dir: &str, typename: &str) -> String
+{
+    let mut name = typename.to_string();
+    name.remove(0);
+    while name.len() < 5 {
+        name.insert(0, '0');
+    }
+    format!("testdata/{}/{}.test", dir, name)
+}
+
 fn next_value_set(line: &str) -> (String, bool, Vec<u8>)
 {
     assert!(line.is_ascii());

@@ -88,7 +88,7 @@ macro_rules! generate_sigshiftl_tests {
         }
     };
     (body $sname: ident, $name: ident, $lname: ident) => {
-        let fname = format!("testdata/sigshiftl/{}.tests", stringify!($sname));
+        let fname = build_test_path("sigshiftl", stringify!($sname));
         run_test(fname.to_string(), 3, |case| {
             let (nega, abytes) = case.get("a").unwrap();
             let (neg1, lbytes) = case.get("l").unwrap();
@@ -119,7 +119,7 @@ macro_rules! generate_sigshiftr_tests {
         }
     };
     (body $sname: ident, $name: ident, $lname: ident) => {
-        let fname = format!("testdata/sigshiftr/{}.tests", stringify!($sname));
+        let fname = build_test_path("sigshiftr", stringify!($sname));
         run_test(fname.to_string(), 3, |case| {
             let (nega, abytes) = case.get("a").unwrap();
             let (neg1, lbytes) = case.get("l").unwrap();

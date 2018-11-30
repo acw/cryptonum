@@ -81,7 +81,7 @@ macro_rules! generate_mul_tests
         }
     };
     (body $name: ident, $lname: ident, $dbl: ident) => {
-        let fname = format!("testdata/mul/{}.tests", stringify!($name));
+        let fname = build_test_path("mul", stringify!($name));
         run_test(fname.to_string(), 3, |case| {
             let (neg0, abytes) = case.get("a").unwrap();
             let (neg1, bbytes) = case.get("b").unwrap();

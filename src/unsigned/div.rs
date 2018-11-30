@@ -240,7 +240,7 @@ macro_rules! generate_div_tests {
         }
     };
     (body $name: ident, $lname: ident) => {
-        let fname = format!("testdata/div/{}.tests", stringify!($name));
+        let fname = build_test_path("div", stringify!($name));
         run_test(fname.to_string(), 4, |case| {
             let (neg0, abytes) = case.get("a").unwrap();
             let (neg1, bbytes) = case.get("b").unwrap();

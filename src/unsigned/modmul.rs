@@ -42,7 +42,7 @@ macro_rules! generate_modmul_tests {
         }
     };
     (body $name: ident, $lname: ident) => {
-        let fname = format!("testdata/modmul/{}.tests", stringify!($name));
+        let fname = build_test_path("modmul", stringify!($name));
         run_test(fname.to_string(), 6, |case| {
             let (neg0, abytes) = case.get("a").unwrap();
             let (neg1, bbytes) = case.get("b").unwrap();
@@ -75,7 +75,7 @@ macro_rules! generate_barrett_modmul_tests {
         }
     };
     (body $name: ident, $lname: ident, $bname: ident) => {
-        let fname = format!("testdata/modmul/{}.tests", stringify!($name));
+        let fname = build_test_path("modmul", stringify!($name));
         run_test(fname.to_string(), 6, |case| {
             let (neg0, abytes) = case.get("a").unwrap();
             let (neg1, bbytes) = case.get("b").unwrap();

@@ -114,7 +114,7 @@ macro_rules! generate_add_tests {
         }
     };
     (body $name: ident, $lname: ident, $plus1: ident) => {
-        let fname = format!("testdata/add/{}.tests", stringify!($name));
+        let fname = build_test_path("add", stringify!($name));
         run_test(fname.to_string(), 3, |case| {
             let (neg0, abytes) = case.get("a").unwrap();
             let (neg1, bbytes) = case.get("b").unwrap();

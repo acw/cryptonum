@@ -11,6 +11,7 @@ macro_rules! modinv_impls {
         impl ModInv for $name {
             fn modinv(&self, phi: &$name) -> Option<$name>
             {
+                println!("---");
                 let (_, mut b, g) = phi.egcd(&self);
 
                 if g != $sname::from(1i64) {
@@ -18,6 +19,7 @@ macro_rules! modinv_impls {
                 }
 
                 while b.is_negative() {
+                    println!("UPTICK");
                     b += $sname::from($uname::from(phi));
                 }
 
@@ -43,7 +45,7 @@ macro_rules! generate_modinv_tests {
         }
     };
     (body $sname: ident, $tname: ident, $mname: ident) => {
-        let fname = format!("testdata/modinv/{}.tests", stringify!($sname));
+        let fname = build_test_path("modinv", stringify!($sname));
         run_test(fname.to_string(), 3, |case| {
             let (nega, abytes) = case.get("a").unwrap();
             let (negb, bbytes) = case.get("b").unwrap();
@@ -54,9 +56,15 @@ macro_rules! generate_modinv_tests {
             let b = $tname::from_bytes(bbytes);
             let c = $tname::from_bytes(cbytes);
 
+            println!("a: {:X}", a);
+            println!("b: {:X}", b);
+            println!("c: {:X}", c);
             match a.modinv(&b) {
                 None      => assert!(false),
-                Some(myc) => assert_eq!(c, myc)
+                Some(myc) => {
+                    println!("d: {:X}", myc);
+                    assert_eq!(c, myc);
+                }
             }
         });
     };

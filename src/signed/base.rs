@@ -159,7 +159,7 @@ macro_rules! generate_signed_tests
         }
     };
     (body $sname: ident, $name: ident, $lname: ident) => {
-        let fname = format!("testdata/signed/{}.tests", stringify!($sname));
+        let fname = build_test_path("signed", stringify!($sname));
         run_test(fname.to_string(), 4, |case| {
             let (negx, xbytes) = case.get("x").unwrap();
             let (neg0, zbytes) = case.get("z").unwrap();

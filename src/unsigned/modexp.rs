@@ -56,7 +56,7 @@ macro_rules! generate_modexp_tests {
         }
     };
     (body $name: ident, $lname: ident) => {
-        let fname = format!("testdata/modexp/{}.tests", stringify!($name));
+        let fname = build_test_path("modexp", stringify!($name));
         run_test(fname.to_string(), 6, |case| {
             let (neg0, bbytes) = case.get("b").unwrap();
             let (neg1, ebytes) = case.get("e").unwrap();
@@ -89,7 +89,7 @@ macro_rules! generate_barrett_modexp_tests {
         }
     };
     (body $name: ident, $lname: ident, $bname: ident) => {
-        let fname = format!("testdata/modexp/{}.tests", stringify!($name));
+        let fname = build_test_path("modexp", stringify!($name));
         run_test(fname.to_string(), 6, |case| {
             let (neg0, bbytes) = case.get("b").unwrap();
             let (neg1, ebytes) = case.get("e").unwrap();

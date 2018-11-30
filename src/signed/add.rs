@@ -96,7 +96,7 @@ macro_rules! generate_sigadd_tests {
         }
     };
     (body $sname: ident, $name: ident, $lname: ident, $bigger: ident, $ubigger: ident) => {
-        let fname = format!("testdata/sigadd/{}.tests", stringify!($sname));
+        let fname = build_test_path("sigadd", stringify!($name));
         run_test(fname.to_string(), 3, |case| {
             let (nega, abytes) = case.get("a").unwrap();
             let (negb, bbytes) = case.get("b").unwrap();

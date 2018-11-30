@@ -1,6 +1,6 @@
 macro_rules! barrett_impl {
     ($bar: ident, $name: ident, $name64: ident, $dbl: ident, $dbl64: ident) => {
-        #[derive(PartialEq)]
+        #[derive(Clone,PartialEq)]
         pub struct $bar {
             pub(crate) k:  usize,
             pub(crate) m:  $name64,
@@ -112,7 +112,7 @@ macro_rules! generate_barrett_gen_tests {
         }
     };
     (body $name: ident, $lname: ident, $bname: ident) => {
-        let fname = format!("testdata/barrett_gen/{}.tests", stringify!($name));
+        let fname = build_test_path("barrett_gen", stringify!($name));
         run_test(fname.to_string(), 3, |case| {
             let (neg0, mbytes) = case.get("m").unwrap();
             let (neg1, kbytes) = case.get("k").unwrap();
@@ -150,7 +150,7 @@ macro_rules! generate_barrett_red_tests {
         }
     };
     (body $name: ident, $lname: ident, $bname: ident, $dbl: ident) => {
-        let fname = format!("testdata/barrett_reduce/{}.tests", stringify!($name));
+        let fname = build_test_path("barrett_reduce", stringify!($name));
         run_test(fname.to_string(), 5, |case| {
             let (neg0, mbytes) = case.get("m").unwrap();
             let (neg1, kbytes) = case.get("k").unwrap();

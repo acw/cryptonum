@@ -35,7 +35,7 @@ macro_rules! generate_sigcmp_tests {
         }
     };
     (body $sname: ident, $name: ident, $lname: ident) => {
-        let fname = format!("testdata/sigcmp/{}.tests", stringify!($sname));
+        let fname = build_test_path("sigcmp", stringify!($sname));
         run_test(fname.to_string(), 5, |case| {
             let (nega, abytes) = case.get("a").unwrap();
             let (negb, bbytes) = case.get("b").unwrap();

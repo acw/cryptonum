@@ -93,7 +93,7 @@ macro_rules! generate_sigsub_tests {
         }
     };
     (body $sname: ident, $name: ident, $lname: ident, $bigger: ident, $ubigger: ident) => {
-        let fname = format!("testdata/sigsub/{}.tests", stringify!($sname));
+        let fname = build_test_path("sigsub", stringify!($sname));
         run_test(fname.to_string(), 3, |case| {
             let (nega, abytes) = case.get("a").unwrap();
             let (negb, bbytes) = case.get("b").unwrap();

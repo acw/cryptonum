@@ -69,7 +69,7 @@ macro_rules! generate_square_tests {
         }
     };
     (body $name: ident, $lname: ident, $dbl: ident) => {
-        let fname = format!("testdata/square/{}.tests", stringify!($name));
+        let fname = build_test_path("square", stringify!($name));
         run_test(fname.to_string(), 2, |case| {
             let (neg0, abytes) = case.get("a").unwrap();
             let (neg1, rbytes) = case.get("r").unwrap();

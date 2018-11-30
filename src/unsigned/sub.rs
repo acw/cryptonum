@@ -89,7 +89,7 @@ macro_rules! generate_sub_tests {
         }
     };
     (body $name: ident, $lname: ident) => {
-        let fname = format!("testdata/sub/{}.tests", stringify!($name));
+        let fname = build_test_path("sub", stringify!($name));
         run_test(fname.to_string(), 3, |case| {
             let (neg0, abytes) = case.get("a").unwrap();
             let (neg1, bbytes) = case.get("b").unwrap();
