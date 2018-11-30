@@ -25,6 +25,7 @@ data Operation = Add
                | SignedShift
                | SignedSub
                | SigConvert Int
+               | SquareRoot
                | EGCD
                | ModInv
                | PrimeGen
@@ -47,7 +48,8 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                       ])
         , Need DSA         (\ size -> [Req size BaseOps,
                                        Req size Shifts,
-                                       Req size Add])
+                                       Req size Add,
+                                       Req size SquareRoot])
         , Need PrimeGen    (\ size -> [Req size Div,
                                        Req size Shifts,
                                        Req size ModExp,
@@ -148,6 +150,11 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req size EGCD,
                                        Req (size + 64) SignedAdd,
                                        Req size Barretts
+                                      ])
+        , Need SquareRoot  (\ size -> [Req size BaseOps,
+                                       Req size Shifts,
+                                       Req size Add,
+                                       Req size Sub
                                       ])
         ]
 

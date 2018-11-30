@@ -39,6 +39,7 @@ testDatabase = [
     (SignedShift, "sigshiftr",      "signed shift right",      sigshiftrTest),
     (SignedShift, "sigshiftl",      "signed shift left",       sigshiftlTest),
     (SignedSub,   "sigsub",         "signed subtraction",      sigsubTest),
+    (SquareRoot,  "sqrt",           "square root",             sqrtTest),
     (EGCD,        "egcd",           "EGCD",                    egcdTest),
     (ModInv,      "modinv",         "modular inversion",       modinvTest)
   ]
@@ -201,6 +202,13 @@ sigsubTest size memory0 =
       res          = Map.fromList [("a", showX a), ("b", showX b),
                                    ("c", showX c)]
   in (res, c, memory2)
+
+sqrtTest :: Test
+sqrtTest size memory0 =
+  let (a, memory1) = generateNum memory0 "a" size
+      r            = isqrt size a
+      res          = Map.fromList [("a", showX a), ("r", showX r)]
+  in (res, r, memory1)
 
 signedTest :: Test
 signedTest size memory0 =

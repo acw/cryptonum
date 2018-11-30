@@ -44,6 +44,8 @@ mod rand;
 #[macro_use]
 mod shifts;
 #[macro_use]
+mod sqrt;
+#[macro_use]
 mod square;
 #[macro_use]
 mod sub;
@@ -56,6 +58,7 @@ pub use self::modmul::ModMul;
 pub use self::modsq::ModSquare;
 pub use self::primes::PrimeGen;
 pub use self::square::Square;
+pub use self::sqrt::SquareRoot;
 
 pub(crate) use self::add::unsafe_addition;
 

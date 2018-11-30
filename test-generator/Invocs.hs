@@ -62,6 +62,7 @@ main = do
            Mul        -> hPutStrLn hndl ("multiply_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ");")
            Shifts     -> hPutStrLn hndl ("shift_impls!(U" ++ show size ++ ", " ++ show (size `div` 64) ++ ");")
            Square     -> hPutStrLn hndl ("square_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ", " ++ show size ++ ");")
+           SquareRoot -> hPutStrLn hndl ("sqrt_impls!(U" ++ show size ++ ");")
            Sub        -> hPutStrLn hndl ("subtraction_impls!(U" ++ show size ++ ", " ++ show (size `div` 64) ++ ");")
            Convert to -> hPutStrLn hndl ("conversion_impls!(U" ++ show size ++ ", U" ++ show to ++ ");")
            PrimeGen   -> hPutStrLn hndl ("prime_gen_impls!(U" ++ show size ++ ");")
@@ -69,25 +70,26 @@ main = do
        hPutStrLn hndl ""
        hPutStrLn hndl "\n#[cfg(test)]"
        hPutStrLn hndl "mod tests {"
-       generateTestBlock hndl "base"           BaseOps  True  16384 []
-       generateTestBlock hndl "conversion"     BaseOps  False 90000 []
-       generateTestBlock hndl "codec"          BaseOps  False 90000 []
-       generateTestBlock hndl "cmp"            BaseOps  True  16384 []
-       generateTestBlock hndl "sub"            Sub      True  9000  []
-       generateTestBlock hndl "shiftl"         Shifts   True  9000  []
-       generateTestBlock hndl "shiftr"         Shifts   True  9000  []
-       generateTestBlock hndl "add"            Add      True  9000  [(+ 64)]
-       generateTestBlock hndl "mul"            Mul      True  9000  [(* 2)]
-       generateTestBlock hndl "div"            Div      True  2049  []
-       generateTestBlock hndl "barrett_gen"    Barretts True  2000  [(+ 64)]
-       generateTestBlock hndl "barrett_red"    Barretts True  4000  [(+ 64), (* 2)]
-       generateTestBlock hndl "modsq"          ModSq    True  4000  []
-       generateTestBlock hndl "modmul"         ModMul   True  4000  []
-       generateTestBlock hndl "modexp"         ModExp   True  512   []
-       generateTestBlock hndl "square"         Square   True  4000  [(* 2)]
-       generateTestBlock hndl "barrett_modsq"  ModSq    True  4000  [(+ 64)]
-       generateTestBlock hndl "barrett_modmul" ModMul   True  4000  [(+ 64)]
-       generateTestBlock hndl "barrett_modexp" ModExp   True  1024  [(+ 64)]
+       generateTestBlock hndl "base"           BaseOps    True  16384 []
+       generateTestBlock hndl "conversion"     BaseOps    False 90000 []
+       generateTestBlock hndl "codec"          BaseOps    False 90000 []
+       generateTestBlock hndl "cmp"            BaseOps    True  16384 []
+       generateTestBlock hndl "sub"            Sub        True  9000  []
+       generateTestBlock hndl "shiftl"         Shifts     True  9000  []
+       generateTestBlock hndl "shiftr"         Shifts     True  9000  []
+       generateTestBlock hndl "add"            Add        True  9000  [(+ 64)]
+       generateTestBlock hndl "mul"            Mul        True  9000  [(* 2)]
+       generateTestBlock hndl "div"            Div        True  2049  []
+       generateTestBlock hndl "barrett_gen"    Barretts   True  2000  [(+ 64)]
+       generateTestBlock hndl "barrett_red"    Barretts   True  4000  [(+ 64), (* 2)]
+       generateTestBlock hndl "modsq"          ModSq      True  4000  []
+       generateTestBlock hndl "modmul"         ModMul     True  4000  []
+       generateTestBlock hndl "modexp"         ModExp     True  512   []
+       generateTestBlock hndl "square"         Square     True  4000  [(* 2)]
+       generateTestBlock hndl "sqrt"           SquareRoot True  4096  []
+       generateTestBlock hndl "barrett_modsq"  ModSq      True  4000  [(+ 64)]
+       generateTestBlock hndl "barrett_modmul" ModMul     True  4000  [(+ 64)]
+       generateTestBlock hndl "barrett_modexp" ModExp     True  1024  [(+ 64)]
        hPutStrLn hndl "}"
   withFile "../src/signed/invoc.rs" WriteMode $ \ hndl ->
     do forM_ requirements $ \ (Req size oper) ->

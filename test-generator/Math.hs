@@ -3,10 +3,12 @@ module Math(
          extendedGCD
        , barrett, computeK, base
        , modulate, modulate'
+       , isqrt
        , showX, showB
        )
  where
 
+import Data.Bits(shiftL,shiftR)
 import Numeric(showHex)
 
 data AlgState = AlgState {
@@ -101,6 +103,24 @@ showX x | x < 0     = "-" ++ showX (abs x)
 showB :: Bool -> String
 showB False = "0"
 showB True  = "1"
+
+isqrt :: Int -> Integer -> Integer
+isqrt bits val = final
+  where
+   bit' = part1 (1 `shiftL` (bits - 2))
+   --
+   part1 x | x > val   = part1 (x `shiftR` 2)
+           | otherwise = x
+   --
+   final = loop val 0 bit'
+   --
+   loop num res bit
+     | bit == 0 = res
+     | otherwise = let (num', res') = adjust num res bit
+                   in loop num' (res' `shiftR` 1) (bit `shiftR` 2)
+   adjust num res bit
+     | num >= (res + bit) = (num - (res + bit), res + (bit `shiftL` 1))
+     | otherwise          = (num, res)
 
 _run :: Integer -> Integer -> IO ()
 _run inputx inputy =

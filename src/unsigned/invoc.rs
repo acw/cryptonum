@@ -3,9 +3,11 @@ base_impls!(U192, 3);
 random_impls!(U192, UniformU192);
 multiply_impls!(U192, U384);
 shift_impls!(U192, 3);
+subtraction_impls!(U192, 3);
 conversion_impls!(U192, U256);
 conversion_impls!(U192, U384);
 conversion_impls!(U192, U1024);
+sqrt_impls!(U192);
 addition_impls!(U256, U320);
 base_impls!(U256, 4);
 random_impls!(U256, UniformU256);
@@ -24,6 +26,7 @@ conversion_impls!(U256, U512);
 conversion_impls!(U256, U576);
 conversion_impls!(U256, U2048);
 conversion_impls!(U256, U3072);
+sqrt_impls!(U256);
 prime_gen_impls!(U256);
 addition_impls!(U320, U384);
 base_impls!(U320, 5);
@@ -92,6 +95,7 @@ subtraction_impls!(U1024, 16);
 conversion_impls!(U1024, U1088);
 conversion_impls!(U1024, U2048);
 conversion_impls!(U1024, U2112);
+sqrt_impls!(U1024);
 prime_gen_impls!(U1024);
 addition_impls!(U1088, U1152);
 base_impls!(U1088, 17);
@@ -152,6 +156,7 @@ subtraction_impls!(U2048, 32);
 conversion_impls!(U2048, U2112);
 conversion_impls!(U2048, U4096);
 conversion_impls!(U2048, U4160);
+sqrt_impls!(U2048);
 prime_gen_impls!(U2048);
 addition_impls!(U2112, U2176);
 base_impls!(U2112, 33);
@@ -184,6 +189,7 @@ subtraction_impls!(U3072, 48);
 conversion_impls!(U3072, U3136);
 conversion_impls!(U3072, U6144);
 conversion_impls!(U3072, U6208);
+sqrt_impls!(U3072);
 addition_impls!(U3136, U3200);
 base_impls!(U3136, 49);
 random_impls!(U3136, UniformU3136);
@@ -608,6 +614,7 @@ mod tests {
     use super::super::*;
     use testing::{build_test_path,run_test};
 
+    generate_sub_tests!(U192, u192);
     generate_sub_tests!(U256, u256);
     generate_sub_tests!(U320, u320);
     generate_sub_tests!(U512, u512);
@@ -900,6 +907,16 @@ mod tests {
     generate_square_tests!(ignore U7680, u7680, U15360);
     generate_square_tests!(ignore U8192, u8192, U16384);
     generate_square_tests!(ignore U15360, u15360, U30720);
+  }
+  mod sqrt {
+    use super::super::*;
+    use testing::{build_test_path,run_test};
+
+    generate_sqrt_tests!(U192, u192);
+    generate_sqrt_tests!(U256, u256);
+    generate_sqrt_tests!(U1024, u1024);
+    generate_sqrt_tests!(U2048, u2048);
+    generate_sqrt_tests!(U3072, u3072);
   }
   mod barrett_modsq {
     use super::super::*;
