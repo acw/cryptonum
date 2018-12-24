@@ -87,6 +87,10 @@ macro_rules! signed_impls {
             fn mask(&mut self, len: usize) {
                 self.value.mask(len);
             }
+
+            fn testbit(&self, bit: usize) -> bool {
+                self.value.testbit(bit)
+            }
         }
 
         #[cfg(test)]

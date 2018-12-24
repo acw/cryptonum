@@ -6,7 +6,7 @@ module Tests(
  where
 
 import           Control.Exception(assert)
-import           Data.Bits(shiftL,shiftR)
+import           Data.Bits(shiftL,shiftR,testBit)
 import           Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
 import           Database
@@ -80,12 +80,15 @@ baseTest :: Test
 baseTest size memory0 =
   let (x, memory1) = generateNum memory0 "x" size
       (m, memory2) = generateNum memory1 "m" size
+      (b, memory3) = generateNum memory2 "b" 16
       m'           = m `mod` (fromIntegral size `div` 64)
       r            = x `mod` (2 ^ (64 * m'))
+      t            = x `testBit` (fromIntegral b)
       res          = Map.fromList [("x", showX x),        ("z", showB (x == 0)),
                                    ("e", showB (even x)), ("o", showB (odd x)),
-                                   ("m", showX m'),       ("r", showX r)]
-  in (res, x, memory2)
+                                   ("m", showX m'),       ("r", showX r),
+                                   ("b", showX b),        ("t", showB t)]
+  in (res, x, memory3)
 
 compareTest :: Test
 compareTest size memory0 =
