@@ -151,6 +151,20 @@ macro_rules! div_impls
                 (resq, r)
             }
         }
+
+        impl DivAssign for $name {
+            fn div_assign(&mut self, rhs: $name) {
+                self.div_assign(&rhs);
+            }
+        }
+
+        impl<'a> DivAssign<&'a $name> for $name {
+            fn div_assign(&mut self, rhs: &$name) {
+                let (res, _) = self.divmod(&rhs);
+                self.value.copy_from_slice(&res.value);
+            }
+        }
+
         impl Div for $name {
             type Output = $name;
 
@@ -183,6 +197,19 @@ macro_rules! div_impls
             fn div(self, rhs: &$name) -> $name {
                 let (res, _) = self.divmod(rhs);
                 res
+            }
+        }
+
+        impl RemAssign for $name {
+            fn rem_assign(&mut self, rhs: $name) {
+                self.rem_assign(&rhs);
+            }
+        }
+
+        impl<'a> RemAssign<&'a $name> for $name {
+            fn rem_assign(&mut self, rhs: &$name) {
+                let (_, res) = self.divmod(rhs);
+                self.value.copy_from_slice(&res.value);
             }
         }
 
@@ -255,6 +282,12 @@ macro_rules! generate_div_tests {
             let (myq, myr) = a.divmod(&b);
             assert_eq!(q, myq);
             assert_eq!(r, myr);
+            let mut a2 = a.clone();
+            a2 /= &b;
+            assert_eq!(a2, q);
+            let mut a3 = a.clone();
+            a3 %= &b;
+            assert_eq!(a3, r);
         });
     };
 }

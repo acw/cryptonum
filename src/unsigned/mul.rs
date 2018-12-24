@@ -20,6 +20,31 @@ pub fn multiply(dest: &mut [u64], left: &[u64], right: &[u64])
     }
 }
 
+pub fn multiply_small(dest: &mut [u64], left: &[u64], right: &[u64])
+{
+    let len = right.len();
+
+    assert_eq!(dest.len(), len);
+    assert_eq!(left.len(), len);
+    for i in 0..len { dest[i] = 0; }
+    for i in 0..len {
+        let mut carry = 0;
+
+        for j in 0..len {
+            if i+j >= len {
+                carry = 0;
+                continue;
+            }
+            let old = dest[i+j] as u128;
+            let l128 = left[j] as u128;
+            let r128 = right[i] as u128;
+            let uv = old + (l128 * r128) + carry;
+            dest[i+j] = uv as u64;
+            carry = uv >> 64;
+        }
+    }
+}
+
 macro_rules! multiply_impls {
     ($name: ident, $dbl: ident) => {
         impl Mul<$name> for $name {
@@ -61,6 +86,20 @@ macro_rules! multiply_impls {
                 res
             }
         }
+
+        impl MulAssign for $name {
+            fn mul_assign(&mut self, rhs: $name) {
+                let copy = self.value.clone();
+                multiply_small(&mut self.value, &copy, &rhs.value);
+            }
+        }
+
+        impl<'a> MulAssign<&'a $name> for $name {
+            fn mul_assign(&mut self, rhs: &$name) {
+                let copy = self.value.clone();
+                multiply_small(&mut self.value, &copy, &rhs.value);
+            }
+        }
     };
 }
 
@@ -88,10 +127,12 @@ macro_rules! generate_mul_tests
             let (neg2, cbytes) = case.get("c").unwrap();
             assert!(!neg0 && !neg1 && !neg2);
 
-            let a = $name::from_bytes(abytes);
+            let mut a = $name::from_bytes(abytes);
             let b = $name::from_bytes(bbytes);
             let c = $dbl::from_bytes(cbytes);
-            assert_eq!(c, &a * &b);
+            assert_eq!(c, &a * &b, "standard multiplication");
+            a *= b;
+            assert_eq!($name::from(c), a);
         });
     };
 }
