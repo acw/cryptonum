@@ -67,6 +67,7 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req (size + 64) SignedMul,
                                        Req ((size + 64) * 2) SignedSub,
                                        Req ((size + 64) * 2) SignedDiv,
+                                       Req ((size + 64) * 2) SignedMul,
                                        Req size (Convert ((size + 64) * 2)),
                                        Req size (SigConvert ((size + 64) * 2))
                                        ])
