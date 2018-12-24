@@ -18,9 +18,13 @@ mod compare;
 #[macro_use]
 mod conversion;
 #[macro_use]
+mod div;
+#[macro_use]
 mod egcd;
 #[macro_use]
 mod modinv;
+#[macro_use]
+mod mul;
 #[macro_use]
 mod shift;
 #[macro_use]
@@ -31,6 +35,9 @@ use quickcheck::{Arbitrary,Gen};
 use std::cmp::{Ord,Ordering,PartialOrd};
 use std::fmt;
 use std::ops::{Add,AddAssign};
+use std::ops::{Div,DivAssign};
+use std::ops::{Mul,MulAssign};
+use std::ops::{Rem,RemAssign};
 use std::ops::{Shl,ShlAssign,Shr,ShrAssign};
 use std::ops::{Sub,SubAssign};
 use unsigned::*;

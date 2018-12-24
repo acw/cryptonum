@@ -22,7 +22,7 @@ executable gen-invocs
   main-is:             Invocs.hs
   other-modules:       Requirements
   -- other-extensions:
-  build-depends:       base >=4.11 && < 4.12, ascii-progress, random
+  build-depends:       base >=4.11 && < 4.14, ascii-progress, random
   hs-source-dirs:      .
   default-language:    Haskell2010
   ghc-options:         -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
@@ -31,7 +31,7 @@ executable gen-tests
   main-is:             Main.hs
   other-modules:       Database, Math, Requirements, Tests
   -- other-extensions:
-  build-depends:       base >=4.11 && < 4.12, ascii-progress, containers, directory, filepath, integer-gmp, random
+  build-depends:       base >=4.11 && < 4.14, ascii-progress, containers, directory, filepath, integer-gmp, random
   hs-source-dirs:      .
   default-language:    Haskell2010
   ghc-options:         -Wall -O2 -threaded -rtsopts -with-rtsopts=-N

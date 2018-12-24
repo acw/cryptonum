@@ -36,6 +36,8 @@ testDatabase = [
     (SignedAdd,   "sigadd",         "signed addition",         sigaddTest),
     (SignedBase,  "signed",         "signed base",             signedTest),
     (SignedCmp,   "sigcmp",         "signed compare",          sigcmpTest),
+    (SignedMul,   "sigmul",         "signed multiply",         sigmulTest),
+    (SignedDiv,   "sigdiv",         "signed division",         sigdivTest),
     (SignedShift, "sigshiftr",      "signed shift right",      sigshiftrTest),
     (SignedShift, "sigshiftl",      "signed shift left",       sigshiftlTest),
     (SignedSub,   "sigsub",         "signed subtraction",      sigsubTest),
@@ -243,6 +245,25 @@ sigcmpTest size memory0 =
                                    ("g", showB (a > b)), ("l", showB (a < b)),
                                    ("e", showB (a == b))]
   in (res, a, memory2)
+
+sigdivTest :: Test
+sigdivTest size memory0 =
+  let (a, memory1) = genSign (generateNum memory0 "a" size)
+      (b, memory2) = genSign (generateNum memory1 "b" size)
+      q            = a `div` b
+      r            = a `mod` b
+      res          = Map.fromList [("a", showX a), ("b", showX b),
+                                   ("q", showX q), ("r", showX r)]
+  in (res, q, memory2)
+
+sigmulTest :: Test
+sigmulTest size memory0 =
+  let (a, memory1) = genSign (generateNum memory0 "a" size)
+      (b, memory2) = genSign (generateNum memory1 "b" size)
+      c            = a * b
+      res          = Map.fromList [("a", showX a), ("b", showX b),
+                                   ("c", showX c)]
+  in (res, c, memory2)
 
 egcdTest :: Test
 egcdTest size memory0 =

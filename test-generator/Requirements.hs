@@ -24,6 +24,8 @@ data Operation = Add
                | SignedCmp
                | SignedShift
                | SignedSub
+               | SignedMul
+               | SignedDiv
                | SigConvert Int
                | SquareRoot
                | EGCD
@@ -31,6 +33,7 @@ data Operation = Add
                | PrimeGen
                | RSA
                | DSA
+               | ECDSA
  deriving (Eq, Ord, Show)
 
 data Requirement = Req Int Operation
@@ -49,7 +52,24 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
         , Need DSA         (\ size -> [Req size BaseOps,
                                        Req size Shifts,
                                        Req size Add,
-                                       Req size SquareRoot])
+                                       Req size SquareRoot,
+                                       Req size PrimeGen,
+                                       Req size ModInv,
+                                       Req size Mul,
+                                       Req (size * 2) Add,
+                                       Req (((size * 2) + 64) * 2) Div,
+                                       Req size (Convert 512),
+                                       Req size (Convert (size + 128)),
+                                       Req size (Convert ((size * 2) + 64)),
+                                       Req size (Convert (((size * 2) + 64) * 2))
+                                       ])
+        , Need ECDSA       (\ size -> [Req size SignedSub,
+                                       Req (size + 64) SignedMul,
+                                       Req ((size + 64) * 2) SignedSub,
+                                       Req ((size + 64) * 2) SignedDiv,
+                                       Req size (Convert ((size + 64) * 2)),
+                                       Req size (SigConvert ((size + 64) * 2))
+                                       ])
         , Need PrimeGen    (\ size -> [Req size Div,
                                        Req size Shifts,
                                        Req size ModExp,
@@ -131,8 +151,15 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req (size + 64) BaseOps,
                                        Req size Add,
                                        Req size Sub,
+                                       Req (size + 64) Sub,
                                        Req size (Convert (size + 64)),
                                        Req size (SigConvert (size + 64))
+                                      ])
+        , Need SignedMul   (\ size -> [Req size Mul,
+                                       Req (size * 2) SignedBase,
+                                       Req size (SigConvert (size * 2))
+                                      ])
+        , Need SignedDiv   (\ size -> [Req size Div
                                       ])
         , Need EGCD        (\ size -> [Req size SignedBase,
                                        Req size BaseOps,
@@ -170,10 +197,15 @@ rsaSizes =  [512,1024,2048,3072,4096,8192,15360]
 dsaSizes :: [Int]
 dsaSizes =  [192,256,1024,2048,3072]
 
+ecdsaSizes :: [Int]
+ecdsaSizes = [192,256,384,576]
+
 baseRequirements :: [Requirement]
 baseRequirements = concatMap (\ x -> [Req x RSA]) rsaSizes
                 ++ concatMap (\ x -> [Req x DSA]) dsaSizes
+                ++ concatMap (\ x -> [Req x ECDSA]) ecdsaSizes
                 ++ [Req 192 (Convert 1024), Req 256 (Convert 2048), Req 256 (Convert 3072)] -- used in DSA
+                ++ [Req 384 (Convert 1024), Req 512 (Convert 2048), Req 512 (Convert 3072)] -- used in DSA
                 ++ [Req 192 Add, Req 256 Add, Req 384 Add] -- used for testing
                 ++ [Req 192 Mul, Req 384 Mul] -- used for testing
                 ++ [Req 448 (Convert 512)] -- used for testing
@@ -181,17 +213,20 @@ baseRequirements = concatMap (\ x -> [Req x RSA]) rsaSizes
 requirements :: [Requirement]
 requirements = go baseRequirements
  where
-  step ls = let news = concatMap newRequirements ls
-                destBits = concatMap destRequirements (news ++ ls)
-            in ls ++ news ++ destBits
+  step ls = let news  = concatMap newRequirements ls
+                ls'   = concatMap sanitizeConverts (news ++ ls)
+                ls''  = removeDups (sort ls')
+            in ls''
   --
-  go ls = let ls' = removeDups (sort (step ls))
+  go ls = let ls' = step ls
           in if ls == ls' then ls else go ls'
   --
   removeDups [] = []
   removeDups (x:xs) | x `elem` xs = removeDups xs
                     | otherwise   = x : removeDups xs
   --
-  destRequirements (Req _ (Convert t)) = [Req t BaseOps]
-  destRequirements _                   = []
-
+  sanitizeConverts (Req x (Convert y))
+    | x == y    = []
+    | x < y     = [Req x (Convert y), Req y BaseOps]
+    | otherwise = [Req y (Convert x), Req x BaseOps]
+  sanitizeConverts x = [x]
