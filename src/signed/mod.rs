@@ -22,6 +22,8 @@ mod div;
 #[macro_use]
 mod egcd;
 #[macro_use]
+mod moddiv;
+#[macro_use]
 mod modinv;
 #[macro_use]
 mod mul;
@@ -43,6 +45,7 @@ use std::ops::{Sub,SubAssign};
 use unsigned::*;
 
 pub use self::egcd::EGCD;
+pub use self::moddiv::ModDiv;
 pub use self::modinv::ModInv;
 
 include!("invoc.rs");

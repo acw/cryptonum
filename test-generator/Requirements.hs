@@ -11,6 +11,7 @@ data Operation = Add
                | BaseOps
                | Barretts
                | Div
+               | ModDiv
                | ModExp
                | ModMul
                | ModSq
@@ -64,6 +65,7 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req size (Convert (((size * 2) + 64) * 2))
                                        ])
         , Need ECDSA       (\ size -> [Req size SignedSub,
+                                       Req size ModDiv,
                                        Req (size + 64) SignedMul,
                                        Req ((size + 64) * 2) SignedSub,
                                        Req ((size + 64) * 2) SignedDiv,
@@ -117,6 +119,12 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req size Mul,
                                        Req size (Convert (size + 64))
                                       ])
+        , Need ModDiv      (\ size -> [Req size ModInv,
+                                       Req size SignedMul,
+                                       Req size SignedDiv,
+                                       Req (size * 2) SignedDiv,
+                                       Req size (SigConvert (size * 2))
+                                      ])
         , Need ModSq       (\ size -> [Req size BaseOps,
                                        Req (size * 2) BaseOps,
                                        Req size Barretts,
@@ -160,7 +168,8 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req (size * 2) SignedBase,
                                        Req size (SigConvert (size * 2))
                                       ])
-        , Need SignedDiv   (\ size -> [Req size Div
+        , Need SignedDiv   (\ size -> [Req size Div,
+                                       Req size Add
                                       ])
         , Need EGCD        (\ size -> [Req size SignedBase,
                                        Req size BaseOps,

@@ -4,11 +4,13 @@ module Math(
        , barrett, computeK, base
        , modulate, modulate'
        , isqrt
+       , divmod
        , showX, showB
        )
  where
 
 import Data.Bits(shiftL,shiftR)
+import GHC.Integer.GMP.Internals(recipModInteger)
 import Numeric(showHex)
 
 data AlgState = AlgState {
@@ -121,6 +123,13 @@ isqrt bits val = final
    adjust num res bit
      | num >= (res + bit) = (num - (res + bit), res + (bit `shiftL` 1))
      | otherwise          = (num, res)
+
+divmod :: Integer -> Integer -> Integer -> Maybe Integer
+divmod x y m =
+  let y' = y `mod` m
+  in case recipModInteger y' m of
+       0 -> Nothing
+       i -> Just ((x * i) `mod` m)
 
 _run :: Integer -> Integer -> IO ()
 _run inputx inputy =

@@ -1,15 +1,21 @@
+moddiv_impls!(I192, I384);
 signed_impls!(I192, U192);
 subtraction_impls!(I192, I256, U256);
+mul_impls!(I192, I384);
+div_impls!(I192, U192);
 conversion_impls!(I192, U192, I256, U256);
+conversion_impls!(I192, U192, I384, U384);
 conversion_impls!(I192, U192, I512, U512);
 egcd_impls!(I256, U192, I192);
 modinv_impls!(U192, I256, U256);
+moddiv_impls!(I256, I512);
 add_impls!(I256, I320, U320);
 signed_impls!(I256, U256);
 cmp_impls!(I256);
 shift_impls!(I256, U256);
 subtraction_impls!(I256, I320, U320);
 mul_impls!(I256, I512);
+div_impls!(I256, U256);
 conversion_impls!(I256, U256, I320, U320);
 conversion_impls!(I256, U256, I512, U512);
 conversion_impls!(I256, U256, I640, U640);
@@ -23,12 +29,23 @@ subtraction_impls!(I320, I384, U384);
 mul_impls!(I320, I640);
 conversion_impls!(I320, U320, I384, U384);
 conversion_impls!(I320, U320, I640, U640);
+moddiv_impls!(I384, I768);
 signed_impls!(I384, U384);
 subtraction_impls!(I384, I448, U448);
+mul_impls!(I384, I768);
+div_impls!(I384, U384);
 conversion_impls!(I384, U384, I448, U448);
+conversion_impls!(I384, U384, I768, U768);
 conversion_impls!(I384, U384, I896, U896);
+egcd_impls!(I448, U384, I384);
+modinv_impls!(U384, I448, U448);
+add_impls!(I448, I512, U512);
 signed_impls!(I448, U448);
+cmp_impls!(I448);
+shift_impls!(I448, U448);
+subtraction_impls!(I448, I512, U512);
 mul_impls!(I448, I896);
+conversion_impls!(I448, U448, I512, U512);
 conversion_impls!(I448, U448, I896, U896);
 signed_impls!(I512, U512);
 subtraction_impls!(I512, I576, U576);
@@ -38,20 +55,31 @@ conversion_impls!(I512, U512, I576, U576);
 conversion_impls!(I512, U512, I1024, U1024);
 egcd_impls!(I576, U512, I512);
 modinv_impls!(U512, I576, U576);
+moddiv_impls!(I576, I1152);
 add_impls!(I576, I640, U640);
 signed_impls!(I576, U576);
 cmp_impls!(I576);
 shift_impls!(I576, U576);
 subtraction_impls!(I576, I640, U640);
+mul_impls!(I576, I1152);
+div_impls!(I576, U576);
 conversion_impls!(I576, U576, I640, U640);
+conversion_impls!(I576, U576, I1152, U1152);
 conversion_impls!(I576, U576, I1280, U1280);
+egcd_impls!(I640, U576, I576);
+modinv_impls!(U576, I640, U640);
+add_impls!(I640, I704, U704);
 signed_impls!(I640, U640);
+cmp_impls!(I640);
+shift_impls!(I640, U640);
 subtraction_impls!(I640, I704, U704);
 mul_impls!(I640, I1280);
 div_impls!(I640, U640);
 conversion_impls!(I640, U640, I704, U704);
 conversion_impls!(I640, U640, I1280, U1280);
 signed_impls!(I704, U704);
+signed_impls!(I768, U768);
+div_impls!(I768, U768);
 signed_impls!(I896, U896);
 subtraction_impls!(I896, I960, U960);
 mul_impls!(I896, I1792);
@@ -70,6 +98,7 @@ shift_impls!(I1088, U1088);
 subtraction_impls!(I1088, I1152, U1152);
 conversion_impls!(I1088, U1088, I1152, U1152);
 signed_impls!(I1152, U1152);
+div_impls!(I1152, U1152);
 signed_impls!(I1280, U1280);
 subtraction_impls!(I1280, I1344, U1344);
 mul_impls!(I1280, I2560);
@@ -164,7 +193,9 @@ mod tests {
 
     generate_sigadd_tests!(I256, U256, i256, I320, U320);
     generate_sigadd_tests!(I320, U320, i320, I384, U384);
+    generate_sigadd_tests!(I448, U448, i448, I512, U512);
     generate_sigadd_tests!(I576, U576, i576, I640, U640);
+    generate_sigadd_tests!(I640, U640, i640, I704, U704);
     generate_sigadd_tests!(I1088, U1088, i1088, I1152, U1152);
     generate_sigadd_tests!(I1600, U1600, i1600, I1664, U1664);
     generate_sigadd_tests!(I2112, U2112, i2112, I2176, U2176);
@@ -182,6 +213,7 @@ mod tests {
     generate_sigsub_tests!(I256, U256, i256, I320, U320);
     generate_sigsub_tests!(I320, U320, i320, I384, U384);
     generate_sigsub_tests!(I384, U384, i384, I448, U448);
+    generate_sigsub_tests!(I448, U448, i448, I512, U512);
     generate_sigsub_tests!(I512, U512, i512, I576, U576);
     generate_sigsub_tests!(I576, U576, i576, I640, U640);
     generate_sigsub_tests!(I640, U640, i640, I704, U704);
@@ -209,6 +241,7 @@ mod tests {
     generate_signed_tests!(I576, U576, i576);
     generate_signed_tests!(I640, U640, i640);
     generate_signed_tests!(I704, U704, i704);
+    generate_signed_tests!(I768, U768, i768);
     generate_signed_tests!(I896, U896, i896);
     generate_signed_tests!(I960, U960, i960);
     generate_signed_tests!(I1024, U1024, i1024);
@@ -250,6 +283,7 @@ mod tests {
     generate_sigconversion_tests!(I576, U576, i576);
     generate_sigconversion_tests!(I640, U640, i640);
     generate_sigconversion_tests!(I704, U704, i704);
+    generate_sigconversion_tests!(I768, U768, i768);
     generate_sigconversion_tests!(I896, U896, i896);
     generate_sigconversion_tests!(I960, U960, i960);
     generate_sigconversion_tests!(I1024, U1024, i1024);
@@ -287,7 +321,9 @@ mod tests {
 
     generate_sigcmp_tests!(I256, U256, i256);
     generate_sigcmp_tests!(I320, U320, i320);
+    generate_sigcmp_tests!(I448, U448, i448);
     generate_sigcmp_tests!(I576, U576, i576);
+    generate_sigcmp_tests!(I640, U640, i640);
     generate_sigcmp_tests!(I1088, U1088, i1088);
     generate_sigcmp_tests!(I1600, U1600, i1600);
     generate_sigcmp_tests!(I2112, U2112, i2112);
@@ -301,10 +337,13 @@ mod tests {
     use super::super::*;
     use testing::{build_test_path,run_test};
 
+    generate_sigmul_tests!(I192, U192, i192, I384, U384);
     generate_sigmul_tests!(I256, U256, i256, I512, U512);
     generate_sigmul_tests!(I320, U320, i320, I640, U640);
+    generate_sigmul_tests!(I384, U384, i384, I768, U768);
     generate_sigmul_tests!(I448, U448, i448, I896, U896);
     generate_sigmul_tests!(I512, U512, i512, I1024, U1024);
+    generate_sigmul_tests!(I576, U576, i576, I1152, U1152);
     generate_sigmul_tests!(I640, U640, i640, I1280, U1280);
     generate_sigmul_tests!(I896, U896, i896, I1792, U1792);
     generate_sigmul_tests!(I1280, U1280, i1280, I2560, U2560);
@@ -313,9 +352,15 @@ mod tests {
     use super::super::*;
     use testing::{build_test_path,run_test};
 
+    generate_sigdiv_tests!(I192, U192, i192);
+    generate_sigdiv_tests!(I256, U256, i256);
+    generate_sigdiv_tests!(I384, U384, i384);
     generate_sigdiv_tests!(I512, U512, i512);
+    generate_sigdiv_tests!(I576, U576, i576);
     generate_sigdiv_tests!(I640, U640, i640);
+    generate_sigdiv_tests!(I768, U768, i768);
     generate_sigdiv_tests!(I896, U896, i896);
+    generate_sigdiv_tests!(I1152, U1152, i1152);
     generate_sigdiv_tests!(I1280, U1280, i1280);
   }
   mod sigshiftl {
@@ -324,7 +369,9 @@ mod tests {
 
     generate_sigshiftl_tests!(I256, U256, i256);
     generate_sigshiftl_tests!(I320, U320, i320);
+    generate_sigshiftl_tests!(I448, U448, i448);
     generate_sigshiftl_tests!(I576, U576, i576);
+    generate_sigshiftl_tests!(I640, U640, i640);
     generate_sigshiftl_tests!(I1088, U1088, i1088);
     generate_sigshiftl_tests!(I1600, U1600, i1600);
     generate_sigshiftl_tests!(I2112, U2112, i2112);
@@ -340,7 +387,9 @@ mod tests {
 
     generate_sigshiftr_tests!(I256, U256, i256);
     generate_sigshiftr_tests!(I320, U320, i320);
+    generate_sigshiftr_tests!(I448, U448, i448);
     generate_sigshiftr_tests!(I576, U576, i576);
+    generate_sigshiftr_tests!(I640, U640, i640);
     generate_sigshiftr_tests!(I1088, U1088, i1088);
     generate_sigshiftr_tests!(I1600, U1600, i1600);
     generate_sigshiftr_tests!(I2112, U2112, i2112);
@@ -356,7 +405,9 @@ mod tests {
 
     generate_egcd_tests!(I192, U192, i192, I256, U256);
     generate_egcd_tests!(I256, U256, i256, I320, U320);
+    generate_egcd_tests!(I384, U384, i384, I448, U448);
     generate_egcd_tests!(I512, U512, i512, I576, U576);
+    generate_egcd_tests!(I576, U576, i576, I640, U640);
     generate_egcd_tests!(ignore I1024, U1024, i1024, I1088, U1088);
     generate_egcd_tests!(ignore I1536, U1536, i1536, I1600, U1600);
     generate_egcd_tests!(ignore I2048, U2048, i2048, I2112, U2112);
@@ -366,13 +417,24 @@ mod tests {
     generate_egcd_tests!(ignore I8192, U8192, i8192, I8256, U8256);
     generate_egcd_tests!(ignore I15360, U15360, i15360, I15424, U15424);
   }
+  mod moddiv {
+    use super::super::*;
+    use testing::{build_test_path,run_test};
+
+    generate_moddiv_tests!(I192, U192, i192);
+    generate_moddiv_tests!(I256, U256, i256);
+    generate_moddiv_tests!(I384, U384, i384);
+    generate_moddiv_tests!(I576, U576, i576);
+  }
   mod modinv {
     use super::super::*;
     use testing::{build_test_path,run_test};
 
     generate_modinv_tests!(I192, U192, i192);
     generate_modinv_tests!(I256, U256, i256);
+    generate_modinv_tests!(I384, U384, i384);
     generate_modinv_tests!(I512, U512, i512);
+    generate_modinv_tests!(I576, U576, i576);
     generate_modinv_tests!(I1024, U1024, i1024);
     generate_modinv_tests!(ignore I2048, U2048, i2048);
     generate_modinv_tests!(ignore I3072, U3072, i3072);

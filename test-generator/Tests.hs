@@ -43,6 +43,7 @@ testDatabase = [
     (SignedSub,   "sigsub",         "signed subtraction",      sigsubTest),
     (SquareRoot,  "sqrt",           "square root",             sqrtTest),
     (EGCD,        "egcd",           "EGCD",                    egcdTest),
+    (ModDiv,      "moddiv",         "modular division",        moddivTest),
     (ModInv,      "modinv",         "modular inversion",       modinvTest)
   ]
 
@@ -277,6 +278,22 @@ egcdTest size memory0 =
                                    ("a", showX a), ("b", showX b),
                                    ("v", showX v)]
   in assert (v == gcd x y) (res, v, memory2)
+
+moddivTest :: Test
+moddivTest size memoryIn =
+  let attempt memory0 =
+        let (a, memory1) = genSign (generateNum memory0 "a" size)
+            (b, memory2) = generateNum memory1 "b" size
+            (m, memory3) = generateNum memory2 "m" size
+            maybe_res    = divmod a b m
+        in case maybe_res of
+             Nothing ->
+               attempt memory3
+             Just c ->
+               let res = Map.fromList [("a", showX a), ("b", showX b),
+                                       ("m", showX m), ("c", showX c)]
+               in (res, c, memory3)
+  in attempt memoryIn
 
 modinvTest :: Test
 modinvTest size memoryIn =

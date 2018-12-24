@@ -102,6 +102,7 @@ main = do
            SignedMul    -> hPutStrLn hndl ("mul_impls!(I" ++ show size ++ ", I" ++ show (size * 2) ++ ");")
            SignedDiv    -> hPutStrLn hndl ("div_impls!(I" ++ show size ++ ", U" ++ show size ++ ");")
            EGCD         -> hPutStrLn hndl ("egcd_impls!(I" ++ show (size + 64) ++ ", U" ++ show size ++ ", I" ++ show size ++ ");")
+           ModDiv       -> hPutStrLn hndl ("moddiv_impls!(I" ++ show size ++ ", I" ++ show (size * 2) ++ ");")
            ModInv       -> hPutStrLn hndl ("modinv_impls!(U" ++ show size ++ ", I" ++ show (size + 64) ++ ", U" ++ show (size + 64) ++ ");")
            SigConvert v -> hPutStrLn hndl ("conversion_impls!(I" ++ show size ++ ", U" ++ show size ++ ", I" ++ show v ++ ", U" ++ show v ++ ");")
            _            -> return ()
@@ -118,5 +119,6 @@ main = do
        generateSigTestBlock hndl "sigshiftl"     SignedShift True  16384 []       []
        generateSigTestBlock hndl "sigshiftr"     SignedShift True  16384 []       []
        generateSigTestBlock hndl "egcd"          EGCD        True  1024  [(+ 64)] [(+ 64)]
+       generateSigTestBlock hndl "moddiv"        ModDiv      True  2048  []       []
        generateSigTestBlock hndl "modinv"        ModInv      True  2048  []       []
        hPutStrLn hndl "}"
