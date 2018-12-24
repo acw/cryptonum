@@ -11,7 +11,6 @@ macro_rules! modinv_impls {
         impl ModInv for $name {
             fn modinv(&self, phi: &$name) -> Option<$name>
             {
-                println!("---");
                 let (_, mut b, g) = phi.egcd(&self);
 
                 if g != $sname::from(1i64) {
@@ -19,7 +18,6 @@ macro_rules! modinv_impls {
                 }
 
                 while b.is_negative() {
-                    println!("UPTICK");
                     b += $sname::from($uname::from(phi));
                 }
 
@@ -56,13 +54,9 @@ macro_rules! generate_modinv_tests {
             let b = $tname::from_bytes(bbytes);
             let c = $tname::from_bytes(cbytes);
 
-            println!("a: {:X}", a);
-            println!("b: {:X}", b);
-            println!("c: {:X}", c);
             match a.modinv(&b) {
                 None      => assert!(false),
                 Some(myc) => {
-                    println!("d: {:X}", myc);
                     assert_eq!(c, myc);
                 }
             }

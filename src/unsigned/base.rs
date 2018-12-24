@@ -57,11 +57,9 @@ macro_rules! generate_base
             fn testbit(&self, bit: usize) -> bool {
                 let idx = bit / 64;
                 let offset = bit % 64;
-                println!("Testing bit {} of {:X}", bit, self);
                 if idx >= $size {
                     return false;
                 }
-                println!("{:x} & {:x} == {:x}", self.value[idx], 1u64 << offset, self.value[idx] & (1u64 << offset));
                 (self.value[idx] & (1u64 << offset)) != 0
             }
         }
@@ -118,15 +116,12 @@ macro_rules! generate_base_tests
             let (neg7, tbytes) = case.get("t").unwrap();
             assert!(!neg0&&!neg1&&!neg2&&!neg3&&!neg4&&!neg5&&!neg6&&!neg7);
             let mut x = $name::from_bytes(xbytes);
-            println!("---------");
-            println!("x: {:x}", x);
             let m = $name::from_bytes(mbytes);
             let z = 1 == zbytes[0];
             let e = 1 == ebytes[0];
             let o = 1 == obytes[0];
             let r = $name::from_bytes(rbytes);
             let b = usize::from($name::from_bytes(bbytes));
-            println!("b: {:x}", b);
             let t = 1 == tbytes[0];
             assert_eq!(x.is_zero(),  z);
             assert_eq!(x.is_even(),  e);
