@@ -11,10 +11,9 @@ macro_rules! moddiv_impls {
         impl ModDiv for $sname {
             fn moddiv(&self, divisor: &Self, phi: &Self) -> Self
             {
-                assert!(!divisor.is_negative());
                 let safe_divisor = divisor % phi;
                 let unsigned_i = safe_divisor.value.modinv(&phi.value).expect("no modular inverse of moddiv divisor");
-                let i = $sname::new(false, unsigned_i);
+                let i = $sname::new(divisor.negative, unsigned_i);
                 let selfi = i * self;
                 $sname::from( selfi % $dbl::from(phi) )
             }
@@ -50,12 +49,6 @@ macro_rules! generate_moddiv_tests {
             let m = $sname::new(*negm, $tname::from_bytes(mbytes));
             let c = $sname::new(*negc, $tname::from_bytes(cbytes));
             let res = a.moddiv(&b, &m);
-            println!("-------------");
-            println!("a: {:x}", a);
-            println!("b: {:x}", b);
-            println!("m: {:x}", m);
-            println!("c: {:x}", c);
-            println!("r: {:x}", res);
             assert_eq!(c, res);
         });
     };

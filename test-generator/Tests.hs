@@ -38,6 +38,7 @@ testDatabase = [
     (SignedCmp,   "sigcmp",         "signed compare",          sigcmpTest),
     (SignedMul,   "sigmul",         "signed multiply",         sigmulTest),
     (SignedDiv,   "sigdiv",         "signed division",         sigdivTest),
+    (SignedModInv,"smodinv",        "signed modular inversion",smodinvTest),
     (SignedShift, "sigshiftr",      "signed shift right",      sigshiftrTest),
     (SignedShift, "sigshiftl",      "signed shift left",       sigshiftlTest),
     (SignedSub,   "sigsub",         "signed subtraction",      sigsubTest),
@@ -287,7 +288,7 @@ moddivTest :: Test
 moddivTest size memoryIn =
   let attempt memory0 =
         let (a, memory1) = genSign (generateNum memory0 "a" size)
-            (b, memory2) = generateNum memory1 "b" size
+            (b, memory2) = genSign (generateNum memory1 "b" size)
             (m, memory3) = generateNum memory2 "m" size
             maybe_res    = divmod a b m
         in case maybe_res of
