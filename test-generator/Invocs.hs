@@ -101,7 +101,8 @@ main = do
            SignedSub    -> hPutStrLn hndl ("subtraction_impls!(I" ++ show size ++ ", I" ++ show (size + 64) ++ ", U" ++ show (size + 64) ++ ");")
            SignedMul    -> hPutStrLn hndl ("mul_impls!(I" ++ show size ++ ", I" ++ show (size * 2) ++ ");")
            SignedDiv    -> hPutStrLn hndl ("div_impls!(I" ++ show size ++ ", U" ++ show size ++ ");")
-           EGCD         -> hPutStrLn hndl ("egcd_impls!(I" ++ show (size + 64) ++ ", U" ++ show size ++ ", I" ++ show size ++ ");")
+           SignedModInv -> hPutStrLn hndl ("smodinv_impls!(I" ++ show size ++ ", I" ++ show (size + 64) ++ ");")
+           EGCD         -> hPutStrLn hndl ("egcd_impls!(I" ++ show (size + 64) ++ ", U" ++ show size ++ ", I" ++ show size ++ ", I" ++ show ((size + 64) * 2) ++ ");")
            ModDiv       -> hPutStrLn hndl ("moddiv_impls!(I" ++ show size ++ ", I" ++ show (size * 2) ++ ");")
            ModInv       -> hPutStrLn hndl ("modinv_impls!(U" ++ show size ++ ", I" ++ show (size + 64) ++ ", U" ++ show (size + 64) ++ ");")
            SigConvert v -> hPutStrLn hndl ("conversion_impls!(I" ++ show size ++ ", U" ++ show size ++ ", I" ++ show v ++ ", U" ++ show v ++ ");")
@@ -109,16 +110,17 @@ main = do
        hPutStrLn hndl ""
        hPutStrLn hndl "\n#[cfg(test)]"
        hPutStrLn hndl "mod tests {"
-       generateSigTestBlock hndl "sigadd"        SignedAdd   True  16384 [(+ 64)] [(+ 64)]
-       generateSigTestBlock hndl "sigsub"        SignedSub   True  16384 [(+ 64)] [(+ 64)]
-       generateSigTestBlock hndl "signed"        SignedBase  True  90000 []       []
-       generateSigTestBlock hndl "sigconversion" SignedBase  False 90000 []       []
-       generateSigTestBlock hndl "sigcmp"        SignedCmp   True  90000 []       []
-       generateSigTestBlock hndl "sigmul"        SignedMul   True  9000  [(* 2)]  [(* 2)]
-       generateSigTestBlock hndl "sigdiv"        SignedDiv   True  2049  []       []
-       generateSigTestBlock hndl "sigshiftl"     SignedShift True  16384 []       []
-       generateSigTestBlock hndl "sigshiftr"     SignedShift True  16384 []       []
-       generateSigTestBlock hndl "egcd"          EGCD        True  1024  [(+ 64)] [(+ 64)]
-       generateSigTestBlock hndl "moddiv"        ModDiv      True  2048  []       []
-       generateSigTestBlock hndl "modinv"        ModInv      True  2048  []       []
+       generateSigTestBlock hndl "sigadd"        SignedAdd    True  16384 [(+ 64)] [(+ 64)]
+       generateSigTestBlock hndl "sigsub"        SignedSub    True  16384 [(+ 64)] [(+ 64)]
+       generateSigTestBlock hndl "signed"        SignedBase   True  90000 []       []
+       generateSigTestBlock hndl "sigconversion" SignedBase   False 90000 []       []
+       generateSigTestBlock hndl "sigcmp"        SignedCmp    True  90000 []       []
+       generateSigTestBlock hndl "sigmul"        SignedMul    True  9000  [(* 2)]  [(* 2)]
+       generateSigTestBlock hndl "sigdiv"        SignedDiv    True  2049  []       []
+       generateSigTestBlock hndl "sigshiftl"     SignedShift  True  16384 []       []
+       generateSigTestBlock hndl "sigshiftr"     SignedShift  True  16384 []       []
+       generateSigTestBlock hndl "egcd"          EGCD         True  1024  [(+ 64)] [(+ 64)]
+       generateSigTestBlock hndl "moddiv"        ModDiv       True  2048  []       []
+       generateSigTestBlock hndl "modinv"        ModInv       True  2048  []       []
+       generateSigTestBlock hndl "smodinv"       SignedModInv True  2048  []       []
        hPutStrLn hndl "}"

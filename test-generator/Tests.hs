@@ -309,5 +309,22 @@ modinvTest size memoryIn =
                                          ("c", showX c)]
         in if c == 0
              then attempt memory2
-             else assert ((c < b) && ((a * c) `mod` b == 1)) (res, c, memory2)
+             else assert (c < b) $
+                  assert ((a * c) `mod` b == 1) $
+                  (res, c, memory2)
+  in attempt memoryIn
+
+smodinvTest :: Test
+smodinvTest size memoryIn =
+  let attempt memory0 =
+        let (a, memory1) = genSign (generateNum memory0 "a" size)
+            (b, memory2) = generateNum memory1 "b" size
+            c            = recipModInteger a b
+            res          = Map.fromList [("a", showX a), ("b", showX b),
+                                         ("c", showX c)]
+        in if c == 0
+             then attempt memory2
+             else assert (c < b) $
+                  assert ((a * c) `mod` b == 1) $
+                  (res, c, memory2)
   in attempt memoryIn
