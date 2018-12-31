@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 module Math(
-         extendedGCD
+         extendedGCD, safeGCD
        , barrett, computeK, base
        , modulate, modulate'
        , isqrt
@@ -30,6 +30,21 @@ printState a =
      putStrLn ("B: " ++ showX (bigB a))
      putStrLn ("C: " ++ showX (bigC a))
      putStrLn ("D: " ++ showX (bigD a))
+
+safeGCD :: Integer -> Integer -> (Integer, Integer, Integer)
+safeGCD self rhs = go (self, 1, 0) (rhs, 0, 1)
+ where
+  go (v, a, b) (0, _, _) = if v < 0
+                             then (-a, -b, -v)
+                             else (a, b, v)
+  go old       new       = go new (step old new)
+  --
+  step (old_r, old_s, old_t) (r, s, t) =
+    let quotient = old_r `div` r
+        r'       = old_r - (r * quotient)
+        s'       = old_s - (s * quotient)
+        t'       = old_t - (t * quotient)
+    in (r', s', t')
 
 extendedGCD :: Integer -> Integer -> (Integer, Integer, Integer)
 extendedGCD x y = (a, b, g * (v finalState))

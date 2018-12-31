@@ -1,5 +1,5 @@
 /// GCD computations, with extended information
-pub trait EGCD<T> {
+pub trait EGCD<T: PartialEq + From<u64> + Sized>: Sized {
     /// Compute the extended GCD for this value and the given value.
     /// If the inputs to this function are x (self) and y (the argument),
     /// and the results are (a, b, g), then (a * x) + (b * y) = g.
@@ -8,11 +8,51 @@ pub trait EGCD<T> {
     /// have a GCD of 1. This is a slightly faster version of calling
     /// `egcd` and testing the result, because it can ignore some
     /// intermediate values.
-    fn gcd_is_one(&self, &Self) -> bool;
+    fn gcd_is_one(&self, rhs: &Self) -> bool {
+        let (_, _, g) = self.egcd(rhs);
+        g == T::from(1u64)
+    }
 }
 
 macro_rules! egcd_impls {
-    ($sname: ident, $name: ident, $ssmall: ident) => {
+    ($sname: ident, $name: ident, $ssmall: ident, $bigger: ident) => {
+        impl EGCD<$sname> for $ssmall {
+            fn egcd(&self, rhs: &$ssmall) -> ($sname, $sname, $sname) {
+                // This slower version works when we can't guarantee that the
+                // inputs are positive.
+                let mut s     = $sname::from(0i64);
+                let mut old_s = $sname::from(1i64);
+                let mut t     = $sname::from(1i64);
+                let mut old_t = $sname::from(0i64);
+                let mut r     = $sname::from(rhs);
+                let mut old_r = $sname::from(self);
+
+                while !r.is_zero() {
+                    let quotient = &old_r / &r;
+
+                    let prov_r = r.clone();
+                    let prov_s = s.clone();
+                    let prov_t = t.clone();
+
+                    // FIXME: Make this less copying, although I suspect the
+                    // division above is the more major problem.
+                    r = $sname::from($bigger::from(old_r) - (r * &quotient));
+                    s = $sname::from($bigger::from(old_s) - (s * &quotient));
+                    t = $sname::from($bigger::from(old_t) - (t * &quotient));
+
+                    old_r = prov_r;
+                    old_s = prov_s;
+                    old_t = prov_t;
+                }
+
+                if old_r.is_negative() {
+                    (old_s.negate(), old_t.negate(), old_r.negate())
+                } else {
+                    (old_s, old_t, old_r)
+                }
+            }
+        }
+
         impl EGCD<$sname> for $name {
             fn egcd(&self, rhs: &$name) -> ($sname, $sname, $sname) {
                 // INPUT: two positive integers x and y.
@@ -160,17 +200,27 @@ macro_rules! generate_egcd_tests {
             let (nega, abytes) = case.get("a").unwrap();
             let (negb, bbytes) = case.get("b").unwrap();
 
-            assert!(!negx && !negy);
-            let x = $uname::from_bytes(xbytes);
-            let y = $uname::from_bytes(ybytes);
             let v = $sname64::new(*negv, $uname64::from_bytes(vbytes));
             let a = $sname64::new(*nega, $uname64::from_bytes(abytes));
             let b = $sname64::new(*negb, $uname64::from_bytes(bbytes));
-            let (mya, myb, myv) = x.egcd(&y);
-            assert_eq!(v, myv, "GCD test");
-            assert_eq!(a, mya, "X factor test");
-            assert_eq!(b, myb, "Y factor tst");
-            assert_eq!(x.gcd_is_one(&y), (myv == $sname64::from(1i64)));
+
+            if *negx || *negy {
+                let x = $sname::new(*negx, $uname::from_bytes(xbytes));
+                let y = $sname::new(*negy, $uname::from_bytes(ybytes));
+                let (mya, myb, myv) = x.egcd(&y);
+                assert_eq!(v, myv, "Signed GCD test");
+                assert_eq!(a, mya, "Signed X factor test");
+                assert_eq!(b, myb, "Signed Y factor tst");
+                assert_eq!(x.gcd_is_one(&y), (myv == $sname64::from(1i64)));
+            } else {
+                let x = $uname::from_bytes(xbytes);
+                let y = $uname::from_bytes(ybytes);
+                let (mya, myb, myv) = x.egcd(&y);
+                assert_eq!(v, myv, "GCD test");
+                assert_eq!(a, mya, "X factor test");
+                assert_eq!(b, myb, "Y factor tst");
+                assert_eq!(x.gcd_is_one(&y), (myv == $sname64::from(1i64)));
+            }
         });
      };
 }

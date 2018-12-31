@@ -271,13 +271,17 @@ sigmulTest size memory0 =
 
 egcdTest :: Test
 egcdTest size memory0 =
-  let (x, memory1) = generateNum memory0 "x" size
-      (y, memory2) = generateNum memory1 "y" size
-      (a, b, v)    = extendedGCD x y
+  let (x, memory1) = genSign (generateNum memory0 "x" size)
+      (y, memory2) = genSign (generateNum memory1 "y" size)
+      (a, b, v)    = if (x >= 0) && (y >= 0)
+                       then extendedGCD x y
+                       else safeGCD x y
       res          = Map.fromList [("x", showX x), ("y", showX y),
                                    ("a", showX a), ("b", showX b),
                                    ("v", showX v)]
-  in assert (v == gcd x y) (res, v, memory2)
+  in assert (((a * x) + (b * y)) == v) $
+     assert (v == gcd x y) $
+     (res, v, memory2)
 
 moddivTest :: Test
 moddivTest size memoryIn =
