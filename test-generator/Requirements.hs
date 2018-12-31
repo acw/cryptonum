@@ -27,6 +27,7 @@ data Operation = Add
                | SignedSub
                | SignedMul
                | SignedDiv
+               | SignedModInv
                | SigConvert Int
                | SquareRoot
                | EGCD
@@ -120,6 +121,7 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req size (Convert (size + 64))
                                       ])
         , Need ModDiv      (\ size -> [Req size ModInv,
+                                       Req size SignedModInv,
                                        Req size SignedMul,
                                        Req size SignedDiv,
                                        Req (size * 2) SignedDiv,
@@ -174,11 +176,17 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
         , Need EGCD        (\ size -> [Req size SignedBase,
                                        Req size BaseOps,
                                        Req (size + 64) SignedBase,
+                                       Req ((size + 64) * 2) SignedBase,
                                        Req size (SigConvert (size + 64)),
                                        Req (size + 64) SignedShift,
                                        Req (size + 64) SignedAdd,
                                        Req (size + 64) SignedSub,
-                                       Req (size + 64) SignedCmp
+                                       Req (size + 64) SignedCmp,
+                                       Req (size + 64) SignedDiv,
+                                       Req (size + 64) SignedMul,
+                                       Req ((size + 64) * 2) SignedSub,
+                                       Req (size + 64) (Convert (((size + 64) * 2) + 64)),
+                                       Req (size + 64) (SigConvert (((size + 64) * 2) + 64))
                                       ])
         , Need ModInv      (\ size -> [Req size BaseOps,
                                        Req (size + 64) SignedBase,
@@ -187,6 +195,10 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req size EGCD,
                                        Req (size + 64) SignedAdd,
                                        Req size Barretts
+                                      ])
+        , Need SignedModInv (\ size -> [
+                                       Req size EGCD,
+                                       Req size SignedModInv
                                       ])
         , Need SquareRoot  (\ size -> [Req size BaseOps,
                                        Req size Shifts,
