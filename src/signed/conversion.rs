@@ -12,6 +12,12 @@ macro_rules! generate_base_conversions
                 $sname{ negative: x < 0, value: $name::from(x.abs() as u128) }
             }
         }
+
+        impl From<u64> for $sname {
+            fn from(x: u64) -> $sname {
+                $sname{ negative: false, value: $name::from(x) }
+            }
+        }
     };
 }
 
