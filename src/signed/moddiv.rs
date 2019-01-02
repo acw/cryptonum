@@ -12,8 +12,7 @@ macro_rules! moddiv_impls {
             fn moddiv(&self, divisor: &Self, phi: &Self) -> Self
             {
                 let safe_divisor = divisor % phi;
-                let unsigned_i = safe_divisor.value.modinv(&phi.value).expect("no modular inverse of moddiv divisor");
-                let i = $sname::new(divisor.negative, unsigned_i);
+                let i = safe_divisor.modinv(&phi).expect("no modular inverse of moddiv divisor");
                 let selfi = i * self;
                 $sname::from( selfi % $dbl::from(phi) )
             }
