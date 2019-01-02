@@ -60,6 +60,7 @@ main = do
            ModMul     -> hPutStrLn hndl ("modmul_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ", BarrettU" ++ show size ++ ");")
            ModSq      -> hPutStrLn hndl ("modsq_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ", BarrettU" ++ show size ++ ");")
            Mul        -> hPutStrLn hndl ("multiply_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ");")
+           Scale      -> hPutStrLn hndl ("scale_impls!(U" ++ show size ++ ", U" ++ show (size + 64) ++ ");")
            Shifts     -> hPutStrLn hndl ("shift_impls!(U" ++ show size ++ ", " ++ show (size `div` 64) ++ ");")
            Square     -> hPutStrLn hndl ("square_impls!(U" ++ show size ++ ", U" ++ show (size * 2) ++ ", " ++ show size ++ ");")
            SquareRoot -> hPutStrLn hndl ("sqrt_impls!(U" ++ show size ++ ");")
@@ -79,6 +80,7 @@ main = do
        generateTestBlock hndl "shiftr"         Shifts     True  9000  []
        generateTestBlock hndl "add"            Add        True  9000  [(+ 64)]
        generateTestBlock hndl "mul"            Mul        True  9000  [(* 2)]
+       generateTestBlock hndl "scale"          Scale      True  9000  [(+ 64)]
        generateTestBlock hndl "div"            Div        True  2049  []
        generateTestBlock hndl "barrett_gen"    Barretts   True  2000  [(+ 64)]
        generateTestBlock hndl "barrett_red"    Barretts   True  4000  [(+ 64), (* 2)]
@@ -102,6 +104,7 @@ main = do
            SignedMul    -> hPutStrLn hndl ("mul_impls!(I" ++ show size ++ ", I" ++ show (size * 2) ++ ");")
            SignedDiv    -> hPutStrLn hndl ("div_impls!(I" ++ show size ++ ", U" ++ show size ++ ");")
            SignedModInv -> hPutStrLn hndl ("smodinv_impls!(I" ++ show size ++ ", I" ++ show (size + 64) ++ ");")
+           SignedScale  -> hPutStrLn hndl ("scale_impls!(I" ++ show size ++ ", I" ++ show (size + 64) ++ ");")
            EGCD         -> hPutStrLn hndl ("egcd_impls!(I" ++ show (size + 64) ++ ", U" ++ show size ++ ", I" ++ show size ++ ", I" ++ show ((size + 64) * 2) ++ ");")
            ModDiv       -> hPutStrLn hndl ("moddiv_impls!(I" ++ show size ++ ", I" ++ show (size * 2) ++ ");")
            ModInv       -> hPutStrLn hndl ("modinv_impls!(U" ++ show size ++ ", I" ++ show (size + 64) ++ ", U" ++ show (size + 64) ++ ");")
@@ -119,6 +122,7 @@ main = do
        generateSigTestBlock hndl "sigdiv"        SignedDiv    True  2049  []       []
        generateSigTestBlock hndl "sigshiftl"     SignedShift  True  16384 []       []
        generateSigTestBlock hndl "sigshiftr"     SignedShift  True  16384 []       []
+       generateSigTestBlock hndl "sigscale"      SignedScale  True  16384 [(+ 64)] [(+ 64)]
        generateSigTestBlock hndl "egcd"          EGCD         True  1024  [(+ 64)] [(+ 64)]
        generateSigTestBlock hndl "moddiv"        ModDiv       True  2048  []       []
        generateSigTestBlock hndl "modinv"        ModInv       True  2048  []       []

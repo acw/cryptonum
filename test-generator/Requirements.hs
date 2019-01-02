@@ -16,6 +16,7 @@ data Operation = Add
                | ModMul
                | ModSq
                | Mul
+               | Scale
                | Shifts
                | Square
                | Sub
@@ -28,6 +29,7 @@ data Operation = Add
                | SignedMul
                | SignedDiv
                | SignedModInv
+               | SignedScale
                | SigConvert Int
                | SquareRoot
                | EGCD
@@ -136,9 +138,11 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req size (Convert (size + 64))
                                       ])
         , Need Mul         (\ size -> [Req size BaseOps,
+                                       Req size Scale,
                                        Req (size * 2) BaseOps,
                                        Req size (Convert (size * 2))
                                       ])
+        , Need Scale       (\ size -> [Req (size + 64) BaseOps])
         , Need Shifts      (\ size -> [Req size BaseOps
                                       ])
         , Need Square      (\ size -> [Req size BaseOps,
@@ -167,6 +171,7 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req size (SigConvert (size + 64))
                                       ])
         , Need SignedMul   (\ size -> [Req size Mul,
+                                       Req size SignedScale,
                                        Req (size * 2) SignedBase,
                                        Req size (SigConvert (size * 2))
                                       ])

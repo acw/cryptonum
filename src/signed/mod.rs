@@ -28,6 +28,8 @@ mod modinv;
 #[macro_use]
 mod mul;
 #[macro_use]
+mod scale;
+#[macro_use]
 mod shift;
 #[macro_use]
 mod subtraction;

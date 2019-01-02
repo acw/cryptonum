@@ -29,6 +29,7 @@ testDatabase = [
     (ModMul,      "modmul",         "modular multiplication",  modmulTest),
     (ModSq,       "modsq",          "modular square",          modsqTest),
     (Mul,         "mul",            "unsigned multiplication", mulTest),
+    (Scale,       "scale",          "unsigned scaling",        scaleTest),
     (Shifts,      "shiftl",         "unsigned shift left",     shiftlTest),
     (Shifts,      "shiftr",         "unsigned shift right",    shiftrTest),
     (Square,      "square",         "unsigned squaring",       squareTest),
@@ -37,6 +38,7 @@ testDatabase = [
     (SignedBase,  "signed",         "signed base",             signedTest),
     (SignedCmp,   "sigcmp",         "signed compare",          sigcmpTest),
     (SignedMul,   "sigmul",         "signed multiply",         sigmulTest),
+    (SignedScale, "sigscale",       "signed scaling",          sigscaleTest),
     (SignedDiv,   "sigdiv",         "signed division",         sigdivTest),
     (SignedModInv,"smodinv",        "signed modular inversion",smodinvTest),
     (SignedShift, "sigshiftr",      "signed shift right",      sigshiftrTest),
@@ -329,3 +331,22 @@ smodinvTest size memoryIn =
                   assert ((a * c) `mod` b == 1) $
                   (res, c, memory2)
   in attempt memoryIn
+
+scaleTest :: Test
+scaleTest size memory0 =
+  let (a, memory1) = generateNum memory0 "a" size
+      (b, memory2) = generateNum memory1 "b" 64
+      c            = a * b
+      res          = Map.fromList [("a", showX a), ("b", showX b),
+                                   ("c", showX c)]
+  in (res, c, memory2)
+
+
+sigscaleTest :: Test
+sigscaleTest size memory0 =
+  let (a, memory1) = genSign (generateNum memory0 "a" size)
+      (b, memory2) = genSign (generateNum memory1 "b" 63)
+      c            = a * b
+      res          = Map.fromList [("a", showX a), ("b", showX b),
+                                   ("c", showX c)]
+  in (res, c, memory2)

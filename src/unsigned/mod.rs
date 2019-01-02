@@ -42,6 +42,8 @@ mod primes;
 #[macro_use]
 mod rand;
 #[macro_use]
+mod scale;
+#[macro_use]
 mod shifts;
 #[macro_use]
 mod sqrt;
@@ -61,6 +63,7 @@ pub use self::square::Square;
 pub use self::sqrt::SquareRoot;
 
 pub(crate) use self::add::unsafe_addition;
+pub(crate) use self::scale::scale;
 
 use rand::{Rng,RngCore};
 use rand::distributions::{Distribution,Standard};
