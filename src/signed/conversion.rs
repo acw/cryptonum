@@ -64,6 +64,15 @@ macro_rules! generate_sigconversion_tests
                 fn conversion_i32(  x: i32)   -> bool { x == i32::from($sname::from(x))   }
                 fn conversion_i64(  x: i64)   -> bool { x == i64::from($sname::from(x))   }
                 fn conversion_isize(x: isize) -> bool { x == isize::from($sname::from(x)) }
+
+                fn back_conversion(x: u64, b: bool) -> bool
+                {
+                    let mut base = $sname::zero();
+                    let xprime = x & 0x7FFFFFFFFFFFFFFF;
+                    base.negative = b;
+                    base.value.value[0] = xprime;
+                    base == $sname::from(i64::from(&base))
+                }
             }
         }
     }
