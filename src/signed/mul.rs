@@ -54,6 +54,12 @@ macro_rules! mul_impls
                 }
             }
         }
+
+        impl Square<$dbl> for $name {
+            fn square(&self) -> $dbl {
+                $dbl{ negative: false, value: self.value.square() }
+            }
+        }
     }
 }
 
