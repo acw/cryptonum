@@ -68,14 +68,26 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req size (Convert (((size * 2) + 64) * 2))
                                        ])
         , Need ECDSA       (\ size -> [Req size SignedSub,
+                                       Req size SignedMul,
                                        Req size ModDiv,
-                                       Req (size + 64) SignedMul,
-                                       Req ((size + 64) * 2) SignedSub,
-                                       Req ((size + 64) * 2) SignedDiv,
-                                       Req ((size + 64) * 2) SignedMul,
-                                       Req size (Convert ((size + 64) * 2)),
-                                       Req size (SigConvert ((size + 64) * 2))
-                                       ])
+                                       Req (size * 2) BaseOps,
+                                       Req (size * 2) SignedBase,
+                                       Req (size * 2) SignedShift,
+                                       Req (size * 2) SignedSub,
+                                       Req (size * 2) SignedMul,
+                                       Req (size * 2) SignedDiv,
+                                       Req ((size * 2) + 64) SignedBase,
+                                       Req ((size * 2) + 64) BaseOps,
+                                       Req ((size * 2) + 64) SignedAdd,
+                                       Req ((size * 2) + 64) SignedShift,
+                                       Req ((size * 2) + 64) ModDiv,
+                                       Req size (Convert (size * 2)),
+                                       Req size (SigConvert (size * 2)),
+                                       Req size (Convert ((size * 2) + 64)),
+                                       Req size (SigConvert ((size * 2) + 64)),
+                                       Req (size * 2) (Convert ((size * 2) + 64)),
+                                       Req (size * 2) (SigConvert ((size * 2) + 64))
+                                      ])
         , Need PrimeGen    (\ size -> [Req size Div,
                                        Req size Shifts,
                                        Req size ModExp,
@@ -151,6 +163,8 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
         , Need Sub         (\ size -> [Req size BaseOps
                                       ])
         , Need SignedAdd   (\ size -> [Req size SignedBase,
+                                       Req size Add,
+                                       Req size Sub,
                                        Req (size + 64) SignedBase,
                                        Req (size + 64) BaseOps
                                       ])
@@ -173,13 +187,15 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
         , Need SignedMul   (\ size -> [Req size Mul,
                                        Req size SignedScale,
                                        Req (size * 2) SignedBase,
-                                       Req size (SigConvert (size * 2))
+                                       Req size (SigConvert (size * 2)),
+                                       Req size Square
                                       ])
         , Need SignedDiv   (\ size -> [Req size Div,
                                        Req size Add
                                       ])
         , Need EGCD        (\ size -> [Req size SignedBase,
                                        Req size BaseOps,
+                                       Req size Shifts,
                                        Req (size + 64) SignedBase,
                                        Req ((size + 64) * 2) SignedBase,
                                        Req size (SigConvert (size + 64)),
