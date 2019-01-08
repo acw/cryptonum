@@ -69,7 +69,7 @@ macro_rules! generate_sigconversion_tests
                 {
                     let mut base = $sname::zero();
                     let xprime = x & 0x7FFFFFFFFFFFFFFF;
-                    base.negative = b;
+                    base.negative = b && (x != 0);
                     base.value.value[0] = xprime;
                     base == $sname::from(i64::from(&base))
                 }
