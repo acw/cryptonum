@@ -1,22 +1,26 @@
 pub fn multiply(dest: &mut [u64], left: &[u64], right: &[u64])
 {
     let len = right.len();
+    let mut i = 0;
 
     assert_eq!(left.len(), len,   "Uneven argument lengths in multiply");
     assert_eq!(dest.len(), len*2, "Bad destination size in multiply");
 
-    for i in 0..len {
+    while i < len {
         let mut carry = 0;
+        let mut j = 0;
 
-        for j in 0..len {
+        while j < len {
             let old = dest[i+j] as u128;
             let l128 = left[j] as u128;
             let r128 = right[i] as u128;
             let uv = old + (l128 * r128) + carry;
             dest[i+j] = uv as u64;
             carry = uv >> 64;
+            j += 1;
         }
         dest[i+len] = carry as u64;
+        i += 1;
     }
 }
 
