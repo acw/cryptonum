@@ -86,7 +86,9 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        Req size (Convert ((size * 2) + 64)),
                                        Req size (SigConvert ((size * 2) + 64)),
                                        Req (size * 2) (Convert ((size * 2) + 64)),
-                                       Req (size * 2) (SigConvert ((size * 2) + 64))
+                                       Req (size * 2) (SigConvert ((size * 2) + 64)),
+                                       Req size (Convert (size * 4)),
+                                       Req (size * 4) Div
                                       ])
         , Need PrimeGen    (\ size -> [Req size Div,
                                        Req size Shifts,
