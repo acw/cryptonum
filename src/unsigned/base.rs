@@ -84,6 +84,12 @@ macro_rules! generate_base
                 f.write_str("}")
             }
         }
+
+        impl From<[u64; $size]> for $name {
+            fn from(x: [u64; $size]) -> $name {
+                $name{ value: x }
+            }
+        }
     }
 }
 
