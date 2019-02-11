@@ -1,0 +1,5 @@
+- Maybe don't use so many Rust macros; traits seem to be a bad idea; maybe just directly generate from Haskell?
+- Verification of some of the basic operations with SAW
+- Remove Decoder/Encoder, and just make normal From trait instances
+- Need some good profiling benchmarks for everything
+- Karatsuba multiplication
