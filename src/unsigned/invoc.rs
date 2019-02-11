@@ -66,6 +66,7 @@ base_impls!(U384, 6);
 random_impls!(U384, UniformU384);
 barrett_impl!(BarrettU384, U384, U448, U768, U832);
 div_impls!(U384, U768);
+modmul_impls!(U384, U768, BarrettU384);
 multiply_impls!(U384, U768);
 scale_impls!(U384, U448);
 shift_impls!(U384, 6);
@@ -118,6 +119,7 @@ base_impls!(U576, 9);
 random_impls!(U576, UniformU576);
 barrett_impl!(BarrettU576, U576, U640, U1152, U1216);
 div_impls!(U576, U1152);
+modmul_impls!(U576, U1152, BarrettU576);
 multiply_impls!(U576, U1152);
 scale_impls!(U576, U640);
 shift_impls!(U576, 9);
@@ -1542,7 +1544,9 @@ mod tests {
 
     generate_modmul_tests!(U192, u192);
     generate_modmul_tests!(U256, u256);
+    generate_modmul_tests!(U384, u384);
     generate_modmul_tests!(U512, u512);
+    generate_modmul_tests!(U576, u576);
     generate_modmul_tests!(U1024, u1024);
     generate_modmul_tests!(U1536, u1536);
     generate_modmul_tests!(U2048, u2048);
@@ -1635,7 +1639,9 @@ mod tests {
 
     generate_barrett_modmul_tests!(U192, u192, U256);
     generate_barrett_modmul_tests!(U256, u256, U320);
+    generate_barrett_modmul_tests!(U384, u384, U448);
     generate_barrett_modmul_tests!(U512, u512, U576);
+    generate_barrett_modmul_tests!(U576, u576, U640);
     generate_barrett_modmul_tests!(U1024, u1024, U1088);
     generate_barrett_modmul_tests!(U1536, u1536, U1600);
     generate_barrett_modmul_tests!(U2048, u2048, U2112);

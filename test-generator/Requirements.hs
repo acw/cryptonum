@@ -69,6 +69,7 @@ needs = [ Need RSA         (\ size -> [Req (size `div` 2) Sub,
                                        ])
         , Need ECDSA       (\ size -> [Req size SignedSub,
                                        Req size SignedMul,
+                                       Req size ModMul,
                                        Req size ModDiv,
                                        Req (size * 2) BaseOps,
                                        Req (size * 2) SignedBase,
