@@ -87,7 +87,6 @@ use std::ops::{Rem,RemAssign};
 use std::ops::{Shl,ShlAssign,Shr,ShrAssign};
 use std::ops::{Sub,SubAssign};
 
-#[cfg(test)]
 use quickcheck::{Arbitrary,Gen};
 
 macro_rules! base_impls

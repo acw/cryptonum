@@ -93,7 +93,6 @@ macro_rules! signed_impls {
             }
         }
 
-        #[cfg(test)]
         impl Arbitrary for $sname {
             fn arbitrary<G>(g: &mut G) -> $sname
               where G: Gen

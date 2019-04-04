@@ -64,7 +64,6 @@ macro_rules! generate_base
             }
         }
 
-        #[cfg(test)]
         impl Arbitrary for $name {
             fn arbitrary<G: Gen>(g: &mut G) -> $name {
                 let mut res = $name::zero();
