@@ -86,6 +86,7 @@ use std::ops::{Div,DivAssign};
 use std::ops::{Rem,RemAssign};
 use std::ops::{Shl,ShlAssign,Shr,ShrAssign};
 use std::ops::{Sub,SubAssign};
+use std::ops::{BitAnd,BitOr};
 
 use quickcheck::{Arbitrary,Gen};
 

@@ -89,6 +89,28 @@ macro_rules! generate_base
                 $name{ value: x }
             }
         }
+
+        impl BitOr for $name {
+            type Output = $name;
+
+            fn bitor(mut self, rhs: Self) -> Self {
+                for (idx, val) in self.value.iter_mut().enumerate() {
+                    *val |= rhs.value[idx];
+                }
+                self
+            }
+        }
+
+        impl BitAnd for $name {
+            type Output = $name;
+
+            fn bitand(mut self, rhs: Self) -> Self {
+                for (idx, val) in self.value.iter_mut().enumerate() {
+                    *val &= rhs.value[idx];
+                }
+                self
+            }
+        }
     }
 }
 
