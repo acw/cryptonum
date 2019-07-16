@@ -7,6 +7,9 @@ module Gen(
     blank,
     out,
     wrapIndent,
+    implFor,
+    implFor',
+    implFor'',
     )
  where
 
@@ -71,3 +74,15 @@ wrapIndent val middle =
        tell (replicate (fromIntegral (indentAmount gs)) ' ')
        tell "}\n"
        return res
+
+implFor :: String -> String -> Gen a -> Gen a
+implFor trait name middle =
+    wrapIndent ("impl " ++ trait ++ " for " ++ name) middle
+
+implFor' :: String -> String -> Gen a -> Gen a
+implFor' trait name middle =
+    wrapIndent ("impl<'a> " ++ trait ++ " for " ++ name) middle
+
+implFor'' :: String -> String -> Gen a -> Gen a
+implFor'' trait name middle =
+    wrapIndent ("impl<'a,'b> " ++ trait ++ " for " ++ name) middle

@@ -11,7 +11,7 @@ import System.Directory(createDirectoryIfMissing)
 import System.Environment(getArgs)
 import System.Exit(die)
 import System.FilePath((</>))
-import UnsignedBase(declareBaseStructure)
+import UnsignedBase(declareBaseStructure,declareBinaryOperators)
 
 gatherRequirements :: [Requirement] -> Map Int [Operation]
 gatherRequirements = foldr process Map.empty
@@ -29,4 +29,5 @@ main =
           createDirectoryIfMissing True basedir
           forM_ reqs $ \ (x, ops) ->
             do runGen (basedir </> "mod.rs") (declareBaseStructure size ops)
+               runGen (basedir </> "binary.rs") (declareBinaryOperators size)
     
