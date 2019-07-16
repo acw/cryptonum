@@ -1,49 +1,24 @@
-extern crate quickcheck;
-extern crate rand;
-
+#![no_std]
 pub mod signed;
 pub mod unsigned;
-#[cfg(test)]
-pub mod testing;
 
-#[cfg(test)]
-mod arithmetic {
-    use super::signed::*;
-    use super::unsigned::*;
-
-    quickcheck! {
-        fn commutivity_signed_add(x: I576, y: I576) -> bool {
-            (&x + &y) == (&y + &x)
-        }
-        fn commutivity_unsigned_add(x: U576, y: U576) -> bool {
-            (&x + &y) == (&y + &x)
-        }
-        fn commutivity_unsigned_mul(x: U192, y: U192) -> bool {
-            (&x * &y) == (&y * &x)
-        }
-
-        fn associativity_unsigned_add(x: U192, y: U192, z: U192) -> bool {
-            (U256::from(&x) + (&y + &z)) == ((&x + &y) + U256::from(&z))
-        }
-        fn associativity_unsigned_mul(x: U192, y: U192, z: U192) -> bool {
-            (U384::from(&x) * (&y * &z)) == ((&x * &y) * U384::from(&z))
-        }
-
-        fn identity_signed_add(x: I576) -> bool {
-            (&x + I576::zero()) == I640::from(&x)
-        }
-        fn identity_unsigned_add(x: U576) -> bool {
-            (&x + U576::zero()) == U640::from(&x)
-        }
-        fn identity_unsigned_mul(x: U192) -> bool {
-            (&x * U192::from(1u64)) == U384::from(&x)
-        }
-
-        fn additive_inverse(x: I576) -> bool {
-            (&x + x.negate()) == I640::zero()
-        }
-        fn distribution(x: U192, y: U192, z: U192) -> bool {
-            (U256::from(&x) * (&y + &z)) == U512::from((&x * &y) + (&x * &z))
-        }
-    } 
+/// A trait definition for large numbers.
+pub trait CryptoNum {
+    /// Generate a new value of the given type.
+    fn zero() -> Self;
+    /// Test if the number is zero.
+    fn is_zero(&self) -> bool;
+    /// Test if the number is even.
+    fn is_even(&self) -> bool;
+    /// Test if the number is odd.
+    fn is_odd(&self) -> bool;
+    /// The size of this number in bits.
+    fn bit_length() -> usize;
+    /// Mask off the high parts of the number. In particular, it
+    /// zeros the bits above (len * 64).
+    fn mask(&mut self, len: usize);
+    /// Test if the given bit is zero, where bits are numbered in
+    /// least-significant order (0 is the LSB, etc.).
+    fn testbit(&self, bit: usize) -> bool;
 }
+

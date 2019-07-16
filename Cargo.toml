@@ -2,7 +2,8 @@
 name = "cryptonum"
 version = "0.1.0"
 authors = ["awick"]
+edition = "2018"
 
 [dependencies]
-quickcheck = "^0.7.2"
-rand       = "^0.6.0"
+# quickcheck = "^0.7.2"
+# rand       = "^0.6.0"
