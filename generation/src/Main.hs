@@ -1,33 +1,54 @@
 module Main
  where
 
+import BinaryOps(binaryOps)
 import Control.Monad(forM_,unless)
-import Data.List(sort)
-import Data.Map.Strict(Map)
-import qualified Data.Map.Strict as Map
+import Data.Maybe(mapMaybe)
+import Data.Word(Word)
+import File(File,Task(..),addModuleTasks,makeTask)
 import Gen(runGen)
-import Requirements(Requirement(..), Operation(..), requirements)
 import System.Directory(createDirectoryIfMissing)
 import System.Environment(getArgs)
 import System.Exit(die)
-import System.FilePath((</>))
-import UnsignedBase(declareBaseStructure,declareBinaryOperators)
+import System.FilePath(takeDirectory,(</>))
+import UnsignedBase(base)
 
-gatherRequirements :: [Requirement] -> Map Int [Operation]
-gatherRequirements = foldr process Map.empty
- where process (Req x val) = Map.insertWith (++) x [val]
+lowestBitsize :: Word
+lowestBitsize = 192
+
+highestBitsize :: Word
+highestBitsize = 512
+
+bitsizes :: [Word]
+bitsizes = [lowestBitsize,lowestBitsize+64..highestBitsize]
+
+unsignedFiles :: [File]
+unsignedFiles = [
+    base
+  , binaryOps
+  ]
+
+signedFiles :: [File]
+signedFiles = [
+  ]
+
+makeTasks :: FilePath -> [File] -> [Task]
+makeTasks basePath files =
+  concatMap (\ sz -> mapMaybe (makeTask basePath sz bitsizes) files) bitsizes
+
+makeAllTasks :: FilePath -> [Task]
+makeAllTasks basePath = addModuleTasks basePath $
+  makeTasks (basePath </> "unsigned") unsignedFiles ++
+  makeTasks (basePath </> "signed")   signedFiles
 
 main :: IO ()
 main =
   do args <- getArgs
      unless (length args == 1) $
        die ("generation takes exactly one argument, the target directory")
-     let reqs = sort (Map.toList (gatherRequirements requirements))
-         target = head args
-     forM_ reqs $ \ (size, opes) ->
-       do let basedir = target </> "unsigned" </> ("u" ++ show size)
-          createDirectoryIfMissing True basedir
-          forM_ reqs $ \ (x, ops) ->
-            do runGen (basedir </> "mod.rs") (declareBaseStructure size ops)
-               runGen (basedir </> "binary.rs") (declareBinaryOperators size)
-    
+     let tasks = makeAllTasks (head args)
+         total = length tasks
+     forM_ (zip [(1::Word)..] tasks) $ \ (i, task) ->
+       do putStrLn ("[" ++ show i ++ "/" ++ show total ++ "] " ++ outputFile task)
+          createDirectoryIfMissing True (takeDirectory (outputFile task))
+          runGen (outputFile task) (fileGenerator task)

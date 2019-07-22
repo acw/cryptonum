@@ -1,27 +1,31 @@
 module UnsignedBase(
-    declareBaseStructure
-  , declareBinaryOperators
+    base
   )
  where
 
 import Control.Monad(forM_)
+import File
 import Gen
-import Requirements(Operation)
 
-declareBaseStructure :: Int -> [Operation] -> Gen ()
-declareBaseStructure bitsize ops =
+base :: File
+base = File {
+  predicate = \ _ _ -> True,
+  outputName = "base",
+  generator = declareBaseStructure
+}
+
+declareBaseStructure :: Word -> Gen ()
+declareBaseStructure bitsize =
   do let name = "U" ++ show bitsize
          entries = bitsize `div` 64
          top = entries - 1
      out "use core::cmp::{Eq,Ordering,PartialEq,min};"
      out "use core::fmt;"
-     out "use super::super::CryptoNum;"
-     blank
-     out "mod binary;"
+     out "use super::super::super::CryptoNum;"
      blank
      out "#[derive(Clone)]"
      wrapIndent ("pub struct " ++ name) $
-       out ("value: [u64; " ++ show entries ++ "]")
+       out ("pub(crate) value: [u64; " ++ show entries ++ "]")
      blank
      implFor "CryptoNum" name $
        do wrapIndent ("fn zero() -> Self") $
@@ -89,81 +93,32 @@ declareBaseStructure bitsize ops =
          do forM_ (reverse [1..top]) $ \ i ->
               out ("write!(f, \"{:x}\", self.value[" ++ show i ++ "])?;")
             out "write!(f, \"{:x}\", self.value[0])"
-
-declareBinaryOperators :: Int -> Gen ()
-declareBinaryOperators bitsize =
-  do let name = "U" ++ show bitsize
-         entries = bitsize `div` 64
-     out "use core::ops::{BitAnd,BitAndAssign};"
-     out "use core::ops::{BitOr,BitOrAssign};"
-     out "use core::ops::{BitXor,BitXorAssign};"
-     out "use core::ops::Not;"
-     out ("use super::U" ++ show bitsize ++ ";")
      blank
-     generateBinOps "BitAnd" name "bitand" "&=" entries
-     blank
-     generateBinOps "BitOr"  name "bitor"  "|=" entries
-     blank
-     generateBinOps "BitXor" name "bitxor" "^=" entries
-     blank
-     implFor "Not" name $
-       do out "type Output = Self;"
-          blank
-          wrapIndent "fn not(mut self) -> Self" $
-            do forM_ [0..entries-1] $ \ i ->
-                 out ("self.value[" ++ show i ++ "] = !self.value[" ++ show i ++ "];")
-               out "self"
-     blank
-     implFor' "Not" ("&'a " ++ name) $
-       do out ("type Output = " ++ name ++ ";")
-          blank
-          wrapIndent ("fn not(self) -> " ++ name) $
-            do out "let mut output = self.clone();"
-               forM_ [0..entries-1] $ \ i ->
-                 out ("output.value[" ++ show i ++ "] = !self.value[" ++ show i ++ "];")
-               out "output"
-
-generateBinOps :: String -> String -> String -> String -> Int -> Gen ()
-generateBinOps trait name fun op entries =
-  do implFor (trait ++ "Assign") name $
-       wrapIndent ("fn " ++ fun ++ "_assign(&mut self, rhs: Self)") $
-         forM_ [0..entries-1] $ \ i ->
-           out ("self.value[" ++ show i ++ "] "++op++" rhs.value[" ++ show i ++ "];")
-     blank
-     implFor' (trait ++ "Assign<&'a " ++ name ++ ">") name $
-       wrapIndent ("fn " ++ fun ++ "_assign(&mut self, rhs: &Self)") $
-         forM_ [0..entries-1] $ \ i ->
-           out ("self.value[" ++ show i ++ "] "++op++" rhs.value[" ++ show i ++ "];")
-     blank
-     generateBinOpsFromAssigns trait name fun op
-
-generateBinOpsFromAssigns :: String -> String -> String -> String -> Gen ()
-generateBinOpsFromAssigns trait name fun op =
-  do implFor trait name $
-       do out "type Output = Self;"
-          blank
-          wrapIndent ("fn " ++ fun ++ "(mut self, rhs: Self) -> Self") $
-            do out ("self " ++ op ++ " rhs;")
-               out "self"
-     blank
-     implFor' (trait ++ "<&'a " ++ name ++ ">") name $
-       do out "type Output = Self;"
-          blank
-          wrapIndent ("fn " ++ fun ++ "(mut self, rhs: &Self) -> Self") $
-            do out ("self " ++ op ++ " rhs;")
-               out "self"
-     blank
-     implFor' (trait ++ "<" ++ name ++ ">") ("&'a " ++ name) $
-       do out ("type Output = " ++ name ++ ";")
-          blank
-          wrapIndent ("fn " ++ fun ++ "(self, mut rhs: " ++ name ++ ") -> " ++ name) $
-            do out ("rhs " ++ op ++ " self;")
-               out "rhs"
-     blank
-     implFor'' (trait ++ "<&'a " ++ name ++ ">") ("&'b " ++ name) $
-       do out ("type Output = " ++ name ++ ";")
-          blank
-          wrapIndent ("fn " ++ fun ++ "(self, rhs: &" ++ name ++ ") -> " ++ name) $
-            do out "let mut output = self.clone();"
-               out ("output " ++ op ++ " rhs;")
-               out "output"
+     out "#[test]"
+     wrapIndent "fn KATs()" $
+       do out ("run_test(\"testdata/base/" ++ name ++ ".test\", 8, |case| {")
+          indent $
+            do out ("let (neg0, xbytes) = case.get(\"x\").unwrap();")
+               out ("let (neg1, mbytes) = case.get(\"m\").unwrap();")
+               out ("let (neg2, zbytes) = case.get(\"z\").unwrap();")
+               out ("let (neg3, ebytes) = case.get(\"e\").unwrap();")
+               out ("let (neg4, obytes) = case.get(\"o\").unwrap();")
+               out ("let (neg5, rbytes) = case.get(\"r\").unwrap();")
+               out ("let (neg6, bbytes) = case.get(\"b\").unwrap();")
+               out ("let (neg7, tbytes) = case.get(\"t\").unwrap();")
+               out ("assert!(!neg0&&!neg1&&!neg2&&!neg3&&!neg4&&!neg5&&!neg6&&!neg7);")
+               out ("let mut x = "++name++"::from_bytes(xbytes);")
+               out ("let m = "++name++"::from_bytes(mbytes);")
+               out ("let z = 1 == zbytes[0];")
+               out ("let e = 1 == ebytes[0];")
+               out ("let o = 1 == obytes[0];")
+               out ("let r = "++name++"::from_bytes(rbytes);")
+               out ("let b = usize::from("++name++"::from_bytes(bbytes));")
+               out ("let t = 1 == tbytes[0];")
+               out ("assert_eq!(x.is_zero(),  z);")
+               out ("assert_eq!(x.is_even(),  e);")
+               out ("assert_eq!(x.is_odd(),   o);")
+               out ("assert_eq!(x.testbit(b), t);")
+               out ("x.mask(usize::from(&m));")
+               out ("assert_eq!(x, r);")
+          out ("});")
