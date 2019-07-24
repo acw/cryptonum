@@ -4,6 +4,7 @@ module UnsignedBase(
  where
 
 import Control.Monad(forM_)
+import Data.List(intercalate)
 import File
 import Gen
 
@@ -56,6 +57,36 @@ declareBaseStructure bitsize =
                wrapIndent ("if idx >= " ++ show entries) $
                  out "return false;"
                out "(self.value[idx] & (1u64 << offset)) != 0"
+          blank
+          wrapIndent ("fn from_bytes(&self, bytes: &[u8]) -> Self") $
+            do let bytes = bitsize `div` 8;
+               forM_ [0..bytes-1] $ \ idx ->
+                 out ("let byte" ++ show idx ++ " = " ++
+                      "if " ++ show idx ++ " < bytes.len() { " ++
+                      "bytes[" ++ show idx ++ "] as u64 } else { 0 };")
+               blank
+               let byteNames = map (\ x -> "byte" ++ show x) [0..bytes-1]
+                   byteGroups = groupCount 8 (reverse byteNames)
+               forM_ (zip byteGroups [0..bytes-1]) $ \ (byteGroup, idx) ->
+                 do let shiftAmts = [0,8..56]
+                        shifts = zipWith (\ n s -> n ++ " << " ++ show s)
+                                         byteGroup shiftAmts
+                        shift0 = head shifts
+                        shiftL = last shifts
+                        middles = reverse (drop 1 (reverse (drop 1 shifts)))
+                        prefix = "let word" ++ show idx ++ " "
+                        blankPrefix = map (const ' ') prefix
+                    out (prefix ++ " = " ++ shift0)
+                    forM_ middles $ \ s -> out (blankPrefix ++ " | " ++ s)
+                    out (blankPrefix ++ " | " ++ shiftL ++ ";")
+               blank
+               wrapIndent name $
+                 do out ("value: [")
+                    let vwords = map (\ x -> "word" ++ show x) [0..top]
+                        linewords = groupCount 4 vwords
+                        vlines = map (intercalate ", ") linewords
+                    forM_ vlines $ \ l -> out ("    " ++ l ++ ",")
+                    out ("]")
      blank
      implFor "PartialEq" name $
        wrapIndent "fn eq(&self, other: &Self) -> bool" $
@@ -122,3 +153,8 @@ declareBaseStructure bitsize =
                out ("x.mask(usize::from(&m));")
                out ("assert_eq!(x, r);")
           out ("});")
+
+groupCount :: Int -> [a] -> [[a]]
+groupCount x ls
+  | x >= length ls = [ls]
+  | otherwise     = take x ls : groupCount x (drop x ls)

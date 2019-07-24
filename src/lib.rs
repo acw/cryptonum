@@ -20,5 +20,17 @@ pub trait CryptoNum {
     /// Test if the given bit is zero, where bits are numbered in
     /// least-significant order (0 is the LSB, etc.).
     fn testbit(&self, bit: usize) -> bool;
+    /// Convert a slice into a CryptoNum, assuming big-endian memory layout.
+    /// If you pass in a slice bigger than the bit size of the numeric type,
+    /// this will assume that the number is in the first `n` bits of the
+    /// memory layout. If you pass in a smaller buffer, it will use the bits
+    /// available as the low `n` bits of the number.
+    fn from_bytes(&self, bytes: &[u8]) -> Self;
+    /// Write the cryptonum into the provide slice. If the provided slice
+    /// is greater than or equal to `n` bits in length, `to_bytes` will
+    /// write to the first `n` bits. If the slice is less than `n` bits
+    /// in length, `to_bytes` will write the lower-order bits that fit
+    /// into the provided slice.
+    fn to_bytes(&self, bytes: &mut [u8]);
 }
 
