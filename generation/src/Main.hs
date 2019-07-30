@@ -1,7 +1,11 @@
 module Main
  where
 
+import Base(base)
 import BinaryOps(binaryOps)
+import Compare(comparisons)
+import Conversions(conversions)
+import CryptoNum(cryptoNum)
 import Control.Monad(forM_,unless)
 import Data.Maybe(mapMaybe)
 import Data.Word(Word)
@@ -11,7 +15,6 @@ import System.Directory(createDirectoryIfMissing)
 import System.Environment(getArgs)
 import System.Exit(die)
 import System.FilePath(takeDirectory,(</>))
-import UnsignedBase(base)
 
 lowestBitsize :: Word
 lowestBitsize = 192
@@ -26,6 +29,9 @@ unsignedFiles :: [File]
 unsignedFiles = [
     base
   , binaryOps
+  , comparisons
+  , conversions
+  , cryptoNum
   ]
 
 signedFiles :: [File]

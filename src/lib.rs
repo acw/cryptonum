@@ -1,6 +1,8 @@
-#![no_std]
+#![cfg_attr(not(test),no_std)]
 pub mod signed;
 pub mod unsigned;
+#[cfg(test)]
+mod testing;
 
 /// A trait definition for large numbers.
 pub trait CryptoNum {
@@ -25,7 +27,7 @@ pub trait CryptoNum {
     /// this will assume that the number is in the first `n` bits of the
     /// memory layout. If you pass in a smaller buffer, it will use the bits
     /// available as the low `n` bits of the number.
-    fn from_bytes(&self, bytes: &[u8]) -> Self;
+    fn from_bytes(bytes: &[u8]) -> Self;
     /// Write the cryptonum into the provide slice. If the provided slice
     /// is greater than or equal to `n` bits in length, `to_bytes` will
     /// write to the first `n` bits. If the slice is less than `n` bits

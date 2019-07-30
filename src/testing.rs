@@ -1,16 +1,18 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
+use std::path::PathBuf;
 use std::str::Lines;
 
-pub fn build_test_path(dir: &str, typename: &str) -> String
+pub fn build_test_path(dir: &str, typename: &str) -> PathBuf
 {
-    let mut name = typename.to_string();
-    name.remove(0);
-    while name.len() < 5 {
-        name.insert(0, '0');
-    }
-    format!("testdata/{}/{}.test", dir, name)
+    let mut res = PathBuf::new();
+    res.push(".");
+    res.push("testdata");
+    res.push(dir);
+    res.push(typename);
+    res.set_extension("test");
+    res
 }
 
 fn next_value_set(line: &str) -> (String, bool, Vec<u8>)
@@ -58,9 +60,10 @@ fn next_test_case(contents: &mut Lines, lines: usize) ->
     Some(res)
 }
 
-pub fn run_test<F>(fname: String, i: usize, f: F)
+pub fn run_test<F>(fname: PathBuf, i: usize, f: F)
  where F: Fn(HashMap<String,(bool,Vec<u8>)>)
 {
+    println!("fname: {:?}", fname);
     let mut file = File::open(fname).unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
