@@ -2,7 +2,7 @@ module File(
          File(..),
          Task(..),
          addModuleTasks,
-         makeTask
+         makeTasks
        )
  where
 
@@ -15,7 +15,8 @@ import System.FilePath(takeBaseName,takeDirectory,takeFileName,(</>))
 data File = File {
     predicate :: Word -> [Word] -> Bool,
     outputName :: FilePath,
-    generator :: Word -> Gen ()
+    generator :: Word -> Gen (),
+    testGenerator :: Maybe (Word -> Gen ())
 }
 
 data Task = Task {
@@ -23,18 +24,18 @@ data Task = Task {
     fileGenerator :: Gen ()
 }
 
-makeTask :: FilePath ->
+makeTasks :: FilePath -> FilePath ->
             Word -> [Word] ->
             File ->
-            Maybe Task
-makeTask base size allSizes file
+            [Task]
+makeTasks srcBase testBase size allSizes file
   | predicate file size allSizes =
-     Just Task {
-         outputFile = base </> ("u" ++ show size) </> outputName file <> ".rs",
-         fileGenerator = generator file size
-     }
-  | otherwise =
-     Nothing
+      let base = Task (srcBase </> ("u" ++ show size) </> outputName file <> ".rs") (generator file size)
+      in case testGenerator file of 
+           Nothing -> [base]
+           Just x ->
+            [base, Task (testBase </> outputName file </> ("U" ++ show size ++ ".test")) (x size)]
+  | otherwise = []
 
 addModuleTasks :: FilePath -> [Task] -> [Task]
 addModuleTasks base baseTasks = unsignedTask : (baseTasks ++ moduleTasks)

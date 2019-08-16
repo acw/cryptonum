@@ -11,7 +11,8 @@ cryptoNum :: File
 cryptoNum = File {
   predicate = \ _ _ -> True,
   outputName = "cryptonum",
-  generator = declareCryptoNumInstance
+  generator = declareCryptoNumInstance,
+  testGenerator = Nothing
 }
 
 declareCryptoNumInstance :: Word -> Gen ()

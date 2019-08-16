@@ -11,7 +11,8 @@ base :: File
 base = File {
   predicate = \ _ _ -> True,
   outputName = "base",
-  generator = declareBaseStructure
+  generator = declareBaseStructure,
+  testGenerator = Nothing
 }
 
 declareBaseStructure :: Word -> Gen ()

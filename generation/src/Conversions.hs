@@ -11,7 +11,8 @@ conversions :: File
 conversions = File {
   predicate = \ _ _ -> True,
   outputName = "conversions",
-  generator = declareConversions
+  generator = declareConversions,
+  testGenerator = Nothing
 }
 
 declareConversions :: Word -> Gen ()

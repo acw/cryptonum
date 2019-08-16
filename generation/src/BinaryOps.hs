@@ -11,7 +11,8 @@ binaryOps :: File
 binaryOps = File {
     predicate = \ _ _ -> True,
     outputName = "binary",
-    generator = declareBinaryOperators
+    generator = declareBinaryOperators,
+    testGenerator = Nothing
 }
 
 declareBinaryOperators :: Word -> Gen ()

@@ -9,7 +9,8 @@ comparisons :: File
 comparisons = File {
   predicate = \ _ _ -> True,
   outputName = "compare",
-  generator = declareComparators
+  generator = declareComparators,
+  testGenerator = Nothing
 }
 
 declareComparators :: Word -> Gen ()
