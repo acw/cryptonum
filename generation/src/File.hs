@@ -8,6 +8,7 @@ module File(
 
 import Control.Monad(forM_)
 import Data.Char(toUpper)
+import Data.List(isPrefixOf)
 import qualified Data.Map.Strict as Map
 import Gen(Gen,blank,out)
 import System.FilePath(takeBaseName,takeDirectory,takeFileName,(</>))
@@ -41,9 +42,12 @@ addModuleTasks :: FilePath -> [Task] -> [Task]
 addModuleTasks base baseTasks = unsignedTask : (baseTasks ++ moduleTasks)
  where
   moduleMap = foldr addModuleInfo Map.empty baseTasks
-  addModuleInfo task =
-    Map.insertWith (++) (takeDirectory (outputFile task))
-                        [takeBaseName (outputFile task)]
+  addModuleInfo task map
+    | base `isPrefixOf` outputFile task =
+        Map.insertWith (++) (takeDirectory (outputFile task))
+                            [takeBaseName (outputFile task)]
+                            map
+    | otherwise = map
   moduleTasks = Map.foldrWithKey generateModuleTask [] moduleMap
   generateModuleTask directory mods acc = acc ++ [Task {
       outputFile = directory </> "mod.rs",

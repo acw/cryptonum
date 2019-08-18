@@ -3,16 +3,20 @@ module BinaryOps(
   )
  where
 
-import Control.Monad(forM_)
+import Control.Monad(forM_,replicateM_)
+import Data.Bits((.&.), (.|.), shiftL, xor)
 import File
 import Gen
+
+binaryTestCount :: Int
+binaryTestCount = 3000
 
 binaryOps :: File
 binaryOps = File {
     predicate = \ _ _ -> True,
     outputName = "binary",
     generator = declareBinaryOperators,
-    testGenerator = Nothing
+    testGenerator = Just testVectors
 }
 
 declareBinaryOperators :: Word -> Gen ()
@@ -52,7 +56,7 @@ declareBinaryOperators bitsize =
                  out ("output.value[" ++ show i ++ "] = !self.value[" ++ show i ++ "];")
                out "output"
      blank
-     addBinaryLaws name
+     addBinaryLaws name entries
 
 generateBinOps :: String -> String -> String -> String -> Word -> Gen ()
 generateBinOps trait name fun op entries =
@@ -99,8 +103,8 @@ generateBinOpsFromAssigns trait name fun op =
                out ("output " ++ op ++ " rhs;")
                out "output"
 
-addBinaryLaws :: String -> Gen ()
-addBinaryLaws name =
+addBinaryLaws :: String -> Word -> Gen ()
+addBinaryLaws name entries =
   do let args3 = "(a: " ++ name ++ ", b: " ++ name ++ ", c: " ++ name ++ ")"
          args2 = "(a: " ++ name ++ ", b: " ++ name ++ ")"
      out "#[cfg(test)]"
@@ -144,3 +148,24 @@ addBinaryLaws name =
           blank
           wrapIndent ("fn or_ident(a: " ++ name ++ ") -> bool") $
             out ("(&a | " ++ name ++ "::zero()) == a")
+          wrapIndent ("fn neg_as_xor(a: " ++ name ++ ") -> bool") $
+            do out ("let ones = " ++ name ++ "{ value: [0xFFFFFFFFFFFFFFFFu64; "
+                    ++ show entries ++ "] };")
+               out ("!&a == (&ones ^ &a)")
+
+
+testVectors :: Word -> Gen ()
+testVectors bitsize = replicateM_ binaryTestCount $
+  do a <- newNum False bitsize
+     b <- newNum False bitsize
+     let o = a .|. b
+         c = a .&. b
+         n = a `xor` ((1 `shiftL` fromIntegral bitsize) - 1)
+         x = a `xor` b
+     emitTestVariable 'a' a
+     emitTestVariable 'b' b
+     emitTestVariable 'c' c
+     emitTestVariable 'o' o
+     emitTestVariable 'n' n
+     emitTestVariable 'x' x
+  
