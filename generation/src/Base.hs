@@ -4,13 +4,10 @@ module Base(
   )
  where
 
-import Control.Monad(forM_)
 import File
-import Gen
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
-import Language.Rust.Pretty
 import Language.Rust.Syntax
 
 base :: File
@@ -20,18 +17,17 @@ base = File {
   generator = declareBaseStructure
 }
 
-declareBaseStructure :: Word -> Gen ()
+declareBaseStructure :: Word -> SourceFile Span
 declareBaseStructure bitsize =
-  do let name = "U" ++ show bitsize
-         entries = bitsize `div` 64
-         top = entries - 1
-         sname = mkIdent name
-         entriese = Lit [] (Int Dec (fromIntegral entries) Unsuffixed mempty) mempty
-         strname = Lit [] (Str name Cooked Unsuffixed mempty) mempty
-         debugExp = buildDebugExp 0 entries [expr| f.debug_tuple($$(strname)) |]
-         lowerPrints = buildPrints entries "x"
-         upperPrints = buildPrints entries "X"
-     out $ show $ pretty' $ [sourceFile|
+  let tname = "U" ++ show bitsize
+      entries = bitsize `div` 64
+      sname = mkIdent tname
+      entriese = Lit [] (Int Dec (fromIntegral entries) Unsuffixed mempty) mempty
+      strname = Lit [] (Str tname Cooked Unsuffixed mempty) mempty
+      debugExp = buildDebugExp 0 entries [expr| f.debug_tuple($$(strname)) |]
+      lowerPrints = buildPrints entries "x"
+      upperPrints = buildPrints entries "X"
+  in [sourceFile|
         use core::fmt;
         use quickcheck::{Arbitrary,Gen};
 

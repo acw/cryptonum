@@ -5,11 +5,10 @@ module Conversions(
  where
 
 import File
-import Gen(Gen,toLit,out)
+import Gen(toLit)
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
-import Language.Rust.Pretty
 import Language.Rust.Syntax
 
 conversions :: File
@@ -19,21 +18,21 @@ conversions = File {
   generator = declareConversions
 }
 
-declareConversions :: Word -> Gen ()
+declareConversions :: Word -> SourceFile Span
 declareConversions bitsize =
-  do let sname      = mkIdent ("U" ++ show bitsize)
-         entries    = bitsize `div` 64
-         u8_prims   = buildPrimitives sname (mkIdent "u8")  entries
-         u16_prims  = buildPrimitives sname (mkIdent "u16") entries
-         u32_prims  = buildPrimitives sname (mkIdent "u32") entries
-         u64_prims  = buildPrimitives sname (mkIdent "u64") entries
-         u128_prims = generateU128Primitives sname entries
-         i8_prims   = generateSignedPrims sname (mkIdent "u8")  (mkIdent "i8")
-         i16_prims  = generateSignedPrims sname (mkIdent "u16") (mkIdent "i16")
-         i32_prims  = generateSignedPrims sname (mkIdent "u32") (mkIdent "i32")
-         i64_prims  = generateSignedPrims sname (mkIdent "u64") (mkIdent "i64")
-         i128_prims = generateI128Primitives sname
-     out $ show $ pretty' $ [sourceFile|
+  let sname      = mkIdent ("U" ++ show bitsize)
+      entries    = bitsize `div` 64
+      u8_prims   = buildPrimitives sname (mkIdent "u8")  entries
+      u16_prims  = buildPrimitives sname (mkIdent "u16") entries
+      u32_prims  = buildPrimitives sname (mkIdent "u32") entries
+      u64_prims  = buildPrimitives sname (mkIdent "u64") entries
+      u128_prims = generateU128Primitives sname entries
+      i8_prims   = generateSignedPrims sname (mkIdent "u8")  (mkIdent "i8")
+      i16_prims  = generateSignedPrims sname (mkIdent "u16") (mkIdent "i16")
+      i32_prims  = generateSignedPrims sname (mkIdent "u32") (mkIdent "i32")
+      i64_prims  = generateSignedPrims sname (mkIdent "u64") (mkIdent "i64")
+      i128_prims = generateI128Primitives sname
+  in [sourceFile|
        use core::convert::{From,TryFrom};
        use core::num::TryFromIntError;
        #[cfg(test)]

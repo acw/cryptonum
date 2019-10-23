@@ -5,11 +5,9 @@ module BinaryOps(
  where
 
 import File
-import Gen
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
-import Language.Rust.Pretty
 import Language.Rust.Syntax
 
 binaryOps :: File
@@ -19,16 +17,16 @@ binaryOps = File {
     generator = declareBinaryOperators
 }
 
-declareBinaryOperators :: Word -> Gen ()
+declareBinaryOperators :: Word -> SourceFile Span
 declareBinaryOperators bitsize =
-  do let struct_name = mkIdent ("U" ++ show bitsize)
-         entries = bitsize `div` 64
-         andOps = generateBinOps "BitAnd" struct_name "bitand" BitAndOp entries
-         orOps  = generateBinOps "BitOr"  struct_name "bitor"  BitOrOp  entries
-         xorOps = generateBinOps "BitXor" struct_name "bitxor" BitXorOp entries
-         baseNegationStmts = negationStatements "self" entries
-         refNegationStmts = negationStatements "output" entries
-     out $ show $ pretty' $ [sourceFile|
+  let struct_name = mkIdent ("U" ++ show bitsize)
+      entries = bitsize `div` 64
+      andOps = generateBinOps "BitAnd" struct_name "bitand" BitAndOp entries
+      orOps  = generateBinOps "BitOr"  struct_name "bitor"  BitOrOp  entries
+      xorOps = generateBinOps "BitXor" struct_name "bitxor" BitXorOp entries
+      baseNegationStmts = negationStatements "self" entries
+      refNegationStmts = negationStatements "output" entries
+  in [sourceFile|
        use core::ops::{BitAnd,BitAndAssign};
        use core::ops::{BitOr,BitOrAssign};
        use core::ops::{BitXor,BitXorAssign};

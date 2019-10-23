@@ -3,11 +3,9 @@ module Compare(comparisons)
  where
 
 import File
-import Gen
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
-import Language.Rust.Pretty
 import Language.Rust.Syntax
 
 comparisons :: File
@@ -17,13 +15,13 @@ comparisons = File {
   generator = declareComparators
 }
 
-declareComparators :: Word -> Gen ()
+declareComparators :: Word -> SourceFile Span
 declareComparators bitsize =
-  do let sname = mkIdent ("U" ++ show bitsize)
-         entries = bitsize `div` 64
-         eqStatements = buildEqStatements 0 entries
-         compareExp = buildCompareExp 0 entries
-     out $ show $ pretty' $ [sourceFile|
+  let sname = mkIdent ("U" ++ show bitsize)
+      entries = bitsize `div` 64
+      eqStatements = buildEqStatements 0 entries
+      compareExp = buildCompareExp 0 entries
+  in [sourceFile|
        use core::cmp::{Eq,Ordering,PartialEq};
        #[cfg(test)]
        use quickcheck::quickcheck;

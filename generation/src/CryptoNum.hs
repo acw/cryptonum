@@ -4,13 +4,11 @@ module CryptoNum(
   )
  where
 
-import Control.Monad(forM_)
 import File
 import Gen
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
-import Language.Rust.Pretty
 import Language.Rust.Syntax
 
 cryptoNum :: File
@@ -20,24 +18,22 @@ cryptoNum = File {
   generator = declareCryptoNumInstance
 }
 
-declareCryptoNumInstance :: Word -> Gen ()
+declareCryptoNumInstance :: Word -> SourceFile Span
 declareCryptoNumInstance bitsize =
-  do let sname = mkIdent ("U" ++ show bitsize)
-         entries = bitsize `div` 64
-         entlit = Lit [] (Int Dec (fromIntegral entries) Unsuffixed mempty) mempty
-         top = entries - 1
-         zeroTests = generateZeroTests 0 entries
-         bitlength = toLit bitsize
-         bytelen = bitsize `div` 8
-         bytelenlit = toLit bytelen
-         bytebuffer = Delimited mempty Brace (Stream [
-                        Tree (Token mempty (LiteralTok (IntegerTok "0") Nothing)),
-                        Tree (Token mempty Semicolon),
-                        Tree (Token mempty (LiteralTok (IntegerTok (show bytelen)) Nothing))
-                      ])
-         entrieslit = toLit entries
-         packerLines = generatePackerLines 0 (bitsize `div` 8)
-     out $ show $ pretty' $ [sourceFile|
+  let sname = mkIdent ("U" ++ show bitsize)
+      entries = bitsize `div` 64
+      entlit = Lit [] (Int Dec (fromIntegral entries) Unsuffixed mempty) mempty
+      zeroTests = generateZeroTests 0 entries
+      bitlength = toLit bitsize
+      bytelen = bitsize `div` 8
+      bytelenlit = toLit bytelen
+      bytebuffer = Delimited mempty Brace (Stream [
+                     Tree (Token mempty (LiteralTok (IntegerTok "0") Nothing)),
+                     Tree (Token mempty Semicolon),
+                     Tree (Token mempty (LiteralTok (IntegerTok (show bytelen)) Nothing))
+                   ])
+      entrieslit = toLit entries
+  in [sourceFile|
        use core::cmp::min;
        use crate::CryptoNum;
        #[cfg(test)]
@@ -142,32 +138,10 @@ declareCryptoNumInstance bitsize =
        }
      |]
 
-byteShiftInfo :: Word -> (Word, Word)
-byteShiftInfo idx =
-    (idx `div` 8, (idx `mod` 8) * 8)
-
-pad :: Int -> Char -> String -> String
-pad len c str
-  | length str >= len = str
-  | otherwise         = pad len c (c:str)
-
 generateZeroTests :: Word -> Word -> [Stmt Span]
-generateZeroTests i max
-  | i == max  = []
+generateZeroTests i entries
+  | i == entries  = []
   | otherwise =
       let ilit = toLit i
       in [stmt| result = self.values[$$(ilit)] == 0; |] :
-         generateZeroTests (i + 1) max
-
-generatePackerLines :: Word -> Word -> [Stmt Span]
-generatePackerLines i max
-  | i == max = []
-  | otherwise =
-      let ilit = toLit i
-          nextLit = toLit (i + 1)
-          validx = toLit (i `div` 8)
-          shiftx = toLit ((i `mod` 8) * 8)
-          writeLine = [stmt| bytes[$$(ilit)] = (self.values[$$(validx)] >> $$(shiftx)) as u8; |]
-          ifLine = [stmt| if bytes.len() == $$(nextLit) { return; } |]
-      in writeLine : ifLine : generatePackerLines (i + 1) max
-
+         generateZeroTests (i + 1) entries
