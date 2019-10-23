@@ -10,6 +10,7 @@ module Gen(
     implFor,
     implFor',
     implFor'',
+    toLit
     )
  where
 
@@ -18,6 +19,8 @@ import Control.Monad.State.Class(MonadState,get,put)
 import Control.Monad.Writer.Class(MonadWriter,tell)
 import Data.List(replicate)
 import Data.Word(Word)
+import Language.Rust.Data.Position
+import Language.Rust.Syntax
 
 newtype Gen a = Gen { unGen :: RWS () String GenState a}
  deriving (Applicative, Functor, Monad, MonadState GenState, MonadWriter String)
@@ -86,3 +89,8 @@ implFor' trait name middle =
 implFor'' :: String -> String -> Gen a -> Gen a
 implFor'' trait name middle =
     wrapIndent ("impl<'a,'b> " ++ trait ++ " for " ++ name) middle
+
+toLit :: Word -> Expr Span
+toLit i = Lit  [] (Int Dec (fromIntegral i) Unsuffixed mempty) mempty
+
+

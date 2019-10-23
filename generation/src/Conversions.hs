@@ -1,11 +1,16 @@
+{-# LANGUAGE QuasiQuotes #-}
 module Conversions(
     conversions
   )
  where
 
-import Data.List(intercalate)
 import File
-import Gen
+import Gen(Gen,toLit,out)
+import Language.Rust.Data.Ident
+import Language.Rust.Data.Position
+import Language.Rust.Quote
+import Language.Rust.Pretty
+import Language.Rust.Syntax
 
 conversions :: File
 conversions = File {
@@ -16,83 +21,203 @@ conversions = File {
 
 declareConversions :: Word -> Gen ()
 declareConversions bitsize =
-  do let name = "U" ++ show bitsize
-         entries = bitsize `div` 64
-     out "use core::convert::{From,TryFrom};"
-     out "#[cfg(test)]"
-     out "use quickcheck::quickcheck;"
-     out ("use super::" ++ name ++ ";")
-     blank
-     buildUnsignedPrimConversions name entries "u8"    >> blank
-     buildUnsignedPrimConversions name entries "u16"   >> blank
-     buildUnsignedPrimConversions name entries "u32"   >> blank
-     buildUnsignedPrimConversions name entries "u64"   >> blank
-     buildUnsignedPrimConversions name entries "usize" >> blank
-     buildSignedPrimConversions   name entries "i8"    >> blank
-     buildSignedPrimConversions   name entries "i16"   >> blank
-     buildSignedPrimConversions   name entries "i32"   >> blank
-     buildSignedPrimConversions   name entries "i64"   >> blank
-     buildSignedPrimConversions   name entries "isize"
-     blank
-     out ("#[cfg(test)]")
-     wrapIndent "quickcheck!" $
-       do roundTripTest name "u8"     >> blank
-          roundTripTest name "u16"    >> blank
-          roundTripTest name "u32"    >> blank
-          roundTripTest name "u64"    >> blank
-          roundTripTest name "usize"
+  do let sname      = mkIdent ("U" ++ show bitsize)
+         entries    = bitsize `div` 64
+         u8_prims   = buildPrimitives sname (mkIdent "u8")  entries
+         u16_prims  = buildPrimitives sname (mkIdent "u16") entries
+         u32_prims  = buildPrimitives sname (mkIdent "u32") entries
+         u64_prims  = buildPrimitives sname (mkIdent "u64") entries
+         u128_prims = generateU128Primitives sname entries
+         i8_prims   = generateSignedPrims sname (mkIdent "u8")  (mkIdent "i8")
+         i16_prims  = generateSignedPrims sname (mkIdent "u16") (mkIdent "i16")
+         i32_prims  = generateSignedPrims sname (mkIdent "u32") (mkIdent "i32")
+         i64_prims  = generateSignedPrims sname (mkIdent "u64") (mkIdent "i64")
+         i128_prims = generateI128Primitives sname
+     out $ show $ pretty' $ [sourceFile|
+       use core::convert::{From,TryFrom};
+       use core::num::TryFromIntError;
+       #[cfg(test)]
+       use quickcheck::quickcheck;
+       use super::$$sname;
+       use crate::ConversionError;
 
-buildUnsignedPrimConversions :: String -> Word -> String -> Gen ()
-buildUnsignedPrimConversions name entries primtype =
-  do implFor ("From<" ++ primtype ++ ">") name $
-       wrapIndent ("fn from(x: " ++ primtype ++ ") -> Self") $
-         do let zeroes = replicate (fromIntegral (entries - 1)) "0,"
-                values =  ("x as u64," : zeroes)
-            out (name ++ " { value: [ ")
-            indent $ printBy 8 values
-            out ("] }")
-     blank
-     implFor ("From<" ++ name ++ ">") primtype $
-       wrapIndent ("fn from(x: " ++ name ++ ") -> Self") $
-         out ("x.value[0] as " ++ primtype)
-     blank
-     implFor' ("From<&'a " ++ name ++ ">") primtype $
-       wrapIndent ("fn from(x: &" ++ name ++ ") -> Self") $
-         out ("x.value[0] as " ++ primtype)
+       $@{u8_prims}
+       $@{u16_prims}
+       $@{u32_prims}
+       $@{u64_prims}
+       $@{u128_prims}
 
-buildSignedPrimConversions :: String -> Word -> String -> Gen ()
-buildSignedPrimConversions name entries primtype =
-  do implFor ("TryFrom<" ++ primtype ++ ">") name $
-       do out ("type Error = &'static str;")
-          blank
-          wrapIndent ("fn try_from(x: " ++ primtype ++ ") -> Result<Self,Self::Error>") $
-            do wrapIndent ("if x < 0") $
-                 out ("return Err(\"Attempt to convert negative number to " ++
-                      name ++ ".\");")
-               blank
-               let zeroes = replicate (fromIntegral (entries - 1)) "0,"
-                   values =  ("x as u64," : zeroes)
-               out ("Ok(" ++ name ++ " { value: [ ")
-               indent $ printBy 8 values
-               out ("] })")
-     blank
-     implFor ("From<" ++ name ++ ">") primtype $
-       wrapIndent ("fn from(x: " ++ name ++ ") -> Self") $
-         out ("x.value[0] as " ++ primtype)
-     blank
-     implFor' ("From<&'a " ++ name ++ ">") primtype $
-       wrapIndent ("fn from(x: &" ++ name ++ ") -> Self") $
-         out ("x.value[0] as " ++ primtype)
+       $@{i8_prims}
+       $@{i16_prims}
+       $@{i32_prims}
+       $@{i64_prims}
+       $@{i128_prims}
+     |]
 
-roundTripTest :: String -> String -> Gen ()
-roundTripTest name primtype =
-  wrapIndent ("fn " ++ primtype ++ "_roundtrips(x: " ++ primtype ++ ") -> bool") $
-    do out ("let big = " ++ name ++ "::from(x);");
-       out ("let small = " ++ primtype ++ "::from(big);")
-       out ("x == small")
+generateU128Primitives :: Ident -> Word -> [Item Span]
+generateU128Primitives sname entries = [
+    [item|impl From<u128> for $$sname {
+         fn from(x: u128) -> Self {
+            let mut res = $$sname::zero;
+            res[0] = x as u64;
+            res[1] = (x >> 64) as u64;
+            res
+         }
+       }|]
+  , [item|impl TryFrom<$$sname> for u128 {
+         type Error = ConversionError;
 
-printBy :: Int -> [String] -> Gen ()
-printBy amt xs
-  | length xs <= amt = out (intercalate " " xs)
-  | otherwise        = printBy amt (take amt xs) >>
-                       printBy amt (drop amt xs)
+         fn try_from(x: $$sname) -> Result<u128,ConversionError> {
+            let mut goodConversion = true;
+            let mut res = 0;
+
+            res = (x.values[1] as u128) << 64;
+            res |= x.values[0] as u128;
+
+            $@{testZeros}
+            if goodConversion {
+                Ok(res)
+            } else {
+                Err(ConversionError::Overflow);
+            }
+         }
+       }|]
+  , [item|impl<'a> TryFrom<&'a $$sname> for u128 {
+         type Error = ConversionError;
+
+         fn try_from(x: &$$sname) -> Result<u128,ConversionError> {
+            let mut goodConversion = true;
+            let mut res = 0;
+
+            res = (x.values[1] as u128) << 64;
+            res |= x.values[0] as u128;
+
+            $@{testZeros}
+            if goodConversion {
+                Ok(res)
+            } else {
+                Err(ConversionError::Overflow());
+            }
+         }
+       }|]
+  ]
+ where
+  testZeros = map (zeroTest . toLit) [2..entries-1]
+  zeroTest i =
+    [stmt| goodConversion &= x.values[$$(i)] == 0; |]
+
+buildPrimitives :: Ident -> Ident -> Word -> [Item Span]
+buildPrimitives sname tname entries = [
+    [item|impl From<$$tname> for $$sname {
+      fn from(x: $$tname) -> Self {
+        let mut res = $$sname::zero();
+        res.values[0] = x as u64;
+        res
+      }
+    }|]
+  , [item|impl TryFrom<$$sname> for $$tname {
+      type Error = ConversionError;
+
+      fn try_from(x: $$sname) -> Result<Self,ConversionError> {
+        let mut goodConversion = true;
+        let mut res = 0;
+
+        res = x.values[0] as $$tname;
+
+        $@{testZeros}
+        if goodConversion {
+          Ok(res)
+        } else {
+          Err(ConversionError::Overflow)
+        }
+      }
+    }|]
+  , [item|impl<'a> TryFrom<&'a $$sname> for $$tname {
+      type Error = ConversionError;
+
+      fn try_from(x: &$$sname) -> Result<Self,ConversionError> {
+        let mut goodConversion = true;
+        let mut res = 0;
+
+        res = x.values[0] as $$tname;
+
+        $@{testZeros}
+        if goodConversion {
+          Ok(res)
+        } else {
+          Err(ConversionError::Overflow)
+        }
+      }
+    }|]
+  ]
+ where
+  testZeros = map (zeroTest . toLit) [1..entries-1]
+  zeroTest i =
+    [stmt| goodConversion &= x.values[$$(i)] == 0; |]
+
+generateSignedPrims :: Ident -> Ident -> Ident -> [Item Span]
+generateSignedPrims sname unsigned signed = [
+    [item|impl TryFrom<$$signed> for $$sname {
+      type Error = ConversionError;
+
+      fn try_from(x: $$signed) -> Result<Self,ConversionError> {
+        let mut res = $$sname::zero();
+        res.values[0] = x as u64;
+        if x < 0 {
+          Err(ConversionError::NegativeToUnsigned)
+        } else {
+          Ok(res)
+        }
+      }
+    }|]
+  , [item|impl TryFrom<$$sname> for $$signed {
+      type Error = ConversionError;
+
+      fn try_from(x: $$sname) -> Result<Self,ConversionError> {
+        let uns = $$unsigned::from(x)?;
+        Ok($$signed::try_from(uns)?)
+      }
+    }|]
+  , [item|impl<'a> TryFrom<&'a $$sname> for $$signed {
+      type Error = ConversionError;
+
+      fn try_from(x: &$$sname) -> Result<Self,ConversionError> {
+        let uns = $$unsigned::from(x)?;
+        Ok($$signed::try_from(uns)?)
+      }
+    }|]
+  ]
+
+generateI128Primitives :: Ident -> [Item Span]
+generateI128Primitives sname = [
+    [item|impl TryFrom<i128> for $$sname {
+      type Error = ConversionError;
+
+      fn try_from(x: i128) -> Result<Self,ConversionError> {
+        let mut res = $$sname::zero();
+        res.values[0] = x as u64;
+        res.values[1] = ((x as u128) >> 64) as u64;
+        if x < 0 {
+          Err(ConversionError::NegativeToUnsigned)
+        } else {
+          Ok(res)
+        }
+      }
+    }|]
+  , [item|impl TryFrom<$$sname> for i128 {
+      type Error = ConversionError;
+
+      fn try_from(x: $$sname) -> Result<Self,ConversionError> {
+        let uns = u128::from(x)?;
+        Ok(i128::try_from(uns)?)
+      }
+    }|]
+  , [item|impl<'a> TryFrom<&'a $$sname> for i128 {
+      type Error = ConversionError;
+
+      fn try_from(x: &$$sname) -> Result<Self,ConversionError> {
+        let uns = u128::from(x)?;
+        Ok(i128::try_from(uns)?)
+      }
+    }|]
+   ]

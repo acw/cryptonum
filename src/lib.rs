@@ -4,6 +4,8 @@ pub mod unsigned;
 #[cfg(test)]
 mod testing;
 
+use core::num::TryFromIntError;
+
 /// A trait definition for large numbers.
 pub trait CryptoNum {
     /// Generate a new value of the given type.
@@ -36,3 +38,14 @@ pub trait CryptoNum {
     fn to_bytes(&self, bytes: &mut [u8]);
 }
 
+/// An error in conversion of large numbers (either to primitives or to other numbers
+pub enum ConversionError {
+    NegativeToUnsigned,
+    Overflow
+}
+
+impl From<TryFromIntError> for ConversionError {
+    fn from(_: TryFromIntError) -> ConversionError {
+        ConversionError::Overflow
+    }
+}
