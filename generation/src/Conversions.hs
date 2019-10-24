@@ -34,7 +34,7 @@ declareConversions bitsize =
       i128_prims = generateI128Primitives sname
   in [sourceFile|
        use core::convert::{From,TryFrom};
-       use core::num::TryFromIntError;
+       use crate::CryptoNum;
        #[cfg(test)]
        use quickcheck::quickcheck;
        use super::$$sname;
@@ -57,9 +57,9 @@ generateU128Primitives :: Ident -> Word -> [Item Span]
 generateU128Primitives sname entries = [
     [item|impl From<u128> for $$sname {
          fn from(x: u128) -> Self {
-            let mut res = $$sname::zero;
-            res[0] = x as u64;
-            res[1] = (x >> 64) as u64;
+            let mut res = $$sname::zero();
+            res.value[0] = x as u64;
+            res.value[1] = (x >> 64) as u64;
             res
          }
        }|]
@@ -67,17 +67,17 @@ generateU128Primitives sname entries = [
          type Error = ConversionError;
 
          fn try_from(x: $$sname) -> Result<u128,ConversionError> {
-            let mut goodConversion = true;
-            let mut res = 0;
+            let mut good_conversion = true;
+            let mut res;
 
-            res = (x.values[1] as u128) << 64;
-            res |= x.values[0] as u128;
+            res = (x.value[1] as u128) << 64;
+            res |= x.value[0] as u128;
 
             $@{testZeros}
-            if goodConversion {
+            if good_conversion {
                 Ok(res)
             } else {
-                Err(ConversionError::Overflow);
+                Err(ConversionError::Overflow)
             }
          }
        }|]
@@ -85,17 +85,17 @@ generateU128Primitives sname entries = [
          type Error = ConversionError;
 
          fn try_from(x: &$$sname) -> Result<u128,ConversionError> {
-            let mut goodConversion = true;
-            let mut res = 0;
+            let mut good_conversion = true;
+            let mut res;
 
-            res = (x.values[1] as u128) << 64;
-            res |= x.values[0] as u128;
+            res = (x.value[1] as u128) << 64;
+            res |= x.value[0] as u128;
 
             $@{testZeros}
-            if goodConversion {
+            if good_conversion {
                 Ok(res)
             } else {
-                Err(ConversionError::Overflow());
+                Err(ConversionError::Overflow)
             }
          }
        }|]
@@ -103,14 +103,14 @@ generateU128Primitives sname entries = [
  where
   testZeros = map (zeroTest . toLit) [2..entries-1]
   zeroTest i =
-    [stmt| goodConversion &= x.values[$$(i)] == 0; |]
+    [stmt| good_conversion &= x.value[$$(i)] == 0; |]
 
 buildPrimitives :: Ident -> Ident -> Word -> [Item Span]
 buildPrimitives sname tname entries = [
     [item|impl From<$$tname> for $$sname {
       fn from(x: $$tname) -> Self {
         let mut res = $$sname::zero();
-        res.values[0] = x as u64;
+        res.value[0] = x as u64;
         res
       }
     }|]
@@ -118,13 +118,11 @@ buildPrimitives sname tname entries = [
       type Error = ConversionError;
 
       fn try_from(x: $$sname) -> Result<Self,ConversionError> {
-        let mut goodConversion = true;
-        let mut res = 0;
-
-        res = x.values[0] as $$tname;
+        let mut good_conversion = true;
+        let res = x.value[0] as $$tname;
 
         $@{testZeros}
-        if goodConversion {
+        if good_conversion {
           Ok(res)
         } else {
           Err(ConversionError::Overflow)
@@ -135,13 +133,11 @@ buildPrimitives sname tname entries = [
       type Error = ConversionError;
 
       fn try_from(x: &$$sname) -> Result<Self,ConversionError> {
-        let mut goodConversion = true;
-        let mut res = 0;
-
-        res = x.values[0] as $$tname;
+        let mut good_conversion = true;
+        let res = x.value[0] as $$tname;
 
         $@{testZeros}
-        if goodConversion {
+        if good_conversion {
           Ok(res)
         } else {
           Err(ConversionError::Overflow)
@@ -152,7 +148,7 @@ buildPrimitives sname tname entries = [
  where
   testZeros = map (zeroTest . toLit) [1..entries-1]
   zeroTest i =
-    [stmt| goodConversion &= x.values[$$(i)] == 0; |]
+    [stmt| good_conversion &= x.value[$$(i)] == 0; |]
 
 generateSignedPrims :: Ident -> Ident -> Ident -> [Item Span]
 generateSignedPrims sname unsigned signed = [
@@ -161,7 +157,7 @@ generateSignedPrims sname unsigned signed = [
 
       fn try_from(x: $$signed) -> Result<Self,ConversionError> {
         let mut res = $$sname::zero();
-        res.values[0] = x as u64;
+        res.value[0] = x as u64;
         if x < 0 {
           Err(ConversionError::NegativeToUnsigned)
         } else {
@@ -173,7 +169,7 @@ generateSignedPrims sname unsigned signed = [
       type Error = ConversionError;
 
       fn try_from(x: $$sname) -> Result<Self,ConversionError> {
-        let uns = $$unsigned::from(x)?;
+        let uns = $$unsigned::try_from(x)?;
         Ok($$signed::try_from(uns)?)
       }
     }|]
@@ -181,7 +177,7 @@ generateSignedPrims sname unsigned signed = [
       type Error = ConversionError;
 
       fn try_from(x: &$$sname) -> Result<Self,ConversionError> {
-        let uns = $$unsigned::from(x)?;
+        let uns = $$unsigned::try_from(x)?;
         Ok($$signed::try_from(uns)?)
       }
     }|]
@@ -194,8 +190,8 @@ generateI128Primitives sname = [
 
       fn try_from(x: i128) -> Result<Self,ConversionError> {
         let mut res = $$sname::zero();
-        res.values[0] = x as u64;
-        res.values[1] = ((x as u128) >> 64) as u64;
+        res.value[0] = x as u64;
+        res.value[1] = ((x as u128) >> 64) as u64;
         if x < 0 {
           Err(ConversionError::NegativeToUnsigned)
         } else {
@@ -207,7 +203,7 @@ generateI128Primitives sname = [
       type Error = ConversionError;
 
       fn try_from(x: $$sname) -> Result<Self,ConversionError> {
-        let uns = u128::from(x)?;
+        let uns = u128::try_from(x)?;
         Ok(i128::try_from(uns)?)
       }
     }|]
@@ -215,7 +211,7 @@ generateI128Primitives sname = [
       type Error = ConversionError;
 
       fn try_from(x: &$$sname) -> Result<Self,ConversionError> {
-        let uns = u128::from(x)?;
+        let uns = u128::try_from(x)?;
         Ok(i128::try_from(uns)?)
       }
     }|]

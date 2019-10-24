@@ -27,7 +27,7 @@ declareCryptoNumInstance bitsize =
       bitlength = toLit bitsize
       bytelen = bitsize `div` 8
       bytelenlit = toLit bytelen
-      bytebuffer = Delimited mempty Brace (Stream [
+      bytebuffer = Delimited mempty Bracket (Stream [
                      Tree (Token mempty (LiteralTok (IntegerTok "0") Nothing)),
                      Tree (Token mempty Semicolon),
                      Tree (Token mempty (LiteralTok (IntegerTok (show bytelen)) Nothing))
@@ -54,7 +54,7 @@ declareCryptoNumInstance bitsize =
          fn is_even(&self) -> bool {
            self.value[0] & 0x1 == 0
          }
-         fn is_off(&self) -> bool {
+         fn is_odd(&self) -> bool {
            self.value[0] & 0x1 == 1
          }
          fn bit_length() -> usize {
@@ -100,8 +100,8 @@ declareCryptoNumInstance bitsize =
             let mut idx = 0;
             let mut shift = 0;
 
-            for x in bytes.iter_mut().take($$(bytelenlit)).reverse() {
-               *x = (self.values[idx] >> shift) as u8;
+            for x in bytes.iter_mut().take($$(bytelenlit)).rev() {
+               *x = (self.value[idx] >> shift) as u8;
                shift += 8;
                if shift == 64 {
                  idx += 1;
@@ -143,5 +143,5 @@ generateZeroTests i entries
   | i == entries  = []
   | otherwise =
       let ilit = toLit i
-      in [stmt| result = self.values[$$(ilit)] == 0; |] :
+      in [stmt| result &= self.value[$$(ilit)] == 0; |] :
          generateZeroTests (i + 1) entries

@@ -33,7 +33,7 @@ declareBaseStructure bitsize =
 
         #[derive(Clone)]
         pub struct $$sname {
-          value: [u64; $$(entriese)]
+          pub(crate) value: [u64; $$(entriese)]
         }
 
         impl fmt::Debug for $$sname {
@@ -59,7 +59,7 @@ declareBaseStructure bitsize =
         impl Arbitrary for $$sname {
             fn arbitrary<G: Gen>(g: &mut G) -> Self {
                 let mut res = $$sname{ value: [0; $$(entriese)] };
-                for entry in res.iter_mut() {
+                for entry in res.value.iter_mut() {
                     *entry = g.next_u64();
                 }
                 res

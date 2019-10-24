@@ -5,6 +5,7 @@ module BinaryOps(
  where
 
 import File
+import Gen(toLit)
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
@@ -51,15 +52,16 @@ declareBinaryOperators bitsize =
        }
 
        impl<'a> Not for &'a $$struct_name {
-         type Output = Self;
+         type Output = $$struct_name;
 
-         fn not(self) -> Self {
+         fn not(self) -> Self::Output {
             let mut output = self.clone();
             $@{refNegationStmts}
             output
          }
        }
 
+       #[cfg(test)]
        quickcheck! {
          fn and_associative(a: $$struct_name, b: $$struct_name, c: $$struct_name) -> bool {
            ((&a & &b) & &c) == (&a & (&b & &c))
@@ -92,10 +94,10 @@ declareBinaryOperators bitsize =
            (&a & (&b | &c)) == ((&a & &b) | (&a & &c))
          }
          fn xor_clears(a: $$struct_name) -> bool {
-           $$struct_name::zero() == (&a ^ *a)
+           $$struct_name::zero() == (&a ^ &a)
          }
          fn double_neg_ident(a: $$struct_name) -> bool {
-           a == !!$a
+           a == !!&a
          }
          fn and_ident(a: $$struct_name) -> bool {
            let ones = !$$struct_name::zero();
@@ -111,13 +113,14 @@ negationStatements :: String -> Word -> [Stmt Span]
 negationStatements target entries = map genStatement [0..entries-1]
  where
   genStatement i =
-    let idx = Lit [] (Int Dec (fromIntegral i) Unsuffixed mempty) mempty
+    let idx = toLit i
         v = mkIdent target
     in [stmt| $$v.value[$$(idx)] = !self.value[$$(idx)]; |]
 
 generateBinOps :: String -> Ident -> String -> BinOp -> Word -> [Item Span]
 generateBinOps trait sname func oper entries =
-  [normAssign, refAssign] ++ generateAllTheVariants traitIdent funcIdent sname oper
+  [normAssign, refAssign] ++
+  generateAllTheVariants traitIdent funcIdent sname oper entries
  where
   traitIdent = mkIdent trait
   assignIdent = mkIdent (trait ++ "Assign")
@@ -132,7 +135,7 @@ generateBinOps trait sname func oper entries =
     }
   |]
   refAssign = [item|
-    impl $$assignIdent<&'a $$sname> for $$sname {
+    impl<'a> $$assignIdent<&'a $$sname> for $$sname {
       fn $$funcAssignIdent(&mut self, rhs: &Self) {
         $@{assignStatements}
       }
@@ -142,54 +145,57 @@ generateBinOps trait sname func oper entries =
   assignStatements :: [Stmt Span]
   assignStatements = map genAssign [0..entries-1]
   genAssign i =
-    let idx = Lit [] (Int Dec (fromIntegral i) Unsuffixed mempty) mempty
+    let idx = toLit i
         left = [expr| self.value[$$(idx)] |]
         right = [expr| rhs.value[$$(idx)] |]
     in Semi (AssignOp [] oper left right mempty) mempty
 
-generateAllTheVariants :: Ident -> Ident -> Ident -> BinOp -> [Item Span]
-generateAllTheVariants traitname func sname oper = [
+generateAllTheVariants :: Ident -> Ident -> Ident -> BinOp -> Word -> [Item Span]
+generateAllTheVariants traitname func sname oper entries = [
     [item|
      impl $$traitname for $$sname {
-       type Output = Self;
+       type Output = $$sname;
 
-       fn $$func(mut self, rhs: Self) -> Self {
-         $${assigner_self_rhs}
+       fn $$func(mut self, rhs: $$sname) -> Self::Output {
+         $@{assigners_self_rhs}
          self
        }
      }|]
   , [item|
      impl<'a> $$traitname<&'a $$sname> for $$sname {
-       type Output = Self;
+       type Output = $$sname;
 
-       fn $$func(mut self, rhs: Self) -> Self {
-         $${assigner_self_rhs}
+       fn $$func(mut self, rhs: &$$sname) -> Self::Output {
+         $@{assigners_self_rhs}
          self
        }
      }|]
   , [item|
-     impl<'a> $$traitname for &'a $$sname {
-       type Output = Self;
+     impl<'a> $$traitname<$$sname> for &'a $$sname {
+       type Output = $$sname;
 
-       fn $$func(mut self, rhs: Self) -> Self {
-         $${assigner_rhs_self}
-         self
+       fn $$func(self, mut rhs: $$sname) -> Self::Output {
+         $@{assigners_rhs_self}
+         rhs
        }
      }|]
   , [item|
      impl<'a,'b> $$traitname<&'a $$sname> for &'b $$sname {
-       type Output = Self;
+       type Output = $$sname;
 
-       fn $$func(mut self, rhs: Self) -> Self {
+       fn $$func(self, rhs: &$$sname) -> Self::Output {
          let mut out = self.clone();
-         $${assigner_out_rhs}
+         $@{assigners_out_rhs}
          out
        }
      }|]
   ]
  where
-  assigner_self_rhs = assigner [expr| self |] [expr| rhs  |]
-  assigner_rhs_self = assigner [expr| rhs  |] [expr| self |]
-  assigner_out_rhs  = assigner [expr| out  |] [expr| rhs  |]
-  assigner left right =
-    Semi (AssignOp [] oper left right mempty) mempty
+  assigners_self_rhs = assigners [expr| self |] [expr| rhs  |]
+  assigners_rhs_self = assigners [expr| rhs  |] [expr| self |]
+  assigners_out_rhs  = assigners [expr| out  |] [expr| rhs  |]
+  assigners left right = map (genAssign left right . toLit) [0..entries-1]
+  genAssign left right i =
+    Semi (AssignOp [] oper [expr| $$(left).value[$$(i)] |]
+                           [expr| $$(right).value[$$(i)] |]
+                           mempty) mempty

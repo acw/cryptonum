@@ -9,11 +9,12 @@ import CryptoNum(cryptoNum)
 import Control.Monad(forM_,unless)
 import Data.Maybe(mapMaybe)
 import File(File,Task(..),addModuleTasks,makeTask)
-import Language.Rust.Pretty(prettyAnnotated')
+import Language.Rust.Pretty(writeSourceFile)
 import System.Directory(createDirectoryIfMissing)
 import System.Environment(getArgs)
 import System.Exit(die)
 import System.FilePath(takeDirectory,(</>))
+import System.IO(IOMode(..),hPutStrLn,withFile)
 
 lowestBitsize :: Word
 lowestBitsize = 192
@@ -56,4 +57,7 @@ main =
      forM_ (zip [(1::Word)..] tasks) $ \ (i, task) ->
        do putStrLn ("[" ++ show i ++ "/" ++ show total ++ "] " ++ outputFile task)
           createDirectoryIfMissing True (takeDirectory (outputFile task))
-          writeFile (outputFile task) (show (prettyAnnotated' (fileData task)))
+          withFile (outputFile task) WriteMode $ \ targetHandle ->
+            do hPutStrLn targetHandle
+                 "// WARNING: This file was automatically generated. Do not edit!"
+               writeSourceFile targetHandle (fileData task)
