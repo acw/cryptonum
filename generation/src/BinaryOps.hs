@@ -15,7 +15,9 @@ binaryOps :: File
 binaryOps = File {
     predicate = \ _ _ -> True,
     outputName = "binary",
-    generator = declareBinaryOperators
+    isUnsigned = True,
+    generator = declareBinaryOperators,
+    testCase = Nothing
 }
 
 declareBinaryOperators :: Word -> SourceFile Span
@@ -81,7 +83,7 @@ declareBinaryOperators bitsize =
          }
 
          fn or_associative(a: $$struct_name, b: $$struct_name, c: $$struct_name) -> bool {
-           ((&a | &b) & &c) == (&a | (&b | &c))
+           ((&a | &b) | &c) == (&a | (&b | &c))
          }
          fn or_commutative(a: $$struct_name, b: $$struct_name) -> bool {
            (&a | &b) == (&b | &a)

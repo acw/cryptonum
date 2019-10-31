@@ -39,6 +39,7 @@ pub trait CryptoNum {
 }
 
 /// An error in conversion of large numbers (either to primitives or to other numbers
+#[derive(Debug)]
 pub enum ConversionError {
     NegativeToUnsigned,
     Overflow

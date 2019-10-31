@@ -7,14 +7,13 @@ import Compare(comparisons)
 import Conversions(conversions)
 import CryptoNum(cryptoNum)
 import Control.Monad(forM_,unless)
-import Data.Maybe(mapMaybe)
-import File(File,Task(..),addModuleTasks,makeTask)
-import Language.Rust.Pretty(writeSourceFile)
+import File(File,Task(..),generateTasks)
 import System.Directory(createDirectoryIfMissing)
 import System.Environment(getArgs)
 import System.Exit(die)
 import System.FilePath(takeDirectory,(</>))
-import System.IO(IOMode(..),hPutStrLn,withFile)
+import System.IO(IOMode(..),withFile)
+import System.Random(getStdGen)
 
 lowestBitsize :: Word
 lowestBitsize = 192
@@ -38,26 +37,20 @@ signedFiles :: [File]
 signedFiles = [
   ]
 
-makeTasks :: FilePath -> [File] -> [Task]
-makeTasks basePath files =
-  concatMap (\ sz -> mapMaybe (makeTask basePath sz bitsizes) files) bitsizes
-
-makeAllTasks :: FilePath -> [Task]
-makeAllTasks basePath = addModuleTasks basePath $
-  makeTasks (basePath </> "unsigned") unsignedFiles ++
-  makeTasks (basePath </> "signed")   signedFiles
+allFiles :: [File]
+allFiles = unsignedFiles ++ signedFiles
 
 main :: IO ()
 main =
   do args <- getArgs
      unless (length args == 1) $
        die ("generation takes exactly one argument, the target directory")
-     let tasks = makeAllTasks (head args)
-         total = length tasks
-     forM_ (zip [(1::Word)..] tasks) $ \ (i, task) ->
+     g <- getStdGen
+     let allTasks = generateTasks g allFiles bitsizes
+         total = length allTasks
+     forM_ (zip [(1::Word)..] allTasks) $ \ (i, task) ->
        do putStrLn ("[" ++ show i ++ "/" ++ show total ++ "] " ++ outputFile task)
-          createDirectoryIfMissing True (takeDirectory (outputFile task))
-          withFile (outputFile task) WriteMode $ \ targetHandle ->
-            do hPutStrLn targetHandle
-                 "// WARNING: This file was automatically generated. Do not edit!"
-               writeSourceFile targetHandle (fileData task)
+          let target = head args </> outputFile task
+          createDirectoryIfMissing True (takeDirectory target)
+          withFile target WriteMode $ \ targetHandle ->
+            writer task targetHandle

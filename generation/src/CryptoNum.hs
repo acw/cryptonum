@@ -4,18 +4,28 @@ module CryptoNum(
   )
  where
 
+import Data.Bits(testBit)
+import Data.Map.Strict(Map)
+import qualified Data.Map.Strict as Map
 import File
 import Gen
+import Generators
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
 import Language.Rust.Syntax
+import System.Random(RandomGen)
+
+numTestCases :: Int
+numTestCases = 3000
 
 cryptoNum :: File
 cryptoNum = File {
   predicate = \ _ _ -> True,
   outputName = "cryptonum",
-  generator = declareCryptoNumInstance
+  isUnsigned = True,
+  generator = declareCryptoNumInstance,
+  testCase = Just generateTests
 }
 
 declareCryptoNumInstance :: Word -> SourceFile Span
@@ -35,6 +45,8 @@ declareCryptoNumInstance bitsize =
       entrieslit = toLit entries
   in [sourceFile|
        use core::cmp::min;
+       #[cfg(test)]
+       use core::convert::TryFrom;
        use crate::CryptoNum;
        #[cfg(test)]
        use crate::testing::{build_test_path,run_test};
@@ -134,6 +146,23 @@ declareCryptoNumInstance bitsize =
            let (neg5, rbytes) = case.get("r").unwrap();
            let (neg6, bbytes) = case.get("b").unwrap();
            let (neg7, tbytes) = case.get("t").unwrap();
+
+           assert!(!neg0 && !neg1 && !neg2 && !neg3 &&
+                   !neg4 && !neg5 && !neg6 && !neg7);
+           let mut x = $$sname::from_bytes(&xbytes);
+           let z = 1 == zbytes[0];
+           let e = 1 == ebytes[0];
+           let o = 1 == obytes[0];
+           let t = 1 == tbytes[0];
+           let m = usize::try_from($$sname::from_bytes(&mbytes)).unwrap();
+           let b = usize::try_from($$sname::from_bytes(&bbytes)).unwrap();
+           let r = $$sname::from_bytes(&rbytes);
+           assert_eq!(x.is_zero(), z);
+           assert_eq!(x.is_even(), e);
+           assert_eq!(x.is_odd(),  o);
+           assert_eq!(x.testbit(b), t);
+           x.mask(m);
+           assert_eq!(x, r);
          });
        }
      |]
@@ -145,3 +174,21 @@ generateZeroTests i entries
       let ilit = toLit i
       in [stmt| result &= self.value[$$(ilit)] == 0; |] :
          generateZeroTests (i + 1) entries
+
+generateTests :: RandomGen g => Word -> g -> [Map String String]
+generateTests size g = go g numTestCases
+ where
+  go _  0 = []
+  go g0 i =
+   let (x, g1) = generateNum g0 size
+       (m, g2) = generateNum g1 size
+       (b, g3) = generateNum g2 16
+       m'      = m `mod` (fromIntegral size `div` 64)
+       r       = m `mod` (2 ^ (64 * m'))
+       t       = x `testBit` (fromIntegral b)
+       tcase   = Map.fromList [("x", showX x),        ("z", showB (x == 0)),
+                               ("e", showB (even x)), ("o", showB (odd x)),
+                               ("m", showX m'),       ("r", showX r),
+                               ("b", showX b),        ("t", showB t)]
+   in tcase : go g3 (i - 1)
+

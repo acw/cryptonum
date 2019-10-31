@@ -15,7 +15,9 @@ conversions :: File
 conversions = File {
   predicate = \ _ _ -> True,
   outputName = "conversions",
-  generator = declareConversions
+  isUnsigned = True,
+  generator = declareConversions,
+  testCase = Nothing
 }
 
 declareConversions :: Word -> SourceFile Span
@@ -26,17 +28,17 @@ declareConversions bitsize =
       u16_prims  = buildPrimitives sname (mkIdent "u16") entries
       u32_prims  = buildPrimitives sname (mkIdent "u32") entries
       u64_prims  = buildPrimitives sname (mkIdent "u64") entries
+      usz_prims  = buildPrimitives sname (mkIdent "usize") entries
       u128_prims = generateU128Primitives sname entries
       i8_prims   = generateSignedPrims sname (mkIdent "u8")  (mkIdent "i8")
       i16_prims  = generateSignedPrims sname (mkIdent "u16") (mkIdent "i16")
       i32_prims  = generateSignedPrims sname (mkIdent "u32") (mkIdent "i32")
       i64_prims  = generateSignedPrims sname (mkIdent "u64") (mkIdent "i64")
+      isz_prims  = buildPrimitives sname (mkIdent "isize") entries
       i128_prims = generateI128Primitives sname
   in [sourceFile|
        use core::convert::{From,TryFrom};
        use crate::CryptoNum;
-       #[cfg(test)]
-       use quickcheck::quickcheck;
        use super::$$sname;
        use crate::ConversionError;
 
@@ -44,12 +46,14 @@ declareConversions bitsize =
        $@{u16_prims}
        $@{u32_prims}
        $@{u64_prims}
+       $@{usz_prims}
        $@{u128_prims}
 
        $@{i8_prims}
        $@{i16_prims}
        $@{i32_prims}
        $@{i64_prims}
+       $@{isz_prims}
        $@{i128_prims}
      |]
 

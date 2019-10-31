@@ -12,7 +12,9 @@ comparisons :: File
 comparisons = File {
   predicate = \ _ _ -> True,
   outputName = "compare",
-  generator = declareComparators
+  isUnsigned = True,
+  generator = declareComparators,
+  testCase = Nothing
 }
 
 declareComparators :: Word -> SourceFile Span

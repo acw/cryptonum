@@ -14,7 +14,9 @@ base :: File
 base = File {
   predicate = \ _ _ -> True,
   outputName = "base",
-  generator = declareBaseStructure
+  isUnsigned = True,
+  generator = declareBaseStructure,
+  testCase = Nothing
 }
 
 declareBaseStructure :: Word -> SourceFile Span
@@ -86,25 +88,3 @@ buildPrints entries printer = go (entries - 1)
         -- Lit [] (Int Dec (fromIntegral x) Unsuffixed mempty) mempty
         cur = [stmt| write!(f, $$(litStr), self.value[$$(curi)])?; |]
     in cur : rest
-
---     implFor "fmt::UpperHex" name $
---       wrapIndent "fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result" $
---         do forM_ (reverse [1..top]) $ \ i ->
---              out ("write!(f, \"{:X}\", self.value[" ++ show i ++ "])?;")
---            out "write!(f, \"{:X}\", self.value[0])"
---     blank
---     implFor "fmt::LowerHex" name $
---       wrapIndent "fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result" $
---         do forM_ (reverse [1..top]) $ \ i ->
---              out ("write!(f, \"{:x}\", self.value[" ++ show i ++ "])?;")
---            out "write!(f, \"{:x}\", self.value[0])"
---     blank
---     implFor "Arbitrary" name $
---       wrapIndent "fn arbitrary<G: Gen>(g: &mut G) -> Self" $
---         do out (name ++ " {")
---            indent $
---              do out ("value: [")
---                 indent $ forM_ [0..top] $ \ _ ->
---                   out ("g.next_u64(),")
---                 out ("]")
---            out ("}")
