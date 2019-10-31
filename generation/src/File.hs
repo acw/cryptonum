@@ -3,7 +3,8 @@
 module File(
          File(..),
          Task(..),
-         generateTasks
+         generateTasks,
+         testFile
        )
  where
 
@@ -33,6 +34,9 @@ data Task = Task {
     outputFile :: FilePath,
     writer :: Handle -> IO ()
 }
+
+testFile :: Word -> FilePath
+testFile size = "U" ++ show5 size ++ ".test"
 
 show5 :: Word -> String
 show5 = go . show
@@ -65,8 +69,7 @@ generateTasks rng files sizes = basicTasks ++ moduleTasks
                mainTask : tasks
              Just caseGenerator ->
                let testTask = Task {
-                     outputFile = "testdata" </> outputName file </>
-                                  ("U" ++ show5 size ++ ".test"),
+                     outputFile = "testdata" </> outputName file </> testFile size,
                      writer = \ hndl -> writeTestCase hndl (caseGenerator size myg)
                    }
                in testTask : mainTask : tasks

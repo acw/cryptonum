@@ -43,6 +43,7 @@ declareCryptoNumInstance bitsize =
                      Tree (Token mempty (LiteralTok (IntegerTok (show bytelen)) Nothing))
                    ])
       entrieslit = toLit entries
+      testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
        use core::cmp::min;
        #[cfg(test)]
@@ -137,7 +138,7 @@ declareCryptoNumInstance bitsize =
        #[allow(non_snake_case)]
        #[test]
        fn KATs() {
-         run_test(build_test_path("base", stringify!($$sname)), 8, |case| {
+         run_test(build_test_path("cryptonum", $$(testFileLit)), 8, |case| {
            let (neg0, xbytes) = case.get("x").unwrap();
            let (neg1, mbytes) = case.get("m").unwrap();
            let (neg2, zbytes) = case.get("z").unwrap();
@@ -184,7 +185,7 @@ generateTests size g = go g numTestCases
        (m, g2) = generateNum g1 size
        (b, g3) = generateNum g2 16
        m'      = m `mod` (fromIntegral size `div` 64)
-       r       = m `mod` (2 ^ (64 * m'))
+       r       = x `mod` (2 ^ (64 * m'))
        t       = x `testBit` (fromIntegral b)
        tcase   = Map.fromList [("x", showX x),        ("z", showB (x == 0)),
                                ("e", showB (even x)), ("o", showB (odd x)),

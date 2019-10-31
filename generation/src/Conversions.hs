@@ -39,8 +39,10 @@ declareConversions bitsize =
   in [sourceFile|
        use core::convert::{From,TryFrom};
        use crate::CryptoNum;
-       use super::$$sname;
        use crate::ConversionError;
+       #[cfg(test)]
+       use quickcheck::quickcheck;
+       use super::$$sname;
 
        $@{u8_prims}
        $@{u16_prims}
@@ -55,6 +57,28 @@ declareConversions bitsize =
        $@{i64_prims}
        $@{isz_prims}
        $@{i128_prims}
+
+       #[cfg(test)]
+       quickcheck! {
+         fn u8_recovers(x: u8) -> bool {
+            x == u8::try_from($$sname::from(x)).unwrap()
+         }
+         fn u16_recovers(x: u16) -> bool {
+            x == u16::try_from($$sname::from(x)).unwrap()
+         }
+         fn u32_recovers(x: u32) -> bool {
+            x == u32::try_from($$sname::from(x)).unwrap()
+         }
+         fn u64_recovers(x: u64) -> bool {
+            x == u64::try_from($$sname::from(x)).unwrap()
+         }
+         fn usize_recovers(x: usize) -> bool {
+            x == usize::try_from($$sname::from(x)).unwrap()
+         }
+         fn u128_recovers(x: u128) -> bool {
+            x == u128::try_from($$sname::from(x)).unwrap()
+         }
+       }
      |]
 
 generateU128Primitives :: Ident -> Word -> [Item Span]

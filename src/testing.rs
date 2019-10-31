@@ -22,7 +22,7 @@ fn next_value_set(line: &str) -> (String, bool, Vec<u8>)
     let key = items.next().unwrap();
     let valbits = items.next().unwrap();
     let neg = valbits.contains('-');
-    let valbitsnoneg = valbits.trim_start_matches("-");
+    let valbitsnoneg = valbits.trim_start_matches('-');
 
     let mut nibble_iter = valbitsnoneg.chars().rev();
     let mut val = Vec::new();
