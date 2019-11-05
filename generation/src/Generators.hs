@@ -10,6 +10,20 @@ generateNum g size =
       x' = x `mod` (2 ^ size)
   in (x', g')
 
+modulate :: (Integral a, Integral b) => a -> b -> Integer
+modulate x size = x' `mod` (2 ^ size')
+ where
+  x', size' :: Integer
+  size' = fromIntegral size
+  x' = fromIntegral x
+
+modulate' :: (Num a, Integral a, Integral b) => a -> b -> Integer
+modulate' x size = signum x' * ((abs x') `mod` (2 ^ size'))
+ where
+  x', size' :: Integer
+  size' = fromIntegral size
+  x' = fromIntegral x
+
 showX :: Integer -> String
 showX x | x < 0     = "-" ++ showX (abs x)
         | otherwise = showHex x ""
