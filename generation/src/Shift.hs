@@ -32,7 +32,8 @@ declareShiftOperators bitsize =
       entries = bitsize `div` 64
       unsignedShifts = generateUnsigneds struct_name
       shlUsizeImpls = generateBaseUsizes struct_name
-      shlActualImpl = concatMap actualImplLines [1..entries-1]
+      shlActualImpl = concatMap actualShlImplLines [1..entries-1]
+      shrActualImpl = concatMap (actualShrImplLines entries) (reverse [0..entries-1])
       testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
        #[cfg(test)]
@@ -50,7 +51,6 @@ declareShiftOperators bitsize =
            let copy    = self.clone();
            let digits  = rhs / 64;
            let bits    = rhs % 64;
-           let mask    = !(0xFFFF_FFFF_FFFF_FFFFu64 << bits);
            let shift   = (64 - bits) as u32;
 
            let base0 = if digits == 0 { copy.value[0] } else { 0 };
@@ -60,8 +60,14 @@ declareShiftOperators bitsize =
        }
 
        impl ShrAssign<usize> for $$struct_name {
-         fn shr_assign(&mut self, _rhs: usize) {
-           panic!("base shl_assign");
+         fn shr_assign(&mut self, rhs: usize) {
+           let copy    = self.clone();
+           let digits  = rhs / 64;
+           let bits    = rhs % 64;
+           let mask    = !(0xFFFFFFFFFFFFFFFFu64 << bits);
+           let shift   = (64 - bits) as u32;
+
+           $@{shrActualImpl}
          }
        }
 
@@ -90,8 +96,8 @@ declareShiftOperators bitsize =
        }
      |]
 
-actualImplLines :: Word -> [Stmt Span]
-actualImplLines i =
+actualShlImplLines :: Word -> [Stmt Span]
+actualShlImplLines i =
   let basei = mkIdent ("base" ++ show i)
       basei1 = mkIdent ("base" ++ show (i - 1))
       carryi = mkIdent ("carry" ++ show i)
@@ -104,6 +110,25 @@ actualImplLines i =
                         }; |]
   , [stmt|let $$carryi = if shift == 64 { 0 } else { $$basei1 >> shift }; |]
   , [stmt|self.value[$$(liti)] = ($$basei << bits) | $$carryi; |]
+  ]
+
+actualShrImplLines :: Word -> Word -> [Stmt Span]
+actualShrImplLines entries i =
+  let basei = mkIdent ("base" ++ show i)
+      carryi = mkIdent ("carry" ++ show i)
+      carryi1 = mkIdent ("carry" ++ show (i + 1))
+      targeti = mkIdent ("target" ++ show i)
+      liti = toLit i
+      litentries = toLit entries
+  in [
+    [stmt|let $$targeti = $$(liti) + digits; |]
+  , [stmt|let $$basei = if $$targeti >= $$(litentries) { 0 } else { copy.value[$$targeti] }; |]
+  , if i == 0
+      then [stmt| {} |];
+      else [stmt|let ($$carryi,_) = ($$basei & mask).overflowing_shl(shift); |]
+  , if (i + 1) == entries
+      then [stmt|self.value[$$(liti)] =  $$basei >> bits             ; |]
+      else [stmt|self.value[$$(liti)] = ($$basei >> bits) | $$carryi1; |]
   ]
 
 generateBaseUsizes :: Ident -> [Item Span]
