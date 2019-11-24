@@ -32,7 +32,7 @@ declareShiftOperators bitsize =
       entries = bitsize `div` 64
       unsignedShifts = generateUnsigneds struct_name
       shlUsizeImpls = generateBaseUsizes struct_name
-      shlActualImpl = concatMap (actualImplLines (toLit entries)) [1..entries-1]
+      shlActualImpl = concatMap actualImplLines [1..entries-1]
       testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
        #[cfg(test)]
@@ -50,7 +50,7 @@ declareShiftOperators bitsize =
            let copy    = self.clone();
            let digits  = rhs / 64;
            let bits    = rhs % 64;
-           let mask    = !(0xFFFF_FFFF_FFFF_FFFF << bits);
+           let mask    = !(0xFFFF_FFFF_FFFF_FFFFu64 << bits);
            let shift   = (64 - bits) as u32;
 
            let base0 = if digits == 0 { copy.value[0] } else { 0 };
@@ -90,19 +90,19 @@ declareShiftOperators bitsize =
        }
      |]
 
-actualImplLines :: Expr Span -> Word -> [Stmt Span]
-actualImplLines entries i =
+actualImplLines :: Word -> [Stmt Span]
+actualImplLines i =
   let basei = mkIdent ("base" ++ show i)
       basei1 = mkIdent ("base" ++ show (i - 1))
       carryi = mkIdent ("carry" ++ show i)
       liti = toLit i
   in  [
-    [stmt|let $$basei = if $$(liti) > $$(entries) {
+    [stmt|let $$basei = if $$(liti) >= digits {
                           copy.value[$$(liti)-digits]
                         } else {
                           0
                         }; |]
-  , [stmt|let ($$carryi,_) = ($$basei1 & mask).overflowing_shl(shift); |]
+  , [stmt|let $$carryi = if shift == 64 { 0 } else { $$basei1 >> shift }; |]
   , [stmt|self.value[$$(liti)] = ($$basei << bits) | $$carryi; |]
   ]
 
