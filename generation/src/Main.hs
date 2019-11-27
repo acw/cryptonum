@@ -1,6 +1,7 @@
 module Main
  where
 
+import Add(safeAddOps,unsafeAddOps)
 import Base(base)
 import BinaryOps(binaryOps)
 import Compare(comparisons)
@@ -32,7 +33,9 @@ unsignedFiles = [
   , comparisons
   , conversions
   , cryptoNum
+  , safeAddOps
   , shiftOps
+  , unsafeAddOps
   ]
 
 signedFiles :: [File]
