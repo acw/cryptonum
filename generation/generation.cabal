@@ -17,7 +17,17 @@ extra-source-files:  CHANGELOG.md
 
 executable generation
   main-is:             Main.hs
-  other-modules:       Add, Base, BinaryOps, Compare, Conversions, CryptoNum, File, Gen, Generators, Shift
+  other-modules:       Add,
+                       Base,
+                       BinaryOps,
+                       Compare,
+                       Conversions,
+                       CryptoNum,
+                       File,
+                       Gen,
+                       Generators,
+                       Shift,
+                       Subtract
   -- other-extensions:
   build-depends:       base >= 4.12.0.0,
                        containers,

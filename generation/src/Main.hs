@@ -10,6 +10,7 @@ import CryptoNum(cryptoNum)
 import Control.Monad(forM_,unless)
 import File(File,Task(..),generateTasks)
 import Shift(shiftOps)
+import Subtract(safeSubtractOps,unsafeSubtractOps)
 import System.Directory(createDirectoryIfMissing)
 import System.Environment(getArgs)
 import System.Exit(die)
@@ -34,8 +35,10 @@ unsignedFiles = [
   , conversions
   , cryptoNum
   , safeAddOps
+  , safeSubtractOps
   , shiftOps
   , unsafeAddOps
+  , unsafeSubtractOps
   ]
 
 signedFiles :: [File]
