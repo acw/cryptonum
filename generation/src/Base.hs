@@ -79,7 +79,7 @@ buildDebugExp i top acc
 buildPrints :: Word -> String -> [Stmt Span]
 buildPrints entries printer = go (entries - 1)
  where
-  litStr = Token mempty (LiteralTok (StrTok ("{:" ++ printer ++ "}")) Nothing)
+  litStr = Token mempty (LiteralTok (StrTok ("{:016" ++ printer ++ "}")) Nothing)
   --Lit [] (Str ("{:" ++ printer ++ "}") Cooked Unsuffixed mempty) mempty
   go 0 = []
   go x =
