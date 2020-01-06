@@ -40,6 +40,7 @@ library
                        Generators,
                        Karatsuba,
                        Multiply,
+                       Scale,
                        Shift,
                        Subtract
 
