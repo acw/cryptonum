@@ -8,6 +8,7 @@ import Compare(comparisons)
 import Conversions(conversions)
 import CryptoNum(cryptoNum)
 import Control.Monad(forM_,unless)
+import Division(divisionOps)
 import File(File,Task(..),generateTasks)
 import Multiply(safeMultiplyOps, unsafeMultiplyOps)
 import Scale(safeScaleOps, unsafeScaleOps)
@@ -36,6 +37,7 @@ unsignedFiles = [
   , comparisons
   , conversions
   , cryptoNum
+  , divisionOps
   , safeAddOps
   , safeMultiplyOps
   , safeScaleOps

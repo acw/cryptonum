@@ -38,6 +38,16 @@ pub trait CryptoNum {
     fn to_bytes(&self, bytes: &mut [u8]);
 }
 
+/// Provides the ability to do a simultaneous division and modulus operation;
+/// this is used as the implementation of division and multiplication, and
+/// so you can save time doing both at once if you need them.
+///
+pub trait DivMod: Sized {
+    /// Divide and modulus as a single operation. The first element of the tuple
+    /// is the quotient, the second is the modulus.
+    fn divmod(&self, rhs: &Self) -> (Self, Self);
+}
+
 /// An error in conversion of large numbers (either to primitives or to other numbers
 #[derive(Debug)]
 pub enum ConversionError {

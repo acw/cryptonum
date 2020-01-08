@@ -35,6 +35,7 @@ library
                        Compare,
                        Conversions,
                        CryptoNum,
+                       Division,
                        File,
                        Gen,
                        Generators,
