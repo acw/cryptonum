@@ -4,6 +4,7 @@ module Base(
   )
  where
 
+-- This is a comment
 import File
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
@@ -47,14 +48,14 @@ declareBaseStructure bitsize =
         impl fmt::UpperHex for $$sname {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 $@{upperPrints}
-                write!(f, "{:X}", self.value[0])
+                write!(f, "{:016X}", self.value[0])
             }
         }
 
         impl fmt::LowerHex for $$sname {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 $@{lowerPrints}
-                write!(f, "{:x}", self.value[0])
+                write!(f, "{:016x}", self.value[0])
             }
         }
 
