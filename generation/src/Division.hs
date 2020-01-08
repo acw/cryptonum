@@ -34,7 +34,6 @@ declareDivision size =
     in [sourceFile|
         use core::ops::{Div, DivAssign};
         use core::ops::{Rem, RemAssign};
-        #[cfg(test)]
         use crate::CryptoNum;
         #[cfg(test)]
         use crate::testing::{build_test_path,run_test};
