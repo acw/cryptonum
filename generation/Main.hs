@@ -10,6 +10,7 @@ import CryptoNum(cryptoNum)
 import Control.Monad(forM_,unless)
 import Division(divisionOps)
 import File(File,Task(..),generateTasks)
+import ModOps(modulusOps)
 import Multiply(safeMultiplyOps, unsafeMultiplyOps)
 import Scale(safeScaleOps, unsafeScaleOps)
 import Shift(shiftOps)
@@ -38,6 +39,7 @@ unsignedFiles = [
   , conversions
   , cryptoNum
   , divisionOps
+  , modulusOps
   , safeAddOps
   , safeMultiplyOps
   , safeScaleOps

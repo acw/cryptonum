@@ -42,10 +42,28 @@ pub trait CryptoNum {
 /// this is used as the implementation of division and multiplication, and
 /// so you can save time doing both at once if you need them.
 ///
+/// WARNING: There has been some effort made to make this have a constant-time
+/// implementation, but it does use a single conditional inside an otherwise-
+/// constant time loop. There may be unforeseen timing effects of this, or
+/// the compiler may do something funny to "optimize" some math.
 pub trait DivMod: Sized {
     /// Divide and modulus as a single operation. The first element of the tuple
     /// is the quotient, the second is the modulus.
     fn divmod(&self, rhs: &Self) -> (Self, Self);
+}
+
+// Provides support for a variety of modular mathematical operations, as beloved
+// by cryptographers.
+pub trait ModularOperations<Modulus=Self> {
+    // reduce the current value by the provided modulus
+    fn reduce(&self, m: &Modulus) -> Self;
+    // multiply this value by the provided one, modulo the modulus
+    fn modmul(&self, rhs: &Self, m: &Modulus) -> Self;
+    // square the provided number, modulo the modulus
+    fn modsq(&self, m: &Modulus) -> Self;
+    // modular exponentiation!
+    fn modexp(&self, e: &Self, m: &Modulus) -> Self;
+
 }
 
 /// An error in conversion of large numbers (either to primitives or to other numbers

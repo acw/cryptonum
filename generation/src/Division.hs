@@ -207,6 +207,6 @@ generateDivisionTests size g = go g numTestCases
                                 ("z", showX (x `div` y)),
                                 ("r", showX (x `mod` y))]
     in if y == 0
-         then go g0 i
+         then go g2 i
          else tcase : go g2 (i - 1)
 
