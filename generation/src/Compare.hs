@@ -24,8 +24,8 @@ comparisons = File {
   testCase = Just generateTests
 }
 
-declareComparators :: Word -> SourceFile Span
-declareComparators bitsize =
+declareComparators :: Word -> [Word] -> SourceFile Span
+declareComparators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       entries = bitsize `div` 64
       eqStatements = buildEqStatements 0 entries

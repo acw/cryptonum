@@ -28,8 +28,8 @@ binaryOps = File {
     testCase = Just generateTests
 }
 
-declareBinaryOperators :: Word -> SourceFile Span
-declareBinaryOperators bitsize =
+declareBinaryOperators :: Word -> [Word] -> SourceFile Span
+declareBinaryOperators bitsize _ =
   let struct_name = mkIdent ("U" ++ show bitsize)
       entries = bitsize `div` 64
       andOps = generateBinOps "BitAnd" struct_name "bitand" BitAndOp entries

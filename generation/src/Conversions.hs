@@ -20,8 +20,8 @@ conversions = File {
   testCase = Nothing
 }
 
-declareConversions :: Word -> SourceFile Span
-declareConversions bitsize =
+declareConversions :: Word -> [Word] -> SourceFile Span
+declareConversions bitsize otherSizes =
   let sname      = mkIdent ("U" ++ show bitsize)
       entries    = bitsize `div` 64
       u8_prims   = buildPrimitives sname (mkIdent "u8")  entries
@@ -36,13 +36,14 @@ declareConversions bitsize =
       i64_prims  = generateSignedPrims sname (mkIdent "u64") (mkIdent "i64")
       isz_prims  = buildPrimitives sname (mkIdent "isize") entries
       i128_prims = generateI128Primitives sname
+      others     = generateCryptonumConversions bitsize otherSizes
   in [sourceFile|
        use core::convert::{From,TryFrom};
        use crate::CryptoNum;
        use crate::ConversionError;
        #[cfg(test)]
        use quickcheck::quickcheck;
-       use super::$$sname;
+       use super::super::*;
 
        $@{u8_prims}
        $@{u16_prims}
@@ -57,6 +58,8 @@ declareConversions bitsize =
        $@{i64_prims}
        $@{isz_prims}
        $@{i128_prims}
+
+       $@{others}
 
        #[cfg(test)]
        quickcheck! {
@@ -244,3 +247,60 @@ generateI128Primitives sname = [
       }
     }|]
    ]
+
+generateCryptonumConversions :: Word -> [Word] -> [Item Span]
+generateCryptonumConversions source otherSizes = concatMap convert otherSizes
+ where
+   sName = mkIdent ("U" ++ show source)
+   --
+   convert target =
+     let tName = mkIdent ("U" ++ show target)
+         sEntries = toLit (source `div` 64)
+         tEntries = toLit (target `div` 64)
+     in case compare source target of
+          LT -> [
+            [item| 
+             impl<'a> From<&'a $$sName> for $$tName {
+               fn from(x: &$$sName) -> $$tName {
+                 let mut res = $$tName::zero();
+                 res.value[0..$$(sEntries)].copy_from_slice(&x.value);
+                 res
+               }
+             }
+            |],
+            [item|
+             impl From<$$sName> for $$tName {
+               fn from(x: $$sName) -> $$tName {
+                 $$tName::from(&x)
+               }
+             }
+            |]
+            ]
+          EQ -> []
+          GT -> [
+            [item|
+              impl<'a> TryFrom<&'a $$sName> for $$tName {
+                type Error = ConversionError;
+
+                fn try_from(x: &$$sName) -> Result<$$tName, ConversionError> {
+                  if x.value.iter().skip($$(tEntries)).all(|x| *x == 0) {
+                    let mut res = $$tName::zero();
+                    res.value.copy_from_slice(&x.value[0..$$(tEntries)]);
+                    Ok(res)
+                  } else {
+                    Err(ConversionError::Overflow)
+                  }
+                }
+              }
+            |],
+            [item|
+              impl TryFrom<$$sName> for $$tName {
+                type Error = ConversionError;
+
+                fn try_from(x: $$sName) -> Result<$$tName, ConversionError> {
+                  $$tName::try_from(&x)
+                }
+              }
+            |]
+            ]
+          

@@ -26,8 +26,8 @@ modulusOps = File {
     testCase = Just generateModulusTests
 }
 
-declareModOps :: Word -> SourceFile Span
-declareModOps bitsize =
+declareModOps :: Word -> [Word] -> SourceFile Span
+declareModOps bitsize _ =
     let sname = mkIdent ("U" ++ show bitsize)
         bname = mkIdent ("U" ++ show (bitsize * 2))
     in [sourceFile| 

@@ -20,8 +20,8 @@ base = File {
   testCase = Nothing
 }
 
-declareBaseStructure :: Word -> SourceFile Span
-declareBaseStructure bitsize =
+declareBaseStructure :: Word -> [Word] -> SourceFile Span
+declareBaseStructure bitsize _ =
   let tname = "U" ++ show bitsize
       entries = bitsize `div` 64
       sname = mkIdent tname

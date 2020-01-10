@@ -38,8 +38,8 @@ unsafeSubtractOps = File {
     testCase = Just generateUnsafeTests
 }
 
-declareSafeSubtractOperators :: Word -> SourceFile Span
-declareSafeSubtractOperators bitsize =
+declareSafeSubtractOperators :: Word -> [Word] -> SourceFile Span
+declareSafeSubtractOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       dname = mkIdent ("U" ++ show (bitsize + 64))
       fullRippleSubtract = makeRippleSubtracter True (bitsize `div` 64) "res"
@@ -106,8 +106,8 @@ declareSafeSubtractOperators bitsize =
       }
       |]
 
-declareUnsafeSubtractOperators :: Word -> SourceFile Span
-declareUnsafeSubtractOperators bitsize =
+declareUnsafeSubtractOperators :: Word -> [Word] -> SourceFile Span
+declareUnsafeSubtractOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       fullRippleSubtract = makeRippleSubtracter False (bitsize `div` 64) "self"
       testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty

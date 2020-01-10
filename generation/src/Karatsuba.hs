@@ -7,6 +7,7 @@
 module Karatsuba(
          Instruction(..)
        , runChecks
+       , runQuickCheck
        , generateInstructions
        )
  where

@@ -26,8 +26,8 @@ shiftOps = File {
     testCase = Just generateTests
 }
 
-declareShiftOperators :: Word -> SourceFile Span
-declareShiftOperators bitsize =
+declareShiftOperators :: Word -> [Word] -> SourceFile Span
+declareShiftOperators bitsize _ =
   let struct_name = mkIdent ("U" ++ show bitsize)
       entries = bitsize `div` 64
       unsignedShifts = generateUnsigneds struct_name

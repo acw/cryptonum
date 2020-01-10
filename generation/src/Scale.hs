@@ -38,8 +38,8 @@ unsafeScaleOps = File {
     testCase = Just generateUnsafeTests
 }
 
-declareSafeScaleOperators :: Word -> SourceFile Span
-declareSafeScaleOperators bitsize =
+declareSafeScaleOperators :: Word -> [Word] -> SourceFile Span
+declareSafeScaleOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       dname = mkIdent ("U" ++ show (bitsize + 64))
       fullRippleScale = generateScaletiplier True (bitsize `div` 64) "rhs" "res"
@@ -154,8 +154,8 @@ declareSafeScaleOperators bitsize =
       }
       |]
 
-declareUnsafeScaleOperators :: Word -> SourceFile Span
-declareUnsafeScaleOperators bitsize =
+declareUnsafeScaleOperators :: Word -> [Word] -> SourceFile Span
+declareUnsafeScaleOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       halfRippleScale = generateScaletiplier False (bitsize `div` 64) "rhs" "self"
       testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty

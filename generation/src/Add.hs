@@ -38,8 +38,8 @@ unsafeAddOps = File {
     testCase = Just generateUnsafeTests
 }
 
-declareSafeAddOperators :: Word -> SourceFile Span
-declareSafeAddOperators bitsize =
+declareSafeAddOperators :: Word -> [Word] -> SourceFile Span
+declareSafeAddOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       dname = mkIdent ("U" ++ show (bitsize + 64))
       fullRippleAdd = makeRippleAdder True (bitsize `div` 64) "res"
@@ -115,8 +115,8 @@ declareSafeAddOperators bitsize =
       }
       |]
 
-declareUnsafeAddOperators :: Word -> SourceFile Span
-declareUnsafeAddOperators bitsize =
+declareUnsafeAddOperators :: Word -> [Word] -> SourceFile Span
+declareUnsafeAddOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       fullRippleAdd = makeRippleAdder False (bitsize `div` 64) "self"
       testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty

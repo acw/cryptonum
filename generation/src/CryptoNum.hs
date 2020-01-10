@@ -28,8 +28,8 @@ cryptoNum = File {
   testCase = Just generateTests
 }
 
-declareCryptoNumInstance :: Word -> SourceFile Span
-declareCryptoNumInstance bitsize =
+declareCryptoNumInstance :: Word -> [Word] -> SourceFile Span
+declareCryptoNumInstance bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       entries = bitsize `div` 64
       entlit = Lit [] (Int Dec (fromIntegral entries) Unsuffixed mempty) mempty

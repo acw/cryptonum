@@ -25,8 +25,8 @@ divisionOps = File {
     testCase = Just generateDivisionTests
 }
 
-declareDivision :: Word -> SourceFile Span
-declareDivision size =
+declareDivision :: Word -> [Word] -> SourceFile Span
+declareDivision size _ =
     let sname = mkIdent ("U" ++ show size)
         entries = size `div` 64
         copyAssign = map doCopy [0..entries-1]

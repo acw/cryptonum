@@ -40,8 +40,8 @@ unsafeMultiplyOps = File {
     testCase = Just generateUnsafeTests
 }
 
-declareSafeMulOperators :: Word -> SourceFile Span
-declareSafeMulOperators bitsize =
+declareSafeMulOperators :: Word -> [Word] -> SourceFile Span
+declareSafeMulOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       dname = mkIdent ("U" ++ show (bitsize * 2))
       fullRippleMul = generateMultiplier True (bitsize `div` 64) "rhs" "res"
@@ -117,8 +117,8 @@ declareSafeMulOperators bitsize =
       }
       |]
 
-declareUnsafeMulOperators :: Word -> SourceFile Span
-declareUnsafeMulOperators bitsize =
+declareUnsafeMulOperators :: Word -> [Word] -> SourceFile Span
+declareUnsafeMulOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       halfRippleMul = generateMultiplier False (bitsize `div` 64) "rhs" "self"
       testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty

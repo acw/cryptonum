@@ -26,7 +26,7 @@ data File = File {
     predicate :: Word -> [Word] -> Bool,
     outputName :: FilePath,
     isUnsigned :: Bool,
-    generator :: Word -> SourceFile Span,
+    generator :: Word -> [Word] -> SourceFile Span,
     testCase :: forall g. RandomGen g => Maybe (Word -> g -> [Map String String])
 }
 
@@ -62,7 +62,7 @@ generateTasks rng files sizes = basicTasks ++ moduleTasks
             mainTask = Task {
               outputFile = "src" </> signedBit </> ("u" ++ show size) </>
                            outputName file ++ ".rs",
-              writer = \ hndl -> writeSourceFile hndl (generator file size)
+              writer = \ hndl -> writeSourceFile hndl (generator file size sizes)
             }
         in case testCase file of
              Nothing ->
