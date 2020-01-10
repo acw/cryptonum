@@ -63,7 +63,6 @@ fn next_test_case(contents: &mut Lines, lines: usize) ->
 pub fn run_test<F>(fname: PathBuf, i: usize, f: F)
  where F: Fn(HashMap<String,(bool,Vec<u8>)>)
 {
-    println!("fname: {:?}", fname);
     let mut file = File::open(fname).unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
