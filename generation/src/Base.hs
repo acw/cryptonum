@@ -4,7 +4,6 @@ module Base(
   )
  where
 
--- This is a comment
 import File
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position

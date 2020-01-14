@@ -30,7 +30,7 @@ declareComparators bitsize _ =
       entries = bitsize `div` 64
       eqStatements = buildEqStatements 0 entries
       compareExp = buildCompareExp 0 entries
-      testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
        use core::cmp::{Eq,Ordering,PartialEq};
        #[cfg(test)]

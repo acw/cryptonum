@@ -35,7 +35,7 @@ declareShiftOperators bitsize _ =
       shlActualImpl = concatMap actualShlImplLines [1..entries-1]
       shrActualImpl = concatMap (actualShrImplLines entries) (reverse [0..entries-1])
       resAssign = map reassignSelf [0..entries-1]
-      testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
        #[cfg(test)]
        use core::convert::TryFrom;

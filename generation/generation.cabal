@@ -45,6 +45,7 @@ library
                        Multiply,
                        Scale,
                        Shift,
+                       Signed,
                        Subtract
 
 executable generation

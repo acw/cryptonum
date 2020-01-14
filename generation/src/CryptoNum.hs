@@ -43,7 +43,7 @@ declareCryptoNumInstance bitsize _ =
                      Tree (Token mempty (LiteralTok (IntegerTok (show bytelen)) Nothing))
                    ])
       entrieslit = toLit entries
-      testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
        use core::cmp::min;
        #[cfg(test)]

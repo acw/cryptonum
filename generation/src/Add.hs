@@ -43,7 +43,7 @@ declareSafeAddOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       dname = mkIdent ("U" ++ show (bitsize + 64))
       fullRippleAdd = makeRippleAdder True (bitsize `div` 64) "res"
-      testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
         use core::ops::Add;
         use crate::CryptoNum;
@@ -119,7 +119,7 @@ declareUnsafeAddOperators :: Word -> [Word] -> SourceFile Span
 declareUnsafeAddOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       fullRippleAdd = makeRippleAdder False (bitsize `div` 64) "self"
-      testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
         use core::ops::AddAssign;
         #[cfg(test)]

@@ -35,8 +35,9 @@ data Task = Task {
     writer :: Handle -> IO ()
 }
 
-testFile :: Word -> FilePath
-testFile size = "U" ++ show5 size ++ ".test"
+testFile :: Bool -> Word -> FilePath
+testFile True  size = "U" ++ show5 size ++ ".test"
+testFile False size = "I" ++ show5 size ++ ".test"
 
 show5 :: Word -> String
 show5 = go . show
@@ -58,9 +59,10 @@ generateTasks rng files sizes = basicTasks ++ moduleTasks
     | otherwise =
         let (myg, theirg) = split g
             tasks = go theirg files' rest
-            signedBit = if isUnsigned file then "unsigned" else "signed"
+            (signedBit, prefix) | isUnsigned file = ("unsigned", "u")
+                                | otherwise       = ("signed", "i")
             mainTask = Task {
-              outputFile = "src" </> signedBit </> ("u" ++ show size) </>
+              outputFile = "src" </> signedBit </> (prefix ++ show size) </>
                            outputName file ++ ".rs",
               writer = \ hndl -> writeSourceFile hndl (generator file size sizes)
             }
@@ -69,16 +71,16 @@ generateTasks rng files sizes = basicTasks ++ moduleTasks
                mainTask : tasks
              Just caseGenerator ->
                let testTask = Task {
-                     outputFile = "testdata" </> outputName file </> testFile size,
+                     outputFile = "testdata" </> outputName file </> testFile (isUnsigned file) size,
                      writer = \ hndl -> writeTestCase hndl (caseGenerator size myg)
                    }
                in testTask : mainTask : tasks
 
 generateModules :: [Task] -> [Task]
-generateModules tasks = Map.foldrWithKey maddModule [] fileMap ++ [unsignedTask]
+generateModules tasks = Map.foldrWithKey maddModule [] fileMap ++ [signedTask, unsignedTask]
  where
   maddModule path mods acc
-   | "src/unsigned" `isPrefixOf` path =
+   | ("src/unsigned" `isPrefixOf` path) || ("src/signed" `isPrefixOf` path) =
         let (basePath, lowerName) = splitFileName (init path)
             upperName = map toUpper lowerName
             task = Task {
@@ -97,26 +99,28 @@ generateModules tasks = Map.foldrWithKey maddModule [] fileMap ++ [unsignedTask]
         file = dropExtension fileext
     in Map.insertWith (++) dir [file] acc
   --
-  unsignedTask =
-    let mods = Map.foldrWithKey topModule [] fileMap
-        pubuses = Map.foldrWithKey pubUse [] fileMap
+  signedTask = moduleTask "signed"
+  unsignedTask = moduleTask "unsigned"
+  moduleTask kind =
+    let mods = Map.foldrWithKey (topModule kind) [] fileMap
+        pubuses = Map.foldrWithKey (pubUse kind) [] fileMap
     in Task {
-         outputFile = "src" </> "unsigned.rs",
+         outputFile = "src" </> (kind ++ ".rs"),
          writer = \ hndl ->
            writeSourceFile hndl [sourceFile|
              $@{mods}
              $@{pubuses}
           |]
        }
-  topModule path _ acc
-   | "src/unsigned" `isPrefixOf` path =
+  topModule kind path _ acc
+   | ("src/" ++ kind) `isPrefixOf` path =
         let lowerName = takeFileName (init path)
             modl = mkIdent lowerName
         in [item| mod $$modl; |] : acc
    | otherwise =
         acc
-  pubUse path _ acc
-   | "src/unsigned" `isPrefixOf` path =
+  pubUse kind path _ acc
+   | ("src/" ++ kind) `isPrefixOf` path =
         let lowerName = takeFileName (init path)
             tname = mkIdent (map toUpper lowerName)
             modl = mkIdent lowerName

@@ -29,7 +29,7 @@ declareModOps :: Word -> [Word] -> SourceFile Span
 declareModOps bitsize _ =
     let sname = mkIdent ("U" ++ show bitsize)
         bname = mkIdent ("U" ++ show (bitsize * 2))
-        testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty
+        testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
     in [sourceFile|
         use core::convert::TryFrom; 
         use crate::unsigned::{$$sname, $$bname};

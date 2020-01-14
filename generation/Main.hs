@@ -14,6 +14,7 @@ import ModOps(modulusOps)
 import Multiply(safeMultiplyOps, unsafeMultiplyOps)
 import Scale(safeScaleOps, unsafeScaleOps)
 import Shift(shiftOps)
+import Signed(signedBaseOps)
 import Subtract(safeSubtractOps,unsafeSubtractOps)
 import System.Directory(createDirectoryIfMissing)
 import System.Environment(getArgs)
@@ -53,6 +54,7 @@ unsignedFiles = [
 
 signedFiles :: [File]
 signedFiles = [
+    signedBaseOps
   ]
 
 allFiles :: [File]

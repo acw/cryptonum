@@ -43,7 +43,7 @@ declareSafeSubtractOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       dname = mkIdent ("U" ++ show (bitsize + 64))
       fullRippleSubtract = makeRippleSubtracter True (bitsize `div` 64) "res"
-      testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
         use core::ops::Sub;
         use crate::CryptoNum;
@@ -110,7 +110,7 @@ declareUnsafeSubtractOperators :: Word -> [Word] -> SourceFile Span
 declareUnsafeSubtractOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       fullRippleSubtract = makeRippleSubtracter False (bitsize `div` 64) "self"
-      testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
         use core::ops::SubAssign;
         #[cfg(test)]

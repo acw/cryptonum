@@ -30,7 +30,7 @@ declareDivision size _ =
     let sname = mkIdent ("U" ++ show size)
         entries = size `div` 64
         copyAssign = map doCopy [0..entries-1]
-        testFileLit = Lit [] (Str (testFile size) Cooked Unsuffixed mempty) mempty
+        testFileLit = Lit [] (Str (testFile True size) Cooked Unsuffixed mempty) mempty
     in [sourceFile|
         use core::ops::{Div, DivAssign};
         use core::ops::{Rem, RemAssign};

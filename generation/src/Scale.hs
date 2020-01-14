@@ -43,7 +43,7 @@ declareSafeScaleOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       dname = mkIdent ("U" ++ show (bitsize + 64))
       fullRippleScale = generateScaletiplier True (bitsize `div` 64) "rhs" "res"
-      testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
         use core::ops::Mul;
         use crate::CryptoNum;
@@ -158,7 +158,7 @@ declareUnsafeScaleOperators :: Word -> [Word] -> SourceFile Span
 declareUnsafeScaleOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
       halfRippleScale = generateScaletiplier False (bitsize `div` 64) "rhs" "self"
-      testFileLit = Lit [] (Str (testFile bitsize) Cooked Unsuffixed mempty) mempty
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
         use core::ops::MulAssign;
         #[cfg(test)]
