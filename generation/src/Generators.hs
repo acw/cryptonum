@@ -10,6 +10,15 @@ generateNum g size =
       x' = x `mod` (2 ^ size)
   in (x', g')
 
+generateSignedNum :: RandomGen g => g -> Word -> (Integer, g)
+generateSignedNum g size =
+  let (x, g') = random g
+      s :: Integer
+      (s, g'') = random g'
+      x' = x `mod` (2 ^ size)
+      sign = if even s then 1 else -1
+  in (x' * sign, g'')
+
 modulate :: (Integral a, Integral b) => a -> b -> Integer
 modulate x size = x' `mod` (2 ^ size')
  where

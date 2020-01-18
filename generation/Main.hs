@@ -1,21 +1,22 @@
 module Main
  where
 
-import Add(safeAddOps,unsafeAddOps)
+import Add(safeAddOps,unsafeAddOps,safeSignedAddOps,unsafeSignedAddOps)
 import Base(base)
 import BinaryOps(binaryOps)
-import Compare(comparisons)
-import Conversions(conversions)
+import Compare(comparisons, signedComparisons)
+import Conversions(conversions, signedConversions)
 import CryptoNum(cryptoNum)
 import Control.Monad(forM_,unless)
 import Division(divisionOps)
 import File(File,Task(..),generateTasks)
+import ModInv(generateModInvOps)
 import ModOps(modulusOps)
 import Multiply(safeMultiplyOps, unsafeMultiplyOps)
 import Scale(safeScaleOps, unsafeScaleOps)
-import Shift(shiftOps)
+import Shift(shiftOps, signedShiftOps)
 import Signed(signedBaseOps)
-import Subtract(safeSubtractOps,unsafeSubtractOps)
+import Subtract(safeSubtractOps,unsafeSubtractOps,safeSignedSubtractOps,unsafeSignedSubtractOps)
 import System.Directory(createDirectoryIfMissing)
 import System.Environment(getArgs)
 import System.Exit(die)
@@ -54,7 +55,15 @@ unsignedFiles = [
 
 signedFiles :: [File]
 signedFiles = [
-    signedBaseOps
+    generateModInvOps
+  , safeSignedAddOps
+  , safeSignedSubtractOps
+  , signedBaseOps
+  , signedComparisons
+  , signedConversions
+  , signedShiftOps
+  , unsafeSignedAddOps
+  , unsafeSignedSubtractOps
   ]
 
 allFiles :: [File]

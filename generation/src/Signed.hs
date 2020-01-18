@@ -33,7 +33,13 @@ declareSigned bitsize _ =
 
         #[derive(Clone)]
         pub struct $$sname {
-            contents: $$uname,
+            pub(crate) contents: $$uname,
+        }
+
+        impl $$sname {
+            pub fn is_negative(&self) -> bool {
+                self.contents.value[self.contents.value.len()-1] & 0x8000_0000_0000_0000 != 0
+            }
         }
 
         impl Neg for $$sname {
@@ -109,20 +115,6 @@ declareSigned bitsize _ =
             }
         }
 
-        impl PartialEq for $$sname {
-            fn eq(&self, other: &$$sname) -> bool {
-                let mut all_equal = true;
-
-                for (l, r) in self.contents.value.iter().zip(other.contents.value.iter()) {
-                    all_equal &= *l == *r;
-                }
-
-                all_equal
-            }
-        }
-
-        impl Eq for $$sname { }
-
         impl Arbitrary for $$sname {
             fn arbitrary<G: Gen>(g: &mut G) -> $$sname {
                 $$sname{
@@ -163,14 +155,6 @@ declareSigned bitsize _ =
 
         #[cfg(test)]
         quickcheck! {
-            fn equality_reflexive(x: $$sname) -> bool {
-                &x == &x
-            }
-
-            fn equality_symmetric(x: $$sname, y: $$sname) -> bool {
-                (&x == &y) == (&y == &x)
-            }
-
             fn double_not(x: $$sname) -> bool {
                 x == !!&x
             }

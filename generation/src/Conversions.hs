@@ -1,6 +1,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Conversions(
     conversions
+  , signedConversions
   )
  where
 
@@ -17,6 +18,15 @@ conversions = File {
   outputName = "conversions",
   isUnsigned = True,
   generator = declareConversions,
+  testCase = Nothing
+}
+
+signedConversions :: File
+signedConversions = File {
+  predicate = \ _ _ -> True,
+  outputName = "sconversions",
+  isUnsigned = False,
+  generator = declareSignedConversions,
   testCase = Nothing
 }
 
@@ -84,6 +94,71 @@ declareConversions bitsize otherSizes =
        }
      |]
 
+declareSignedConversions :: Word -> [Word] -> SourceFile Span
+declareSignedConversions bitsize otherSizes =
+  let sname      = mkIdent ("I" ++ show bitsize)
+      entries    = bitsize `div` 64
+      u8_prims   = buildUSPrimitives sname (mkIdent "u8")    entries
+      u16_prims  = buildUSPrimitives sname (mkIdent "u16")   entries
+      u32_prims  = buildUSPrimitives sname (mkIdent "u32")   entries
+      u64_prims  = buildUSPrimitives sname (mkIdent "u64")   entries
+      usz_prims  = buildUSPrimitives sname (mkIdent "usize") entries
+      u128_prims = generateUS128Primitives sname entries
+      i8_prims   = buildSSPrimitives sname (mkIdent "i8")    entries
+      i16_prims  = buildSSPrimitives sname (mkIdent "i16")   entries
+      i32_prims  = buildSSPrimitives sname (mkIdent "i32")   entries
+      i64_prims  = buildSSPrimitives sname (mkIdent "i64")   entries
+      isz_prims  = buildSSPrimitives sname (mkIdent "isize") entries
+      i128_prims = generateSS128Primitives sname entries
+      others     = generateSignedCryptonumConversions bitsize otherSizes
+  in [sourceFile|
+       use core::convert::{From,TryFrom};
+       use crate::CryptoNum;
+       use crate::ConversionError;
+       use crate::signed::*;
+       use crate::unsigned::*;
+       #[cfg(test)]
+       use quickcheck::quickcheck;
+
+       $@{u8_prims}
+       $@{u16_prims}
+       $@{u32_prims}
+       $@{u64_prims}
+       $@{usz_prims}
+       $@{u128_prims}
+
+       $@{i8_prims}
+       $@{i16_prims}
+       $@{i32_prims}
+       $@{i64_prims}
+       $@{isz_prims}
+       $@{i128_prims}
+
+       $@{others}
+
+       #[cfg(test)]
+       quickcheck! {
+         fn u8_recovers(x: u8) -> bool {
+            x == u8::try_from($$sname::from(x)).unwrap()
+         }
+         fn u16_recovers(x: u16) -> bool {
+            x == u16::try_from($$sname::from(x)).unwrap()
+         }
+         fn u32_recovers(x: u32) -> bool {
+            x == u32::try_from($$sname::from(x)).unwrap()
+         }
+         fn u64_recovers(x: u64) -> bool {
+            x == u64::try_from($$sname::from(x)).unwrap()
+         }
+         fn usize_recovers(x: usize) -> bool {
+            x == usize::try_from($$sname::from(x)).unwrap()
+         }
+         fn u128_recovers(x: u128) -> bool {
+            x == u128::try_from($$sname::from(x)).unwrap()
+         }
+       }
+    |]
+ 
 generateU128Primitives :: Ident -> Word -> [Item Span]
 generateU128Primitives sname entries = [
     [item|impl From<u128> for $$sname {
@@ -303,4 +378,138 @@ generateCryptonumConversions source otherSizes = concatMap convert otherSizes
               }
             |]
             ]
-          
+
+buildUSPrimitives :: Ident -> Ident -> Word -> [Item Span]
+buildUSPrimitives sname prim entries = [
+    [item|
+        impl From<$$prim> for $$sname {
+          fn from(x: $$prim) -> $$sname {
+            let mut base = $$sname::zero();
+            base.contents.value[0] = x as u64;
+            base
+          }
+        }
+    |]
+  , [item|
+        impl<'a> TryFrom<&'a $$sname> for $$prim {
+          type Error = ConversionError;
+
+          fn try_from(x: &$$sname) -> Result<$$prim, ConversionError> {
+              if (x.contents.value)[1..].iter().any(|v| *v != 0) {
+                return Err(ConversionError::Overflow);
+              }
+              let res64 = x.contents.value[0];
+              if res64 & 0x8000_0000_0000_0000 != 0 {
+                return Err(ConversionError::Overflow);
+              }
+              Ok(res64 as $$prim)
+          }
+        }
+    |]
+  , [item|
+        impl TryFrom<$$sname> for $$prim {
+          type Error = ConversionError;
+
+          fn try_from(x: $$sname) -> Result<$$prim, ConversionError> {
+            $$prim::try_from(&x)
+          }
+        }
+    |]
+  ]
+
+buildSSPrimitives :: Ident -> Ident -> Word -> [Item Span]
+buildSSPrimitives sname prim entries = [
+    [item|
+        impl From<$$prim> for $$sname {
+          fn from(x: $$prim) -> $$sname {
+            panic!("from_signed")
+          }
+        }
+    |]
+  , [item|
+        impl<'a> TryFrom<&'a $$sname> for $$prim {
+          type Error = ConversionError;
+
+          fn try_from(x: &$$sname) -> Result<$$prim, ConversionError> {
+            panic!("try_from_signed")
+          }
+        }
+    |]
+  , [item|
+        impl TryFrom<$$sname> for $$prim {
+          type Error = ConversionError;
+
+          fn try_from(x: $$sname) -> Result<$$prim, ConversionError> {
+            $$prim::try_from(&x)
+          }
+        }
+    |]
+  ]
+
+generateUS128Primitives :: Ident -> Word -> [Item Span]
+generateUS128Primitives struct entries = []
+
+generateSS128Primitives :: Ident -> Word -> [Item Span]
+generateSS128Primitives struct entries = []
+
+generateSignedCryptonumConversions :: Word -> [Word] -> [Item Span]
+generateSignedCryptonumConversions source otherSizes = concatMap convert otherSizes
+ where
+   sName = mkIdent ("I" ++ show source)
+   --
+   convert target =
+     let tsName = mkIdent ("I" ++ show target)
+         tuName = mkIdent ("U" ++ show target)
+         sEntries = toLit (source `div` 64)
+         tEntries = toLit (target `div` 64)
+     in case compare source target of
+          LT -> []
+          EQ -> [
+            [item|
+              impl TryFrom<$$tuName> for $$sName {
+                type Error = ConversionError;
+
+                fn try_from(x: $$tuName) -> Result<$$sName,ConversionError> {
+                  let res = $$sName{ contents: x };
+
+                  if res.is_negative() {
+                    return Err(ConversionError::Overflow);
+                  }
+
+                  Ok(res)
+                }
+              }
+            |],
+            [item|
+              impl<'a> TryFrom<&'a $$tuName> for $$sName {
+                type Error = ConversionError;
+
+                fn try_from(x: &$$tuName) -> Result<$$sName,ConversionError> {
+                  $$sName::try_from(x.clone())
+                }
+              }
+            |],
+            [item|
+              impl TryFrom<$$sName> for $$tuName {
+                type Error = ConversionError;
+
+                fn try_from(x: $$sName) -> Result<$$tuName,ConversionError> {
+                  if x.is_negative() {
+                    return Err(ConversionError::Overflow);
+                  }
+                  Ok(x.contents)
+                }
+              }
+            |],
+            [item|
+              impl<'a> TryFrom<&'a $$sName> for $$tuName {
+                type Error = ConversionError;
+
+                fn try_from(x: &$$sName) -> Result<$$tuName,ConversionError> {
+                  $$tuName::try_from(x.clone())
+                }
+              }
+            |]
+           ]
+          GT -> []
+

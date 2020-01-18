@@ -2,6 +2,8 @@
 module Add(
     safeAddOps
   , unsafeAddOps
+  , safeSignedAddOps
+  , unsafeSignedAddOps
   )
  where
 
@@ -36,6 +38,24 @@ unsafeAddOps = File {
     isUnsigned = True,
     generator = declareUnsafeAddOperators,
     testCase = Just generateUnsafeTests
+}
+
+safeSignedAddOps :: File
+safeSignedAddOps = File {
+    predicate = \ me others -> (me + 64) `elem` others,
+    outputName = "safe_sadd",
+    isUnsigned = False,
+    generator = declareSafeSignedAddOperators,
+    testCase = Just generateSafeSignedTests
+}
+
+unsafeSignedAddOps :: File
+unsafeSignedAddOps = File {
+    predicate = \ _ _ -> True,
+    outputName = "unsafe_sadd",
+    isUnsigned = False,
+    generator = declareUnsafeSignedAddOperators,
+    testCase = Just generateUnsafeSignedTests
 }
 
 declareSafeAddOperators :: Word -> [Word] -> SourceFile Span
@@ -175,6 +195,142 @@ declareUnsafeAddOperators bitsize _ =
       }
       |]
 
+declareSafeSignedAddOperators :: Word -> [Word] -> SourceFile Span
+declareSafeSignedAddOperators bitsize _ =
+  let sname = mkIdent ("I" ++ show bitsize)
+      dname = mkIdent ("I" ++ show (bitsize + 64))
+      fullRippleAdd = makeRippleAdder True (bitsize `div` 64) "res"
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
+  in [sourceFile|
+        use core::ops::Add;
+        use crate::CryptoNum;
+        #[cfg(test)]
+        use crate::testing::{build_test_path,run_test};
+        #[cfg(test)]
+        use quickcheck::quickcheck;
+        use crate::signed::{$$sname,$$dname};
+
+        impl Add for $$sname {
+          type Output = $$dname;
+
+          fn add(self, rhs: $$sname) -> $$dname {
+             &self + &rhs
+          }
+        }
+
+        impl<'a> Add<&'a $$sname> for $$sname {
+          type Output = $$dname;
+
+          fn add(self, rhs: &$$sname) -> $$dname {
+            &self + rhs
+          }
+        }
+
+        impl<'a> Add<$$sname> for &'a $$sname {
+          type Output = $$dname;
+
+          fn add(self, rhs: $$sname) -> $$dname {
+            self + &rhs
+          }
+        }
+
+        impl<'a,'b> Add<&'a $$sname> for &'b $$sname {
+          type Output = $$dname;
+
+          fn add(self, rhs: &$$sname) -> $$dname {
+            panic!("add")
+          }
+        }
+
+        #[cfg(test)]
+        quickcheck! {
+           fn addition_symmetric(a: $$sname, b: $$sname) -> bool {
+             (&a + &b) == (&b + &a)
+           }
+        }
+
+       #[cfg(test)]
+       #[allow(non_snake_case)]
+       #[test]
+       fn KATs() {
+         run_test(build_test_path("safe_sadd", $$(testFileLit)), 3, |case| {
+           let (neg0, xbytes) = case.get("x").unwrap();
+           let (neg1, ybytes) = case.get("y").unwrap();
+           let (neg2, zbytes) = case.get("z").unwrap();
+
+           let mut x = $$sname::from_bytes(&xbytes);
+           let mut y = $$sname::from_bytes(&ybytes);
+           let mut z = $$dname::from_bytes(&zbytes);
+           if neg0 { x = x.negate() }
+           if neg1 { y = y.negate() }
+           if neg2 { z = z.negate() }
+
+           assert_eq!(z, x + y);
+        });
+      }
+      |]
+
+declareUnsafeSignedAddOperators :: Word -> [Word] -> SourceFile Span
+declareUnsafeSignedAddOperators bitsize _ =
+  let sname = mkIdent ("I" ++ show bitsize)
+      fullRippleAdd = makeRippleAdder False (bitsize `div` 64) "self"
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
+  in [sourceFile|
+        use core::ops::AddAssign;
+        #[cfg(test)]
+        use crate::CryptoNum;
+        #[cfg(test)]
+        use crate::testing::{build_test_path,run_test};
+        #[cfg(test)]
+        use quickcheck::quickcheck;
+        use crate::signed::$$sname;
+
+        impl AddAssign for $$sname {
+          fn add_assign(&mut self, rhs: Self) {
+            self.add_assign(&rhs);
+          }
+        }
+
+        impl<'a> AddAssign<&'a $$sname> for $$sname {
+          fn add_assign(&mut self, rhs: &Self) {
+            panic!("add_assign")
+          }
+        }
+
+        #[cfg(test)]
+        quickcheck! {
+           fn addition_symmetric(a: $$sname, b: $$sname) -> bool {
+             let mut side1 = a.clone();
+             let mut side2 = b.clone();
+
+             side1 += b;
+             side2 += a;
+
+             side1 == side2
+           }
+        }
+
+       #[cfg(test)]
+       #[allow(non_snake_case)]
+       #[test]
+       fn KATs() {
+         run_test(build_test_path("unsafe_sadd", $$(testFileLit)), 3, |case| {
+           let (neg0, xbytes) = case.get("x").unwrap();
+           let (neg1, ybytes) = case.get("y").unwrap();
+           let (neg2, zbytes) = case.get("z").unwrap();
+
+           let mut x = $$sname::from_bytes(&xbytes);
+           let mut y = $$sname::from_bytes(&ybytes);
+           let mut z = $$sname::from_bytes(&zbytes);
+           if neg0 { x = x.negate() }
+           if neg1 { y = y.negate() }
+           if neg2 { z = z.negate() }
+
+           x += &y;
+           assert_eq!(z, x);
+        });
+      }
+      |]
 
 makeRippleAdder :: Bool -> Word -> String -> [Stmt Span]
 makeRippleAdder useLastCarry inElems resName =
@@ -234,6 +390,29 @@ generateUnsafeTests size g = go g numTestCases
   go g0 i =
     let (x, g1) = generateNum g0 size
         (y, g2) = generateNum g1 size
+        z       = (x + y) .&. ((2 ^ size) - 1)
+        tcase   = Map.fromList [("x", showX x), ("y", showX y),
+                                ("z", showX z)]
+    in tcase : go g2 (i - 1)
+
+generateSafeSignedTests :: RandomGen g => Word -> g -> [Map String String]
+generateSafeSignedTests size g = go g numTestCases
+ where
+  go _  0 = []
+  go g0 i =
+    let (x, g1) = generateSignedNum g0 size
+        (y, g2) = generateSignedNum g1 size
+        tcase   = Map.fromList [("x", showX x), ("y", showX y),
+                                ("z", showX (x + y))]
+    in tcase : go g2 (i - 1)
+
+generateUnsafeSignedTests :: RandomGen g => Word -> g -> [Map String String]
+generateUnsafeSignedTests size g = go g numTestCases
+ where
+  go _  0 = []
+  go g0 i =
+    let (x, g1) = generateSignedNum g0 size
+        (y, g2) = generateSignedNum g1 size
         z       = (x + y) .&. ((2 ^ size) - 1)
         tcase   = Map.fromList [("x", showX x), ("y", showX y),
                                 ("z", showX z)]

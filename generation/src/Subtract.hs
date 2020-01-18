@@ -2,6 +2,8 @@
 module Subtract(
     safeSubtractOps
   , unsafeSubtractOps
+  , safeSignedSubtractOps
+  , unsafeSignedSubtractOps
   )
  where
 
@@ -29,6 +31,15 @@ safeSubtractOps = File {
     testCase = Just generateSafeTests
 }
 
+safeSignedSubtractOps :: File
+safeSignedSubtractOps = File {
+    predicate = \ me others -> (me + 64) `elem` others,
+    outputName = "safe_ssub",
+    isUnsigned = True,
+    generator = declareSafeSignedSubtractOperators,
+    testCase = Just generateSafeSignedTests
+}
+
 unsafeSubtractOps :: File
 unsafeSubtractOps = File {
     predicate = \ _ _ -> True,
@@ -36,6 +47,15 @@ unsafeSubtractOps = File {
     isUnsigned = True,
     generator = declareUnsafeSubtractOperators,
     testCase = Just generateUnsafeTests
+}
+
+unsafeSignedSubtractOps :: File
+unsafeSignedSubtractOps = File {
+    predicate = \ _ _ -> True,
+    outputName = "unsafe_ssub",
+    isUnsigned = True,
+    generator = declareUnsafeSignedSubtractOperators,
+    testCase = Just generateUnsafeSignedTests
 }
 
 declareSafeSubtractOperators :: Word -> [Word] -> SourceFile Span
@@ -106,6 +126,70 @@ declareSafeSubtractOperators bitsize _ =
       }
       |]
 
+declareSafeSignedSubtractOperators :: Word -> [Word] -> SourceFile Span
+declareSafeSignedSubtractOperators bitsize _ =
+  let sname = mkIdent ("I" ++ show bitsize)
+      dname = mkIdent ("I" ++ show (bitsize + 64))
+      fullRippleSubtract = makeRippleSubtracter True (bitsize `div` 64) "res"
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
+  in [sourceFile|
+        use core::ops::Sub;
+        use crate::CryptoNum;
+        #[cfg(test)]
+        use crate::testing::{build_test_path,run_test};
+        use crate::signed::{$$sname,$$dname};
+
+        impl Sub for $$sname {
+          type Output = $$dname;
+
+          fn sub(self, rhs: $$sname) -> $$dname {
+             &self - &rhs
+          }
+        }
+
+        impl<'a> Sub<&'a $$sname> for $$sname {
+          type Output = $$dname;
+
+          fn sub(self, rhs: &$$sname) -> $$dname {
+            &self - rhs
+          }
+        }
+
+        impl<'a> Sub<$$sname> for &'a $$sname {
+          type Output = $$dname;
+
+          fn sub(self, rhs: $$sname) -> $$dname {
+            self - &rhs
+          }
+        }
+
+        impl<'a,'b> Sub<&'a $$sname> for &'b $$sname {
+          type Output = $$dname;
+
+          fn sub(self, rhs: &$$sname) -> $$dname {
+            panic!("sub")
+          }
+        }
+
+       #[cfg(test)]
+       #[allow(non_snake_case)]
+       #[test]
+       fn KATs() {
+         run_test(build_test_path("safe_sub", $$(testFileLit)), 3, |case| {
+           let (neg0, xbytes) = case.get("x").unwrap();
+           let (neg1, ybytes) = case.get("y").unwrap();
+           let (neg2, zbytes) = case.get("z").unwrap();
+
+           assert!(!neg0 && !neg1 && !neg2);
+           let x = $$sname::from_bytes(&xbytes);
+           let y = $$sname::from_bytes(&ybytes);
+           let z = $$dname::from_bytes(&zbytes);
+
+           assert_eq!(z, x - y);
+        });
+      }
+      |]
+
 declareUnsafeSubtractOperators :: Word -> [Word] -> SourceFile Span
 declareUnsafeSubtractOperators bitsize _ =
   let sname = mkIdent ("U" ++ show bitsize)
@@ -151,6 +235,52 @@ declareUnsafeSubtractOperators bitsize _ =
       }
       |]
 
+declareUnsafeSignedSubtractOperators :: Word -> [Word] -> SourceFile Span
+declareUnsafeSignedSubtractOperators bitsize _ =
+  let sname = mkIdent ("I" ++ show bitsize)
+      fullRippleSubtract = makeRippleSubtracter False (bitsize `div` 64) "self"
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
+  in [sourceFile|
+        use core::ops::SubAssign;
+        #[cfg(test)]
+        use crate::CryptoNum;
+        #[cfg(test)]
+        use crate::testing::{build_test_path,run_test};
+        use crate::signed::$$sname;
+
+        impl SubAssign for $$sname {
+          fn sub_assign(&mut self, rhs: Self) {
+            self.sub_assign(&rhs);
+          }
+        }
+
+        impl<'a> SubAssign<&'a $$sname> for $$sname {
+          fn sub_assign(&mut self, rhs: &Self) {
+            panic!("sub_assign")
+          }
+        }
+
+       #[cfg(test)]
+       #[allow(non_snake_case)]
+       #[test]
+       fn KATs() {
+         run_test(build_test_path("unsafe_ssub", $$(testFileLit)), 3, |case| {
+           let (neg0, xbytes) = case.get("x").unwrap();
+           let (neg1, ybytes) = case.get("y").unwrap();
+           let (neg2, zbytes) = case.get("z").unwrap();
+
+           let mut x = $$sname::from_bytes(&xbytes);
+           let mut y = $$sname::from_bytes(&ybytes);
+           let mut z = $$sname::from_bytes(&zbytes);
+           if neg0 { x = x.negate(); }
+           if neg1 { y = y.negate(); }
+           if neg2 { z = z.negate(); }
+
+           x -= &y;
+           assert_eq!(z, x);
+        });
+      }
+      |]
 
 makeRippleSubtracter :: Bool -> Word -> String -> [Stmt Span]
 makeRippleSubtracter useLastCarry inElems resName =
@@ -206,6 +336,20 @@ generateSafeTests size g = go g numTestCases
                                       ("z", showX r)]
     in tcase : go g2 (i - 1)
 
+generateSafeSignedTests :: RandomGen g => Word -> g -> [Map String String]
+generateSafeSignedTests size g = go g numTestCases
+ where
+  go _  0 = []
+  go g0 i =
+    let (x, g1)       = generateSignedNum g0 size
+        (y, g2)       = generateSignedNum g1 size
+        r | x < y     = (2 ^ (size + 64)) + (x - y)
+          | otherwise = x - y
+        tcase         = Map.fromList [("x", showX x),
+                                      ("y", showX y),
+                                      ("z", showX r)]
+    in tcase : go g2 (i - 1)
+
 generateUnsafeTests :: RandomGen g => Word -> g -> [Map String String]
 generateUnsafeTests size g = go g numTestCases
  where
@@ -213,6 +357,18 @@ generateUnsafeTests size g = go g numTestCases
   go g0 i =
     let (x, g1) = generateNum g0 size
         (y, g2) = generateNum g1 size
+        z       = (x - y) .&. ((2 ^ size) - 1)
+        tcase   = Map.fromList [("x", showX x), ("y", showX y),
+                                ("z", showX z)]
+    in tcase : go g2 (i - 1)
+
+generateUnsafeSignedTests :: RandomGen g => Word -> g -> [Map String String]
+generateUnsafeSignedTests size g = go g numTestCases
+ where
+  go _  0 = []
+  go g0 i =
+    let (x, g1) = generateSignedNum g0 size
+        (y, g2) = generateSignedNum g1 size
         z       = (x - y) .&. ((2 ^ size) - 1)
         tcase   = Map.fromList [("x", showX x), ("y", showX y),
                                 ("z", showX z)]

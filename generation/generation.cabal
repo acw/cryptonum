@@ -41,6 +41,7 @@ library
                        Gen,
                        Generators,
                        Karatsuba,
+                       ModInv,
                        ModOps,
                        Multiply,
                        Scale,

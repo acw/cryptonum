@@ -1,5 +1,5 @@
 {-# LANGUAGE QuasiQuotes #-}
-module Shift(shiftOps)
+module Shift(shiftOps, signedShiftOps)
  where
 
 import Data.Bits(shiftL,shiftR)
@@ -24,6 +24,15 @@ shiftOps = File {
     isUnsigned = True,
     generator = declareShiftOperators,
     testCase = Just generateTests
+}
+
+signedShiftOps :: File
+signedShiftOps = File {
+    predicate = \ _ _ -> True,
+    outputName = "sshift",
+    isUnsigned = False,
+    generator = declareSignedShiftOperators,
+    testCase = Just generateSignedTests
 }
 
 declareShiftOperators :: Word -> [Word] -> SourceFile Span
@@ -90,6 +99,68 @@ declareShiftOperators bitsize _ =
            let s = usize::try_from($$struct_name::from_bytes(sbytes)).unwrap();
            let l = $$struct_name::from_bytes(lbytes);
            let r = $$struct_name::from_bytes(rbytes);
+
+           assert_eq!(l, &x << s);
+           assert_eq!(r, &x >> s);
+         });
+       }
+     |]
+
+declareSignedShiftOperators :: Word -> [Word] -> SourceFile Span
+declareSignedShiftOperators bitsize _ =
+  let struct_name = mkIdent ("I" ++ show bitsize)
+      entries = bitsize `div` 64
+      unsignedShifts = generateUnsigneds struct_name
+      shlUsizeImpls = generateBaseUsizes struct_name
+      shlActualImpl = concatMap actualShlImplLines [1..entries-1]
+      shrActualImpl = concatMap (actualShrImplLines entries) (reverse [0..entries-1])
+      resAssign = map reassignSelf [0..entries-1]
+      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
+  in [sourceFile|
+       #[cfg(test)]
+       use core::convert::TryFrom;
+       use core::ops::{Shl,ShlAssign};
+       use core::ops::{Shr,ShrAssign};
+       #[cfg(test)]
+       use crate::CryptoNum;
+       #[cfg(test)]
+       use crate::testing::{build_test_path,run_test};
+       use super::$$struct_name;
+
+       impl ShlAssign<usize> for $$struct_name {
+         fn shl_assign(&mut self, rhs: usize) {
+           panic!("shl_assign")
+         }
+       }
+
+       impl ShrAssign<usize> for $$struct_name {
+         fn shr_assign(&mut self, rhs: usize) {
+           panic!("shr_assign")
+         }
+       }
+
+       $@{shlUsizeImpls}
+       $@{unsignedShifts}
+
+       #[cfg(test)]
+       #[allow(non_snake_case)]
+       #[test]
+       fn KATs() {
+         run_test(build_test_path("shift", $$(testFileLit)), 4, |case| {
+           let (neg0, xbytes) = case.get("x").unwrap();
+           let (neg1, sbytes) = case.get("s").unwrap();
+           let (neg2, lbytes) = case.get("l").unwrap();
+           let (neg3, rbytes) = case.get("r").unwrap();
+
+           assert!(!neg1);
+           let mut x = $$struct_name::from_bytes(xbytes);
+           let mut l = $$struct_name::from_bytes(lbytes);
+           let mut r = $$struct_name::from_bytes(rbytes);
+
+           if neg0 { x = x.negate() }
+           if neg2 { l = l.negate() }
+           if neg3 { r = r.negate() }
+           let s = usize::try_from($$struct_name::from_bytes(sbytes)).unwrap();
 
            assert_eq!(l, &x << s);
            assert_eq!(r, &x >> s);
@@ -217,6 +288,21 @@ generateTests size g = go g numTestCases
   go _  0 = []
   go g0 i =
    let (x, g1) = generateNum g0 size
+       (y, g2) = generateNum g1 size
+       s       = y `mod` fromIntegral size
+       l       = modulate (x `shiftL` fromIntegral s) size
+       r       = modulate (x `shiftR` fromIntegral s) size
+       tcase   = Map.fromList [("x", showX x), ("s", showX s),
+                               ("l", showX l), ("r", showX r)]
+   in tcase : go g2 (i - 1)
+
+
+generateSignedTests :: RandomGen g => Word -> g -> [Map String String]
+generateSignedTests size g = go g numTestCases
+ where
+  go _  0 = []
+  go g0 i =
+   let (x, g1) = generateSignedNum g0 size
        (y, g2) = generateNum g1 size
        s       = y `mod` fromIntegral size
        l       = modulate (x `shiftL` fromIntegral s) size
