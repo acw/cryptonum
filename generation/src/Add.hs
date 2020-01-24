@@ -199,8 +199,7 @@ declareSafeSignedAddOperators :: Word -> [Word] -> SourceFile Span
 declareSafeSignedAddOperators bitsize _ =
   let sname = mkIdent ("I" ++ show bitsize)
       dname = mkIdent ("I" ++ show (bitsize + 64))
-      fullRippleAdd = makeRippleAdder True (bitsize `div` 64) "res"
-      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
+      testFileLit = Lit [] (Str (testFile False bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
         use core::ops::Add;
         use crate::CryptoNum;
@@ -238,7 +237,10 @@ declareSafeSignedAddOperators bitsize _ =
           type Output = $$dname;
 
           fn add(self, rhs: &$$sname) -> $$dname {
-            panic!("add")
+            let mut res = $$dname::from(self);
+            let bigrhs  = $$dname::from(rhs);
+            res += bigrhs;
+            res
           }
         }
 
@@ -261,9 +263,9 @@ declareSafeSignedAddOperators bitsize _ =
            let mut x = $$sname::from_bytes(&xbytes);
            let mut y = $$sname::from_bytes(&ybytes);
            let mut z = $$dname::from_bytes(&zbytes);
-           if neg0 { x = x.negate() }
-           if neg1 { y = y.negate() }
-           if neg2 { z = z.negate() }
+           if *neg0 { x = -x }
+           if *neg1 { y = -y }
+           if *neg2 { z = -z }
 
            assert_eq!(z, x + y);
         });
@@ -273,8 +275,7 @@ declareSafeSignedAddOperators bitsize _ =
 declareUnsafeSignedAddOperators :: Word -> [Word] -> SourceFile Span
 declareUnsafeSignedAddOperators bitsize _ =
   let sname = mkIdent ("I" ++ show bitsize)
-      fullRippleAdd = makeRippleAdder False (bitsize `div` 64) "self"
-      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
+      testFileLit = Lit [] (Str (testFile False bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
         use core::ops::AddAssign;
         #[cfg(test)]
@@ -287,13 +288,13 @@ declareUnsafeSignedAddOperators bitsize _ =
 
         impl AddAssign for $$sname {
           fn add_assign(&mut self, rhs: Self) {
-            self.add_assign(&rhs);
+            self.contents += rhs.contents;
           }
         }
 
         impl<'a> AddAssign<&'a $$sname> for $$sname {
           fn add_assign(&mut self, rhs: &Self) {
-            panic!("add_assign")
+            self.contents += &rhs.contents;
           }
         }
 
@@ -322,9 +323,9 @@ declareUnsafeSignedAddOperators bitsize _ =
            let mut x = $$sname::from_bytes(&xbytes);
            let mut y = $$sname::from_bytes(&ybytes);
            let mut z = $$sname::from_bytes(&zbytes);
-           if neg0 { x = x.negate() }
-           if neg1 { y = y.negate() }
-           if neg2 { z = z.negate() }
+           if *neg0 { x = -x }
+           if *neg1 { y = -y }
+           if *neg2 { z = -z }
 
            x += &y;
            assert_eq!(z, x);

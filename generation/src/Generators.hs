@@ -2,7 +2,7 @@ module Generators
  where
 
 import Numeric(showHex)
-import System.Random(RandomGen,random)
+import System.Random(RandomGen,random,randomR)
 
 generateNum :: RandomGen g => g -> Word -> (Integer, g)
 generateNum g size =
@@ -12,12 +12,10 @@ generateNum g size =
 
 generateSignedNum :: RandomGen g => g -> Word -> (Integer, g)
 generateSignedNum g size =
-  let (x, g') = random g
-      s :: Integer
-      (s, g'') = random g'
-      x' = x `mod` (2 ^ size)
-      sign = if even s then 1 else -1
-  in (x' * sign, g'')
+  let biggest = (2 ^ (size - 1)) - 1
+      smallest = - (2 ^ (size - 1))
+      (x, g') = randomR (smallest, biggest) g
+  in (x, g')
 
 modulate :: (Integral a, Integral b) => a -> b -> Integer
 modulate x size = x' `mod` (2 ^ size')

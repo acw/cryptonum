@@ -133,10 +133,7 @@ declareComparators bitsize _ =
 declareSignedComparators :: Word -> [Word] -> SourceFile Span
 declareSignedComparators bitsize _ =
   let sname = mkIdent ("I" ++ show bitsize)
-      entries = bitsize `div` 64
-      eqStatements = buildEqStatements 0 entries
-      compareExp = buildCompareExp 0 entries
-      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
+      testFileLit = Lit [] (Str (testFile False bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
        use core::cmp::{Eq,Ordering,PartialEq};
        #[cfg(test)]
@@ -157,7 +154,12 @@ declareSignedComparators bitsize _ =
 
        impl Ord for $$sname {
          fn cmp(&self, other: &Self) -> Ordering {
-           panic!("cmp")
+           match (self.is_negative(), other.is_negative()) {
+             (false, false) => self.contents.cmp(&other.contents),
+             (false, true)  => Ordering::Greater,
+             (true,  false) => Ordering::Less,
+             (true,  true)  => self.contents.cmp(&other.contents),
+           }
          }
        }
 
@@ -204,10 +206,11 @@ declareSignedComparators bitsize _ =
            let (neg6, lbytes) = case.get("l").unwrap();
            let (neg7, kbytes) = case.get("k").unwrap();
 
-           assert!(!neg0 && !neg1 && !neg2 && !neg3 &&
-                   !neg4 && !neg5 && !neg6 && !neg7);
-           let x = $$sname::from_bytes(&xbytes);
-           let y = $$sname::from_bytes(&ybytes);
+           assert!(!neg2 && !neg3 && !neg4 && !neg5 && !neg6 && !neg7);
+           let mut x = $$sname::from_bytes(&xbytes);
+           let mut y = $$sname::from_bytes(&ybytes);
+           if *neg0 { x = -x; }
+           if *neg1 { y = -y; }
            let e = 1 == ebytes[0];
            let n = 1 == nbytes[0];
            let g = 1 == gbytes[0];

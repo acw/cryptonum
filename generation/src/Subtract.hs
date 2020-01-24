@@ -130,7 +130,6 @@ declareSafeSignedSubtractOperators :: Word -> [Word] -> SourceFile Span
 declareSafeSignedSubtractOperators bitsize _ =
   let sname = mkIdent ("I" ++ show bitsize)
       dname = mkIdent ("I" ++ show (bitsize + 64))
-      fullRippleSubtract = makeRippleSubtracter True (bitsize `div` 64) "res"
       testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
         use core::ops::Sub;
@@ -238,7 +237,6 @@ declareUnsafeSubtractOperators bitsize _ =
 declareUnsafeSignedSubtractOperators :: Word -> [Word] -> SourceFile Span
 declareUnsafeSignedSubtractOperators bitsize _ =
   let sname = mkIdent ("I" ++ show bitsize)
-      fullRippleSubtract = makeRippleSubtracter False (bitsize `div` 64) "self"
       testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
         use core::ops::SubAssign;
@@ -272,9 +270,9 @@ declareUnsafeSignedSubtractOperators bitsize _ =
            let mut x = $$sname::from_bytes(&xbytes);
            let mut y = $$sname::from_bytes(&ybytes);
            let mut z = $$sname::from_bytes(&zbytes);
-           if neg0 { x = x.negate(); }
-           if neg1 { y = y.negate(); }
-           if neg2 { z = z.negate(); }
+           if *neg0 { x = -x; }
+           if *neg1 { y = -y; }
+           if *neg2 { z = -z; }
 
            x -= &y;
            assert_eq!(z, x);

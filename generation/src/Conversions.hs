@@ -97,22 +97,23 @@ declareConversions bitsize otherSizes =
 declareSignedConversions :: Word -> [Word] -> SourceFile Span
 declareSignedConversions bitsize otherSizes =
   let sname      = mkIdent ("I" ++ show bitsize)
+      uname      = mkIdent ("U" ++ show bitsize)
       entries    = bitsize `div` 64
-      u8_prims   = buildUSPrimitives sname (mkIdent "u8")    entries
-      u16_prims  = buildUSPrimitives sname (mkIdent "u16")   entries
-      u32_prims  = buildUSPrimitives sname (mkIdent "u32")   entries
-      u64_prims  = buildUSPrimitives sname (mkIdent "u64")   entries
-      usz_prims  = buildUSPrimitives sname (mkIdent "usize") entries
-      u128_prims = generateUS128Primitives sname entries
-      i8_prims   = buildSSPrimitives sname (mkIdent "i8")    entries
-      i16_prims  = buildSSPrimitives sname (mkIdent "i16")   entries
-      i32_prims  = buildSSPrimitives sname (mkIdent "i32")   entries
-      i64_prims  = buildSSPrimitives sname (mkIdent "i64")   entries
-      isz_prims  = buildSSPrimitives sname (mkIdent "isize") entries
-      i128_prims = generateSS128Primitives sname entries
+      u8_prims   = buildUSPrimitives sname (mkIdent "u8")
+      u16_prims  = buildUSPrimitives sname (mkIdent "u16")
+      u32_prims  = buildUSPrimitives sname (mkIdent "u32")
+      u64_prims  = buildUSPrimitives sname (mkIdent "u64")
+      usz_prims  = buildUSPrimitives sname (mkIdent "usize")
+      i8_prims   = buildSSPrimitives sname uname (mkIdent "i8")
+      i16_prims  = buildSSPrimitives sname uname (mkIdent "i16")
+      i32_prims  = buildSSPrimitives sname uname (mkIdent "i32")
+      i64_prims  = buildSSPrimitives sname uname (mkIdent "i64")
+      isz_prims  = buildSSPrimitives sname uname (mkIdent "isize")
+      s128_prims = generateS128Primitives sname uname entries
       others     = generateSignedCryptonumConversions bitsize otherSizes
   in [sourceFile|
        use core::convert::{From,TryFrom};
+       use core::{i8,i16,i32,i64,isize};
        use crate::CryptoNum;
        use crate::ConversionError;
        use crate::signed::*;
@@ -125,14 +126,13 @@ declareSignedConversions bitsize otherSizes =
        $@{u32_prims}
        $@{u64_prims}
        $@{usz_prims}
-       $@{u128_prims}
 
        $@{i8_prims}
        $@{i16_prims}
        $@{i32_prims}
        $@{i64_prims}
        $@{isz_prims}
-       $@{i128_prims}
+       $@{s128_prims}
 
        $@{others}
 
@@ -155,6 +155,24 @@ declareSignedConversions bitsize otherSizes =
          }
          fn u128_recovers(x: u128) -> bool {
             x == u128::try_from($$sname::from(x)).unwrap()
+         }
+         fn i8_recovers(x: i8) -> bool {
+            x == i8::try_from($$sname::from(x)).unwrap()
+         }
+         fn i16_recovers(x: i16) -> bool {
+            x == i16::try_from($$sname::from(x)).unwrap()
+         }
+         fn i32_recovers(x: i32) -> bool {
+            x == i32::try_from($$sname::from(x)).unwrap()
+         }
+         fn i64_recovers(x: i64) -> bool {
+            x == i64::try_from($$sname::from(x)).unwrap()
+         }
+         fn isize_recovers(x: isize) -> bool {
+            x == isize::try_from($$sname::from(x)).unwrap()
+         }
+         fn i128_recovers(x: i128) -> bool {
+            x == i128::try_from($$sname::from(x)).unwrap()
          }
        }
     |]
@@ -324,7 +342,7 @@ generateI128Primitives sname = [
    ]
 
 generateCryptonumConversions :: Word -> [Word] -> [Item Span]
-generateCryptonumConversions source otherSizes = concatMap convert otherSizes
+generateCryptonumConversions source = concatMap convert
  where
    sName = mkIdent ("U" ++ show source)
    --
@@ -379,8 +397,8 @@ generateCryptonumConversions source otherSizes = concatMap convert otherSizes
             |]
             ]
 
-buildUSPrimitives :: Ident -> Ident -> Word -> [Item Span]
-buildUSPrimitives sname prim entries = [
+buildUSPrimitives :: Ident -> Ident -> [Item Span]
+buildUSPrimitives sname prim = [
     [item|
         impl From<$$prim> for $$sname {
           fn from(x: $$prim) -> $$sname {
@@ -417,12 +435,18 @@ buildUSPrimitives sname prim entries = [
     |]
   ]
 
-buildSSPrimitives :: Ident -> Ident -> Word -> [Item Span]
-buildSSPrimitives sname prim entries = [
+buildSSPrimitives :: Ident -> Ident -> Ident -> [Item Span]
+buildSSPrimitives sname uname prim = [
     [item|
         impl From<$$prim> for $$sname {
           fn from(x: $$prim) -> $$sname {
-            panic!("from_signed")
+            let mut ures = $$uname::zero();
+            let topbits = if x < 0 { 0xFFFF_FFFF_FFFF_FFFF } else { 0 };
+            for x in ures.value.iter_mut() {
+              *x = topbits;
+            }
+            ures.value[0] = (x as i64) as u64;
+            $$sname{ contents: ures }
           }
         }
     |]
@@ -431,7 +455,19 @@ buildSSPrimitives sname prim entries = [
           type Error = ConversionError;
 
           fn try_from(x: &$$sname) -> Result<$$prim, ConversionError> {
-            panic!("try_from_signed")
+            let topbits = if x.is_negative() { 0xFFFF_FFFF_FFFF_FFFF } else { 0 };
+            if x.contents.value[1..].iter().any(|v| *v != topbits) {
+              return Err(ConversionError::Overflow);
+            }
+            let local_min = $$prim::MIN as i64;
+            let local_max = $$prim::MAX as i64;
+            let bottom    = x.contents.value[0] as i64;
+
+            if (bottom > local_max) || (bottom < local_min) {
+              Err(ConversionError::Overflow)
+            } else {
+              Ok(bottom as $$prim)
+            }
           }
         }
     |]
@@ -446,11 +482,80 @@ buildSSPrimitives sname prim entries = [
     |]
   ]
 
-generateUS128Primitives :: Ident -> Word -> [Item Span]
-generateUS128Primitives struct entries = []
+generateS128Primitives :: Ident -> Ident -> Word -> [Item Span]
+generateS128Primitives sname uname entries = [
+    [item|
+      impl From<u128> for $$sname {
+        fn from(x: u128) -> $$sname {
+          $$sname{ contents: $$uname::from(x) }
+        }
+      }
+    |],
+    [item|
+      impl From<i128> for $$sname {
+        fn from(x: i128) -> $$sname {
+          let mut basic = $$uname::from(x as u128);
+          if x < 0 {
+            for x in basic.value[2..].iter_mut() {
+              *x = 0xFFFF_FFFF_FFFF_FFFF;
+            }
+          }
+          $$sname{ contents: basic }
+        }
+      }
+    |],
+    [item|
+      impl TryFrom<$$sname> for u128 {
+        type Error = ConversionError;
 
-generateSS128Primitives :: Ident -> Word -> [Item Span]
-generateSS128Primitives struct entries = []
+        fn try_from(x: $$sname) -> Result<u128,ConversionError> {
+          u128::try_from(&x)
+        }
+      }
+    |],
+    [item|
+      impl TryFrom<$$sname> for i128 {
+        type Error = ConversionError;
+
+        fn try_from(x: $$sname) -> Result<i128,ConversionError> {
+          i128::try_from(&x)
+        }
+      }
+    |],
+    [item|
+      impl<'a> TryFrom<&'a $$sname> for u128 {
+        type Error = ConversionError;
+
+        fn try_from(x: &$$sname) -> Result<u128,ConversionError> {
+          if x.is_negative() {
+            return Err(ConversionError::Overflow);
+          }
+          u128::try_from(&x.contents)
+        }
+      }
+    |],
+    [item|
+      impl<'a> TryFrom<&'a $$sname> for i128 {
+        type Error = ConversionError;
+
+        fn try_from(x: &$$sname) -> Result<i128,ConversionError> {
+          let isneg = x.is_negative();
+          let target_top = if isneg { 0xFFFF_FFFF_FFFF_FFFF } else { 0x0 };
+          let mut worked = true;
+
+          worked &= x.contents.value[2..].iter().all(|v| *v == target_top);
+          worked &= (x.contents.value[1] >> 63 == 1) == isneg;
+
+          let res = ((x.contents.value[1] as u128) << 64) | (x.contents.value[0] as u128);
+          if worked {
+            Ok(res as i128)
+          } else {
+            Err(ConversionError::Overflow)
+          }
+        }
+      }
+    |]
+  ]
 
 generateSignedCryptonumConversions :: Word -> [Word] -> [Item Span]
 generateSignedCryptonumConversions source otherSizes = concatMap convert otherSizes
@@ -463,7 +568,8 @@ generateSignedCryptonumConversions source otherSizes = concatMap convert otherSi
          sEntries = toLit (source `div` 64)
          tEntries = toLit (target `div` 64)
      in case compare source target of
-          LT -> []
+          LT -> [
+           ]
           EQ -> [
             [item|
               impl TryFrom<$$tuName> for $$sName {
@@ -511,5 +617,34 @@ generateSignedCryptonumConversions source otherSizes = concatMap convert otherSi
               }
             |]
            ]
-          GT -> []
+          GT -> [
+            [item|
+              impl From<$$tuName> for $$sName {
+                fn from(x: $$tuName) -> $$sName {
+                  $$sName::from(&x)
+                }
+              }
+            |],
+            [item|
+              impl<'a> From<&'a $$tuName> for $$sName {
+                fn from(x: &$$tuName) -> $$sName {
+                  panic!("from1")
+                }
+              }
+            |],
+            [item|
+              impl From<$$tsName> for $$sName {
+                fn from(x: $$tsName) -> $$sName {
+                  $$sName::from(&x)
+                }
+              }
+            |],
+            [item|
+              impl<'a> From<&'a $$tsName> for $$sName {
+                fn from(x: &$$tsName) -> $$sName {
+                  panic!("from2")
+                }
+              }
+            |]   
+           ]
 

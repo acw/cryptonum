@@ -157,9 +157,9 @@ declareSignedShiftOperators bitsize _ =
            let mut l = $$struct_name::from_bytes(lbytes);
            let mut r = $$struct_name::from_bytes(rbytes);
 
-           if neg0 { x = x.negate() }
-           if neg2 { l = l.negate() }
-           if neg3 { r = r.negate() }
+           if *neg0 { x = -x }
+           if *neg2 { l = -l }
+           if *neg3 { r = -r }
            let s = usize::try_from($$struct_name::from_bytes(sbytes)).unwrap();
 
            assert_eq!(l, &x << s);
