@@ -42,8 +42,8 @@ declareShiftOperators bitsize _ =
       unsignedShifts = generateUnsigneds struct_name
       shlUsizeImpls = generateBaseUsizes struct_name
       shlActualImpl = concatMap actualShlImplLines [1..entries-1]
-      shrActualImpl = concatMap (actualShrImplLines entries) (reverse [0..entries-1])
-      resAssign = map reassignSelf [0..entries-1]
+      shrActualImpl = concatMap (actualShrImplLines False entries) (reverse [0..entries-1])
+      resAssign = map (reassignSelf False) [0..entries-1]
       testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
        #[cfg(test)]
@@ -71,10 +71,11 @@ declareShiftOperators bitsize _ =
 
        impl ShrAssign<usize> for $$struct_name {
          fn shr_assign(&mut self, rhs: usize) {
-           let digits  = rhs / 64;
-           let bits    = rhs % 64;
-           let mask    = !(0xFFFFFFFFFFFFFFFFu64 << bits);
-           let shift   = (64 - bits) as u32;
+           let digits     = rhs / 64;
+           let bits       = rhs % 64;
+           let mask       = !(0xFFFFFFFFFFFFFFFFu64 << bits);
+           let shift      = (64 - bits) as u32;
+           let arith_base = 0;
 
            $@{shrActualImpl}
            $@{resAssign}
@@ -112,10 +113,9 @@ declareSignedShiftOperators bitsize _ =
       entries = bitsize `div` 64
       unsignedShifts = generateUnsigneds struct_name
       shlUsizeImpls = generateBaseUsizes struct_name
-      shlActualImpl = concatMap actualShlImplLines [1..entries-1]
-      shrActualImpl = concatMap (actualShrImplLines entries) (reverse [0..entries-1])
-      resAssign = map reassignSelf [0..entries-1]
-      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
+      shrActualImpl = concatMap (actualShrImplLines True entries) (reverse [0..entries-1])
+      resAssign = map (reassignSelf True) [0..entries-1]
+      testFileLit = Lit [] (Str (testFile False bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
        #[cfg(test)]
        use core::convert::TryFrom;
@@ -129,13 +129,24 @@ declareSignedShiftOperators bitsize _ =
 
        impl ShlAssign<usize> for $$struct_name {
          fn shl_assign(&mut self, rhs: usize) {
-           panic!("shl_assign")
+           self.contents <<= rhs;
          }
        }
 
        impl ShrAssign<usize> for $$struct_name {
          fn shr_assign(&mut self, rhs: usize) {
-           panic!("shr_assign")
+           let digits     = rhs / 64;
+           let bits       = rhs % 64;
+           let mask       = !(0xFFFFFFFFFFFFFFFFu64 << bits);
+           let shift      = (64 - bits) as u32;
+           let arith_base = if self.is_negative() {
+              0xFFFF_FFFF_FFFF_FFFFu64
+           } else {
+              0
+           };
+
+           $@{shrActualImpl}
+           $@{resAssign}
          }
        }
 
@@ -146,7 +157,7 @@ declareSignedShiftOperators bitsize _ =
        #[allow(non_snake_case)]
        #[test]
        fn KATs() {
-         run_test(build_test_path("shift", $$(testFileLit)), 4, |case| {
+         run_test(build_test_path("sshift", $$(testFileLit)), 4, |case| {
            let (neg0, xbytes) = case.get("x").unwrap();
            let (neg1, sbytes) = case.get("s").unwrap();
            let (neg2, lbytes) = case.get("l").unwrap();
@@ -185,8 +196,8 @@ actualShlImplLines i =
   , [stmt|let $$resi = ($$basei << bits) | $$carryi; |]
   ]
 
-actualShrImplLines :: Word -> Word -> [Stmt Span]
-actualShrImplLines entries i =
+actualShrImplLines :: Bool -> Word -> Word -> [Stmt Span]
+actualShrImplLines prefix_field entries i =
   let basei = mkIdent ("base" ++ show i)
       carryi = mkIdent ("carry" ++ show i)
       carryi1 = mkIdent ("carry" ++ show (i + 1))
@@ -194,22 +205,27 @@ actualShrImplLines entries i =
       resi = mkIdent ("res" ++ show i)
       liti = toLit i
       litentries = toLit entries
-  in [
-    [stmt|let $$targeti = $$(liti) + digits; |]
-  , [stmt|let $$basei = if $$targeti >= $$(litentries) { 0 } else { self.value[$$targeti] }; |]
+      sourceI | prefix_field = [expr| self.contents.value[$$targeti] |]
+              | otherwise    = [expr| self.value[$$targeti] |]
+  in concat [
+    [[stmt|let $$targeti = $$(liti) + digits; |]]
+  , [[stmt|let $$basei = if $$targeti >= $$(litentries) { arith_base } else { $$(sourceI) }; |]]
+  , if i == (entries - 1)
+      then [[stmt| let ($$carryi1,_) = (arith_base & mask).overflowing_shl(shift); |]]
+      else []
   , if i == 0
-      then [stmt| {} |];
-      else [stmt|let ($$carryi,_) = ($$basei & mask).overflowing_shl(shift); |]
-  , if (i + 1) == entries
-      then [stmt|let $$resi =  $$basei >> bits             ; |]
-      else [stmt|let $$resi = ($$basei >> bits) | $$carryi1; |]
+      then []
+      else [[stmt|let ($$carryi,_) = ($$basei & mask).overflowing_shl(shift); |]]
+  , [[stmt|let $$resi = ($$basei >> bits) | $$carryi1; |]]
   ]
 
-reassignSelf :: Word -> Stmt Span
-reassignSelf i =
+reassignSelf :: Bool -> Word -> Stmt Span
+reassignSelf prefix_field i =
   let liti = toLit i
       resi = mkIdent ("res" ++ show i)
-  in [stmt| self.value[$$(liti)] = $$resi; |]
+  in if prefix_field
+       then [stmt| self.contents.value[$$(liti)] = $$resi; |]
+       else [stmt| self.value[$$(liti)]          = $$resi; |]
 
 generateBaseUsizes :: Ident -> [Item Span]
 generateBaseUsizes sname =

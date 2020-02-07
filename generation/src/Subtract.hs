@@ -237,7 +237,7 @@ declareUnsafeSubtractOperators bitsize _ =
 declareUnsafeSignedSubtractOperators :: Word -> [Word] -> SourceFile Span
 declareUnsafeSignedSubtractOperators bitsize _ =
   let sname = mkIdent ("I" ++ show bitsize)
-      testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
+      testFileLit = Lit [] (Str (testFile False bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
         use core::ops::SubAssign;
         #[cfg(test)]
