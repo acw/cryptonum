@@ -567,8 +567,58 @@ generateSignedCryptonumConversions source otherSizes = concatMap convert otherSi
          tuName = mkIdent ("U" ++ show target)
          sEntries = toLit (source `div` 64)
          tEntries = toLit (target `div` 64)
+         sTop     = toLit ((source `div` 64) - 1)
+         extensions = map (\ x ->
+                            let xLit = toLit x
+                            in [stmt| res.contents.value[$$(xLit)] = extension; |])
+                          [(source `div` 64)..((target `div` 64) - 1)]
      in case compare source target of
           LT -> [
+            [item|
+             impl<'a> From<&'a $$sName> for $$tsName {
+               fn from(x: &$$sName) -> $$tsName {
+                 let mut res = $$tsName::zero();
+                 res.contents.value[0..$$(sEntries)].copy_from_slice(&x.contents.value);
+                 let extension = if x.contents.value[$$(sTop)] & 0x8000_0000_0000_0000 == 0 {
+                    0
+                 } else {
+                    0xFFFF_FFFF_FFFF_FFFFu64
+                 };
+                 $@{extensions}
+                 res
+               }
+             }
+            |],
+            [item|
+             impl From<$$sName> for $$tsName {
+               fn from(x: $$sName) -> $$tsName {
+                 $$tsName::from(&x)
+               }
+             }
+            |],
+            [item|
+             impl<'a> TryFrom<&'a $$sName> for $$tuName {
+               type Error = ConversionError;
+
+
+               fn try_from(x: &$$sName) -> Result<$$tuName,ConversionError> {
+                 if x.is_negative() {
+                   Err(ConversionError::NegativeToUnsigned)
+                 } else {
+                   Ok($$tuName::from(&x.contents))
+                 }
+               }
+             }
+            |],
+            [item|
+             impl TryFrom<$$sName> for $$tuName {
+               type Error = ConversionError;
+
+               fn try_from(x: $$sName) -> Result<$$tuName,ConversionError> {
+                 $$tuName::try_from(&x)
+               }
+             }
+            |]
            ]
           EQ -> [
             [item|
@@ -618,33 +668,5 @@ generateSignedCryptonumConversions source otherSizes = concatMap convert otherSi
             |]
            ]
           GT -> [
-            [item|
-              impl From<$$tuName> for $$sName {
-                fn from(x: $$tuName) -> $$sName {
-                  $$sName::from(&x)
-                }
-              }
-            |],
-            [item|
-              impl<'a> From<&'a $$tuName> for $$sName {
-                fn from(x: &$$tuName) -> $$sName {
-                  panic!("from1")
-                }
-              }
-            |],
-            [item|
-              impl From<$$tsName> for $$sName {
-                fn from(x: $$tsName) -> $$sName {
-                  $$sName::from(&x)
-                }
-              }
-            |],
-            [item|
-              impl<'a> From<&'a $$tsName> for $$sName {
-                fn from(x: &$$tsName) -> $$sName {
-                  panic!("from2")
-                }
-              }
-            |]   
            ]
 

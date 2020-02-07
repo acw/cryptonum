@@ -35,7 +35,7 @@ safeSignedSubtractOps :: File
 safeSignedSubtractOps = File {
     predicate = \ me others -> (me + 64) `elem` others,
     outputName = "safe_ssub",
-    isUnsigned = True,
+    isUnsigned = False,
     generator = declareSafeSignedSubtractOperators,
     testCase = Just generateSafeSignedTests
 }
@@ -53,7 +53,7 @@ unsafeSignedSubtractOps :: File
 unsafeSignedSubtractOps = File {
     predicate = \ _ _ -> True,
     outputName = "unsafe_ssub",
-    isUnsigned = True,
+    isUnsigned = False,
     generator = declareUnsafeSignedSubtractOperators,
     testCase = Just generateUnsafeSignedTests
 }
@@ -166,7 +166,7 @@ declareSafeSignedSubtractOperators bitsize _ =
           type Output = $$dname;
 
           fn sub(self, rhs: &$$sname) -> $$dname {
-            panic!("sub")
+            $$dname{ contents: &self.contents - &rhs.contents }
           }
         }
 
@@ -254,7 +254,7 @@ declareUnsafeSignedSubtractOperators bitsize _ =
 
         impl<'a> SubAssign<&'a $$sname> for $$sname {
           fn sub_assign(&mut self, rhs: &Self) {
-            panic!("sub_assign")
+            self.contents -= &rhs.contents;
           }
         }
 
