@@ -98,7 +98,6 @@ declareSignedConversions :: Word -> [Word] -> SourceFile Span
 declareSignedConversions bitsize otherSizes =
   let sname      = mkIdent ("I" ++ show bitsize)
       uname      = mkIdent ("U" ++ show bitsize)
-      entries    = bitsize `div` 64
       u8_prims   = buildUSPrimitives sname (mkIdent "u8")
       u16_prims  = buildUSPrimitives sname (mkIdent "u16")
       u32_prims  = buildUSPrimitives sname (mkIdent "u32")
@@ -109,7 +108,7 @@ declareSignedConversions bitsize otherSizes =
       i32_prims  = buildSSPrimitives sname uname (mkIdent "i32")
       i64_prims  = buildSSPrimitives sname uname (mkIdent "i64")
       isz_prims  = buildSSPrimitives sname uname (mkIdent "isize")
-      s128_prims = generateS128Primitives sname uname entries
+      s128_prims = generateS128Primitives sname uname
       others     = generateSignedCryptonumConversions bitsize otherSizes
   in [sourceFile|
        use core::convert::{From,TryFrom};
@@ -482,8 +481,8 @@ buildSSPrimitives sname uname prim = [
     |]
   ]
 
-generateS128Primitives :: Ident -> Ident -> Word -> [Item Span]
-generateS128Primitives sname uname entries = [
+generateS128Primitives :: Ident -> Ident -> [Item Span]
+generateS128Primitives sname uname = [
     [item|
       impl From<u128> for $$sname {
         fn from(x: u128) -> $$sname {
@@ -560,7 +559,8 @@ generateS128Primitives sname uname entries = [
 generateSignedCryptonumConversions :: Word -> [Word] -> [Item Span]
 generateSignedCryptonumConversions source otherSizes = concatMap convert otherSizes
  where
-   sName = mkIdent ("I" ++ show source)
+   suName = mkIdent ("U" ++ show source)
+   ssName = mkIdent ("I" ++ show source)
    --
    convert target =
      let tsName = mkIdent ("I" ++ show target)
@@ -575,8 +575,8 @@ generateSignedCryptonumConversions source otherSizes = concatMap convert otherSi
      in case compare source target of
           LT -> [
             [item|
-             impl<'a> From<&'a $$sName> for $$tsName {
-               fn from(x: &$$sName) -> $$tsName {
+             impl<'a> From<&'a $$ssName> for $$tsName {
+               fn from(x: &$$ssName) -> $$tsName {
                  let mut res = $$tsName::zero();
                  res.contents.value[0..$$(sEntries)].copy_from_slice(&x.contents.value);
                  let extension = if x.contents.value[$$(sTop)] & 0x8000_0000_0000_0000 == 0 {
@@ -590,18 +590,32 @@ generateSignedCryptonumConversions source otherSizes = concatMap convert otherSi
              }
             |],
             [item|
-             impl From<$$sName> for $$tsName {
-               fn from(x: $$sName) -> $$tsName {
+             impl From<$$ssName> for $$tsName {
+               fn from(x: $$ssName) -> $$tsName {
                  $$tsName::from(&x)
                }
              }
             |],
             [item|
-             impl<'a> TryFrom<&'a $$sName> for $$tuName {
+             impl<'a> From<&'a $$suName> for $$tsName {
+               fn from(x: &$$suName) -> $$tsName {
+                 $$tsName{ contents: $$tuName::from(x) }
+               }
+             }
+            |],
+            [item|
+             impl From<$$suName> for $$tsName {
+               fn from(x: $$suName) -> $$tsName {
+                 $$tsName{ contents: $$tuName::from(x) }
+               }
+             }
+            |],
+            [item|
+             impl<'a> TryFrom<&'a $$ssName> for $$tuName {
                type Error = ConversionError;
 
 
-               fn try_from(x: &$$sName) -> Result<$$tuName,ConversionError> {
+               fn try_from(x: &$$ssName) -> Result<$$tuName,ConversionError> {
                  if x.is_negative() {
                    Err(ConversionError::NegativeToUnsigned)
                  } else {
@@ -611,10 +625,10 @@ generateSignedCryptonumConversions source otherSizes = concatMap convert otherSi
              }
             |],
             [item|
-             impl TryFrom<$$sName> for $$tuName {
+             impl TryFrom<$$ssName> for $$tuName {
                type Error = ConversionError;
 
-               fn try_from(x: $$sName) -> Result<$$tuName,ConversionError> {
+               fn try_from(x: $$ssName) -> Result<$$tuName,ConversionError> {
                  $$tuName::try_from(&x)
                }
              }
@@ -622,11 +636,11 @@ generateSignedCryptonumConversions source otherSizes = concatMap convert otherSi
            ]
           EQ -> [
             [item|
-              impl TryFrom<$$tuName> for $$sName {
+              impl TryFrom<$$tuName> for $$ssName {
                 type Error = ConversionError;
 
-                fn try_from(x: $$tuName) -> Result<$$sName,ConversionError> {
-                  let res = $$sName{ contents: x };
+                fn try_from(x: $$tuName) -> Result<$$ssName,ConversionError> {
+                  let res = $$ssName{ contents: x };
 
                   if res.is_negative() {
                     return Err(ConversionError::Overflow);
@@ -637,19 +651,19 @@ generateSignedCryptonumConversions source otherSizes = concatMap convert otherSi
               }
             |],
             [item|
-              impl<'a> TryFrom<&'a $$tuName> for $$sName {
+              impl<'a> TryFrom<&'a $$tuName> for $$ssName {
                 type Error = ConversionError;
 
-                fn try_from(x: &$$tuName) -> Result<$$sName,ConversionError> {
-                  $$sName::try_from(x.clone())
+                fn try_from(x: &$$tuName) -> Result<$$ssName,ConversionError> {
+                  $$ssName::try_from(x.clone())
                 }
               }
             |],
             [item|
-              impl TryFrom<$$sName> for $$tuName {
+              impl TryFrom<$$ssName> for $$tuName {
                 type Error = ConversionError;
 
-                fn try_from(x: $$sName) -> Result<$$tuName,ConversionError> {
+                fn try_from(x: $$ssName) -> Result<$$tuName,ConversionError> {
                   if x.is_negative() {
                     return Err(ConversionError::Overflow);
                   }
@@ -658,15 +672,66 @@ generateSignedCryptonumConversions source otherSizes = concatMap convert otherSi
               }
             |],
             [item|
-              impl<'a> TryFrom<&'a $$sName> for $$tuName {
+              impl<'a> TryFrom<&'a $$ssName> for $$tuName {
                 type Error = ConversionError;
 
-                fn try_from(x: &$$sName) -> Result<$$tuName,ConversionError> {
+                fn try_from(x: &$$ssName) -> Result<$$tuName,ConversionError> {
                   $$tuName::try_from(x.clone())
                 }
               }
             |]
            ]
           GT -> [
+            [item|
+             impl<'a> TryFrom<&'a $$ssName> for $$tsName {
+               type Error = ConversionError;
+
+               fn try_from(x: &$$ssName) -> Result<$$tsName,ConversionError> {
+                 let required_top = if x.is_negative() {
+                    0xFFFF_FFFF_FFFF_FFFF
+                 } else {
+                    0
+                 };
+                 if x.contents.value.iter().skip($$(tEntries)).all(|x| *x == required_top) {
+                    let mut res = $$tsName::zero();
+                    res.contents.value.copy_from_slice(&x.contents.value[0..$$(tEntries)]);
+                    Ok(res)
+                 } else {
+                    Err(ConversionError::Overflow)
+                 }
+               }
+             }
+            |],
+            [item|
+             impl TryFrom<$$ssName> for $$tsName {
+               type Error = ConversionError;
+
+               fn try_from(x: $$ssName) -> Result<$$tsName,ConversionError> {
+                 $$tsName::try_from(&x)
+               }
+             }
+            |],
+            [item|
+             impl<'a> TryFrom<&'a $$ssName> for $$tuName {
+               type Error = ConversionError;
+
+               fn try_from(x: &$$ssName) -> Result<$$tuName,ConversionError> {
+                 if x.is_negative() {
+                   Err(ConversionError::NegativeToUnsigned)
+                 } else {
+                   $$tuName::try_from(&x.contents)
+                 }
+               }
+             }
+            |],
+            [item|
+             impl TryFrom<$$ssName> for $$tuName {
+               type Error = ConversionError;
+
+               fn try_from(x: $$ssName) -> Result<$$tuName,ConversionError> {
+                 $$tuName::try_from(&x)
+               }
+             }
+            |]
            ]
 

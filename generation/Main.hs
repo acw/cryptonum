@@ -47,6 +47,7 @@ unsignedFiles = [
   , conversions
   , cryptoNum
   , divisionOps
+  , generateModInvOps
   , modulusOps
   , safeAddOps
   , safeMultiplyOps
@@ -61,8 +62,7 @@ unsignedFiles = [
 
 signedFiles :: [File]
 signedFiles = [
-    generateModInvOps
-  , safeSignedAddOps
+    safeSignedAddOps
   , safeSignedSubtractOps
   , signedBaseOps
   , signedComparisons
