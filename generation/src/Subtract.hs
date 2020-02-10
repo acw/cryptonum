@@ -133,6 +133,7 @@ declareSafeSignedSubtractOperators bitsize _ =
       testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
         use core::ops::Sub;
+        #[cfg(test)]
         use crate::CryptoNum;
         #[cfg(test)]
         use crate::testing::{build_test_path,run_test};

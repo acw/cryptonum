@@ -36,13 +36,15 @@ declareModInv bitsize _ =
         testFileLit = Lit [] (Str (testFile True bitsize) Cooked Unsuffixed mempty) mempty
     in [sourceFile|
         use core::convert::TryFrom;
-        use crate::CryptoNum;
+        use crate::{CryptoNum,ModularInversion};
         use crate::signed::$$sname;
         #[cfg(test)]
         use crate::testing::{build_test_path,run_test};
         use crate::unsigned::$$uname;
 
-        impl $$uname {
+        impl ModularInversion for $$uname {
+            type Signed = $$sname;
+
             fn modinv(&self, phi: &$$uname) -> Option<$$uname>
             {
                 let (_, mut b, g) = phi.egcd(&self);

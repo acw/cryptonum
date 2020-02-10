@@ -202,6 +202,7 @@ declareSafeSignedAddOperators bitsize _ =
       testFileLit = Lit [] (Str (testFile False bitsize) Cooked Unsuffixed mempty) mempty
   in [sourceFile|
         use core::ops::Add;
+        #[cfg(test)]
         use crate::CryptoNum;
         #[cfg(test)]
         use crate::testing::{build_test_path,run_test};

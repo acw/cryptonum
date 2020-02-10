@@ -52,8 +52,10 @@ pub trait DivMod: Sized {
     fn divmod(&self, rhs: &Self) -> (Self, Self);
 }
 
-// Provides support for a variety of modular mathematical operations, as beloved
-// by cryptographers.
+/// Provides support for a variety of modular mathematical operations, as beloved
+/// by cryptographers. Note that modular inversion and GCD calculations are shoved
+/// off into another trait, because they operate on slightly different number
+/// types.
 pub trait ModularOperations<Modulus=Self> {
     // reduce the current value by the provided modulus
     fn reduce(&self, m: &Modulus) -> Self;
@@ -64,6 +66,18 @@ pub trait ModularOperations<Modulus=Self> {
     // modular exponentiation!
     fn modexp(&self, e: &Self, m: &Modulus) -> Self;
 
+}
+
+/// Provide support for modular inversion and GCD operations, which are useful
+/// here and there. We provide default implementations for `modinv` and
+/// `gcd_is_one`, based on the implementation of `egcd`. The built-in versions
+/// explicitly define the latter, though, to improve performance.
+pub trait ModularInversion: Sized {
+    type Signed;
+
+    fn modinv(&self, phi: &Self) -> Option<Self>;
+    fn egcd(&self, rhs: &Self) -> (Self::Signed, Self::Signed, Self::Signed);
+    fn gcd_is_one(&self, b: &Self) -> bool;
 }
 
 /// An error in conversion of large numbers (either to primitives or to other numbers
