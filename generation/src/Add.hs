@@ -10,7 +10,6 @@ module Add(
 import Data.Bits((.&.))
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import File
 import Gen(toLit)
 import Generators
 import Language.Rust.Data.Ident
@@ -19,11 +18,12 @@ import Language.Rust.Quote
 import Language.Rust.Syntax
 import System.Random(RandomGen)
 
+import RustModule
 numTestCases :: Int
 numTestCases = 3000
 
-safeAddOps :: File
-safeAddOps = File {
+safeAddOps :: RustModule
+safeAddOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
     outputName = "safe_add",
     isUnsigned = True,
@@ -31,8 +31,8 @@ safeAddOps = File {
     testCase = Just generateSafeTests
 }
 
-unsafeAddOps :: File
-unsafeAddOps = File {
+unsafeAddOps :: RustModule
+unsafeAddOps = RustModule {
     predicate = \ _ _ -> True,
     outputName = "unsafe_add",
     isUnsigned = True,
@@ -40,8 +40,8 @@ unsafeAddOps = File {
     testCase = Just generateUnsafeTests
 }
 
-safeSignedAddOps :: File
-safeSignedAddOps = File {
+safeSignedAddOps :: RustModule
+safeSignedAddOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
     outputName = "safe_sadd",
     isUnsigned = False,
@@ -49,8 +49,8 @@ safeSignedAddOps = File {
     testCase = Just generateSafeSignedTests
 }
 
-unsafeSignedAddOps :: File
-unsafeSignedAddOps = File {
+unsafeSignedAddOps :: RustModule
+unsafeSignedAddOps = RustModule {
     predicate = \ _ _ -> True,
     outputName = "unsafe_sadd",
     isUnsigned = False,

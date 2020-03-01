@@ -13,11 +13,11 @@ import CryptoNum(cryptoNum)
 import Control.Monad(forM_,unless)
 import Data.Text.Lazy(Text, pack)
 import Division(divisionOps)
-import File(File,Task(..),generateTasks)
 import GHC.Conc(getNumCapabilities)
 import ModInv(generateModInvOps)
 import ModOps(modulusOps)
 import Multiply(safeMultiplyOps, unsafeMultiplyOps)
+import RustModule(RustModule,Task(..),generateTasks)
 import Scale(safeScaleOps, unsafeScaleOps)
 import Shift(shiftOps, signedShiftOps)
 import Signed(signedBaseOps)
@@ -39,7 +39,7 @@ highestBitsize = 512
 bitsizes :: [Word]
 bitsizes = [lowestBitsize,lowestBitsize+64..highestBitsize]
 
-unsignedFiles :: [File]
+unsignedFiles :: [RustModule]
 unsignedFiles = [
     base
   , binaryOps
@@ -60,7 +60,7 @@ unsignedFiles = [
   , unsafeSubtractOps
   ]
 
-signedFiles :: [File]
+signedFiles :: [RustModule]
 signedFiles = [
     safeSignedAddOps
   , safeSignedSubtractOps
@@ -72,7 +72,7 @@ signedFiles = [
   , unsafeSignedSubtractOps
   ]
 
-allFiles :: [File]
+allFiles :: [RustModule]
 allFiles = unsignedFiles ++ signedFiles
 
 printLast :: Progress String -> Timing -> Text

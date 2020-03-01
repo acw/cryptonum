@@ -10,20 +10,20 @@ module Subtract(
 import Data.Bits((.&.))
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import File
 import Gen(toLit)
 import Generators
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
 import Language.Rust.Syntax
+import RustModule
 import System.Random(RandomGen)
 
 numTestCases :: Int
 numTestCases = 3000
 
-safeSubtractOps :: File
-safeSubtractOps = File {
+safeSubtractOps :: RustModule
+safeSubtractOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
     outputName = "safe_sub",
     isUnsigned = True,
@@ -31,8 +31,8 @@ safeSubtractOps = File {
     testCase = Just generateSafeTests
 }
 
-safeSignedSubtractOps :: File
-safeSignedSubtractOps = File {
+safeSignedSubtractOps :: RustModule
+safeSignedSubtractOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
     outputName = "safe_ssub",
     isUnsigned = False,
@@ -40,8 +40,8 @@ safeSignedSubtractOps = File {
     testCase = Just generateSafeSignedTests
 }
 
-unsafeSubtractOps :: File
-unsafeSubtractOps = File {
+unsafeSubtractOps :: RustModule
+unsafeSubtractOps = RustModule {
     predicate = \ _ _ -> True,
     outputName = "unsafe_sub",
     isUnsigned = True,
@@ -49,8 +49,8 @@ unsafeSubtractOps = File {
     testCase = Just generateUnsafeTests
 }
 
-unsafeSignedSubtractOps :: File
-unsafeSignedSubtractOps = File {
+unsafeSignedSubtractOps :: RustModule
+unsafeSignedSubtractOps = RustModule {
     predicate = \ _ _ -> True,
     outputName = "unsafe_ssub",
     isUnsigned = False,

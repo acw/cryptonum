@@ -9,7 +9,6 @@ import Data.Bits((.&.))
 import Data.List(union)
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import File
 import Gen(toLit)
 import Generators
 import Karatsuba
@@ -17,13 +16,14 @@ import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
 import Language.Rust.Syntax
+import RustModule
 import System.Random(RandomGen)
 
 numTestCases :: Int
 numTestCases = 3000
 
-safeMultiplyOps :: File
-safeMultiplyOps = File {
+safeMultiplyOps :: RustModule
+safeMultiplyOps = RustModule {
     predicate = \ me others -> (me * 2) `elem` others,
     outputName = "safe_mul",
     isUnsigned = True,
@@ -31,8 +31,8 @@ safeMultiplyOps = File {
     testCase = Just generateSafeTests
 }
 
-unsafeMultiplyOps :: File
-unsafeMultiplyOps = File {
+unsafeMultiplyOps :: RustModule
+unsafeMultiplyOps = RustModule {
     predicate = \ _ _ -> True,
     outputName = "unsafe_mul",
     isUnsigned = True,

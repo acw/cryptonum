@@ -8,20 +8,20 @@ module Scale(
 import Data.Bits((.&.))
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import File
 import Gen(toLit)
 import Generators
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
 import Language.Rust.Syntax
+import RustModule
 import System.Random(RandomGen)
 
 numTestCases :: Int
 numTestCases = 3000
 
-safeScaleOps :: File
-safeScaleOps = File {
+safeScaleOps :: RustModule
+safeScaleOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
     outputName = "safe_scale",
     isUnsigned = True,
@@ -29,8 +29,8 @@ safeScaleOps = File {
     testCase = Just generateSafeTests
 }
 
-unsafeScaleOps :: File
-unsafeScaleOps = File {
+unsafeScaleOps :: RustModule
+unsafeScaleOps = RustModule {
     predicate = \ _ _ -> True,
     outputName = "unsafe_scale",
     isUnsigned = True,

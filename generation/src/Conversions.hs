@@ -5,15 +5,15 @@ module Conversions(
   )
  where
 
-import File
 import Gen(toLit)
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
 import Language.Rust.Syntax
+import RustModule
 
-conversions :: File
-conversions = File {
+conversions :: RustModule
+conversions = RustModule {
   predicate = \ _ _ -> True,
   outputName = "conversions",
   isUnsigned = True,
@@ -21,8 +21,8 @@ conversions = File {
   testCase = Nothing
 }
 
-signedConversions :: File
-signedConversions = File {
+signedConversions :: RustModule
+signedConversions = RustModule {
   predicate = \ _ _ -> True,
   outputName = "sconversions",
   isUnsigned = False,

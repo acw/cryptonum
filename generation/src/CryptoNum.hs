@@ -7,20 +7,20 @@ module CryptoNum(
 import Data.Bits(testBit)
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import File
 import Gen
 import Generators
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
 import Language.Rust.Syntax
+import RustModule
 import System.Random(RandomGen)
 
 numTestCases :: Int
 numTestCases = 3000
 
-cryptoNum :: File
-cryptoNum = File {
+cryptoNum :: RustModule
+cryptoNum = RustModule {
   predicate = \ _ _ -> True,
   outputName = "cryptonum",
   isUnsigned = True,

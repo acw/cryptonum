@@ -4,14 +4,14 @@ module Base(
   )
  where
 
-import File
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
 import Language.Rust.Syntax
+import RustModule
 
-base :: File
-base = File {
+base :: RustModule
+base = RustModule {
   predicate = \ _ _ -> True,
   outputName = "base",
   isUnsigned = True,

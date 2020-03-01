@@ -2,15 +2,14 @@
 module Signed(signedBaseOps)
  where
 
-import File
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
 import Language.Rust.Syntax
+import RustModule
 
-
-signedBaseOps :: File
-signedBaseOps = File {
+signedBaseOps :: RustModule
+signedBaseOps = RustModule {
     predicate = const (const True),
     outputName = "base",
     isUnsigned = False,

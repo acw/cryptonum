@@ -5,20 +5,20 @@ module Shift(shiftOps, signedShiftOps)
 import Data.Bits(shiftL,shiftR)
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import File
 import Gen(toLit)
 import Generators
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
 import Language.Rust.Syntax
+import RustModule
 import System.Random(RandomGen)
 
 numTestCases :: Int
 numTestCases = 3000
 
-shiftOps :: File
-shiftOps = File {
+shiftOps :: RustModule
+shiftOps = RustModule {
     predicate = \ _ _ -> True,
     outputName = "shift",
     isUnsigned = True,
@@ -26,8 +26,8 @@ shiftOps = File {
     testCase = Just generateTests
 }
 
-signedShiftOps :: File
-signedShiftOps = File {
+signedShiftOps :: RustModule
+signedShiftOps = RustModule {
     predicate = \ _ _ -> True,
     outputName = "sshift",
     isUnsigned = False,

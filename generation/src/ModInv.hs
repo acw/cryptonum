@@ -8,20 +8,20 @@ module ModInv(
 import Control.Exception(assert)
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import File
 import Generators
 import GHC.Integer.GMP.Internals(recipModInteger)
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
 import Language.Rust.Syntax
+import RustModule
 import System.Random(RandomGen)
 
 numTestCases :: Int
 numTestCases = 100
 
-generateModInvOps :: File
-generateModInvOps = File {
+generateModInvOps :: RustModule
+generateModInvOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
     outputName = "modinv",
     isUnsigned = True,

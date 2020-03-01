@@ -4,20 +4,20 @@ module ModOps(modulusOps)
 
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import File
 import Generators
 import GHC.Integer.GMP.Internals(powModInteger)
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
 import Language.Rust.Syntax
+import RustModule
 import System.Random(RandomGen)
 
 numTestCases :: Int
 numTestCases = 1000
 
-modulusOps :: File
-modulusOps = File {
+modulusOps :: RustModule
+modulusOps = RustModule {
     predicate = \ me others -> (me * 2) `elem` others,
     outputName = "modops",
     isUnsigned = True,
