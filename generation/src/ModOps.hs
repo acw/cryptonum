@@ -118,7 +118,7 @@ generateModulusTest size g = go g
                                 ("m", showX m),
                                 ("r", showX (x `mod` m)),
                                 ("t", showX ((x * y) `mod` m)),
-                                ("s", showX ((x * x) `mod` m)),
+                                ("s", showX (powModInteger x 2 m)),
                                 ("e", showX (powModInteger x y m))
                                ]
     in if y < 2

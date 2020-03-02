@@ -30,7 +30,7 @@ maximumTestCases :: Int
 maximumTestCases = 5000
 
 targetTestGenerationTime :: Float
-targetTestGenerationTime = 5.0 -- in seconds
+targetTestGenerationTime = 2.0 -- in seconds
 
 targetTestGenerationPicos :: Integer
 targetTestGenerationPicos =

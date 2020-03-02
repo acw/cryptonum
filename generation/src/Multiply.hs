@@ -1,14 +1,16 @@
 {-# LANGUAGE QuasiQuotes #-}
-module Multiply(
-    safeMultiplyOps
-  , unsafeMultiplyOps
-  )
+module Multiply
+-- (
+--    safeMultiplyOps
+--  , unsafeMultiplyOps
+--  )
  where
 
 import Data.Bits((.&.))
-import Data.List(union)
+import Data.List(foldl')
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 import Gen(toLit)
 import Generators
 import Karatsuba
@@ -25,7 +27,7 @@ safeMultiplyOps = RustModule {
     outputName = "safe_mul",
     isUnsigned = True,
     generator = declareSafeMulOperators,
-    testCase = Just generateSafeTest
+    testCase = Nothing -- Just generateSafeTest
 }
 
 unsafeMultiplyOps :: RustModule
@@ -34,7 +36,7 @@ unsafeMultiplyOps = RustModule {
     outputName = "unsafe_mul",
     isUnsigned = True,
     generator = declareUnsafeMulOperators,
-    testCase = Just generateUnsafeTest
+    testCase = Nothing -- Just generateUnsafeTest
 }
 
 declareSafeMulOperators :: Word -> [Word] -> SourceFile Span
@@ -202,7 +204,6 @@ generateMultiplier fullmul size inName outName =
          var = mkIdent (vname ++ show i)
      in [stmt| $$vec.value[$$(liti)] = $$var; |]
 
-
 translateInstruction :: Instruction -> Stmt Span
 translateInstruction instr =
   case instr of
@@ -252,11 +253,16 @@ translateInstruction instr =
       in [stmt| let $$outid: u128 = $$inid >> $$(val); |]
 
 releaseUnnecessary :: [String] -> [Instruction] -> [Instruction]
-releaseUnnecessary outkeys instrs = snd (foldl check (outkeys, []) (reverse instrs))
+releaseUnnecessary outkeys instrs = go (Set.fromList outkeys) [] rInstrs
  where
-  check acc@(required, rest) cur
-    | outVar cur `elem` required = (union (inVars cur) required, cur : rest)
-    | otherwise                  = acc
+   rInstrs = reverse instrs
+   --
+   go _ acc [] = acc
+   go required acc (cur:rest)
+     | outVar cur `Set.member` required =
+         go (foldl' (flip Set.insert) required (inVars cur)) (cur:acc) rest
+     | otherwise =
+         go required acc rest
 
 outVar :: Instruction -> String
 outVar instr =

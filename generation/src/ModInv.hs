@@ -9,7 +9,7 @@ import Control.Exception(assert)
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
 import Generators
-import GHC.Integer.GMP.Internals(recipModInteger)
+import GHC.Integer.GMP.Internals(powModInteger, recipModInteger)
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
@@ -232,9 +232,10 @@ generateModInvTest size g = go g
    in if z == 0
         then go g2
         else assert (z < y) $
-             assert ((x * z) `mod` y == 1) $
-             assert (((a * x) + (b * y)) == v) $
-             assert (v == gcd x y) $
+             assert (powModInteger x z y == 1) $
+--             assert ((x * z) `mod` y == 1) $
+--             assert (((a * x) + (b * y)) == v) $
+--             assert (v == gcd x y) $
              (tcase, g2)
 
 extendedGCD :: Integer -> Integer -> (Integer, Integer, Integer)
