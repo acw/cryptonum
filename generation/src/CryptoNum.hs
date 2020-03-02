@@ -16,16 +16,13 @@ import Language.Rust.Syntax
 import RustModule
 import System.Random(RandomGen)
 
-numTestCases :: Int
-numTestCases = 3000
-
 cryptoNum :: RustModule
 cryptoNum = RustModule {
   predicate = \ _ _ -> True,
   outputName = "cryptonum",
   isUnsigned = True,
   generator = declareCryptoNumInstance,
-  testCase = Just generateTests
+  testCase = Just generateTest
 }
 
 declareCryptoNumInstance :: Word -> [Word] -> SourceFile Span
@@ -176,20 +173,16 @@ generateZeroTests i entries
       in [stmt| result &= self.value[$$(ilit)] == 0; |] :
          generateZeroTests (i + 1) entries
 
-generateTests :: RandomGen g => Word -> g -> [Map String String]
-generateTests size g = go g numTestCases
+generateTest :: RandomGen g => Word -> g -> (Map String String, g)
+generateTest size g0 = (tcase, g3)
  where
-  go _  0 = []
-  go g0 i =
-   let (x, g1) = generateNum g0 size
-       (m, g2) = generateNum g1 size
-       (b, g3) = generateNum g2 16
-       m'      = m `mod` (fromIntegral size `div` 64)
-       r       = x `mod` (2 ^ (64 * m'))
-       t       = x `testBit` (fromIntegral b)
-       tcase   = Map.fromList [("x", showX x),        ("z", showB (x == 0)),
-                               ("e", showB (even x)), ("o", showB (odd x)),
-                               ("m", showX m'),       ("r", showX r),
-                               ("b", showX b),        ("t", showB t)]
-   in tcase : go g3 (i - 1)
-
+  (x, g1) = generateNum g0 size
+  (m, g2) = generateNum g1 size
+  (b, g3) = generateNum g2 16
+  m'      = m `mod` (fromIntegral size `div` 64)
+  r       = x `mod` (2 ^ (64 * m'))
+  t       = x `testBit` (fromIntegral b)
+  tcase   = Map.fromList [("x", showX x),        ("z", showB (x == 0)),
+                          ("e", showB (even x)), ("o", showB (odd x)),
+                          ("m", showX m'),       ("r", showX r),
+                          ("b", showX b),        ("t", showB t)]

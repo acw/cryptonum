@@ -13,16 +13,13 @@ import Language.Rust.Syntax
 import RustModule
 import System.Random(RandomGen)
 
-numTestCases :: Int
-numTestCases = 1000
-
 modulusOps :: RustModule
 modulusOps = RustModule {
     predicate = \ me others -> (me * 2) `elem` others,
     outputName = "modops",
     isUnsigned = True,
     generator = declareModOps,
-    testCase = Just generateModulusTests
+    testCase = Just generateModulusTest
 }
 
 declareModOps :: Word -> [Word] -> SourceFile Span
@@ -110,11 +107,10 @@ declareModOps bitsize _ =
         }
      |]
 
-generateModulusTests :: RandomGen g => Word -> g -> [Map String String]
-generateModulusTests size g = go g numTestCases
+generateModulusTest :: RandomGen g => Word -> g -> (Map String String, g)
+generateModulusTest size g = go g
  where
-  go _  0 = []
-  go g0 i =
+  go g0 =
     let (x, g1) = generateNum g0 size
         (y, g2) = generateNum g1 size
         (m, g3) = generateNum g2 size
@@ -126,7 +122,7 @@ generateModulusTests size g = go g numTestCases
                                 ("e", showX (powModInteger x y m))
                                ]
     in if y < 2
-         then go g3 i
-         else tcase : go g3 (i - 1)
+         then go g3
+         else (tcase, g3)
 
 

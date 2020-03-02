@@ -17,16 +17,13 @@ import Language.Rust.Syntax
 import RustModule
 import System.Random(RandomGen)
 
-numTestCases :: Int
-numTestCases = 100
-
 generateModInvOps :: RustModule
 generateModInvOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
     outputName = "modinv",
     isUnsigned = True,
     generator = declareModInv,
-    testCase = Just generateModInvTests
+    testCase = Just generateModInvTest
 }
 
 declareModInv :: Word -> [Word] -> SourceFile Span 
@@ -221,11 +218,10 @@ declareModInv bitsize _ =
         }
      |]
 
-generateModInvTests :: RandomGen g => Word -> g -> [Map String String]
-generateModInvTests size g = go g numTestCases
+generateModInvTest :: RandomGen g => Word -> g -> (Map String String, g)
+generateModInvTest size g = go g
  where
-  go _  0 = []
-  go g0 i =
+  go g0 =
    let (x, g1)   = generateNum g0 size
        (y, g2)   = generateNum g1 size
        z         = recipModInteger x y
@@ -234,12 +230,12 @@ generateModInvTests size g = go g numTestCases
                                  ("z", showX z), ("a", showX a),
                                  ("b", showX b), ("v", showX v)]
    in if z == 0
-        then go g2 i
+        then go g2
         else assert (z < y) $
              assert ((x * z) `mod` y == 1) $
              assert (((a * x) + (b * y)) == v) $
              assert (v == gcd x y) $
-             tcase : go g2 (i - 1)
+             (tcase, g2)
 
 extendedGCD :: Integer -> Integer -> (Integer, Integer, Integer)
 extendedGCD x y = (a, b, g * (v finalState))

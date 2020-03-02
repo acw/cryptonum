@@ -17,16 +17,13 @@ import Language.Rust.Syntax
 import RustModule
 import System.Random(RandomGen)
 
-numTestCases :: Int
-numTestCases = 3000
-
 safeScaleOps :: RustModule
 safeScaleOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
     outputName = "safe_scale",
     isUnsigned = True,
     generator = declareSafeScaleOperators,
-    testCase = Just generateSafeTests
+    testCase = Just generateSafeTest
 }
 
 unsafeScaleOps :: RustModule
@@ -35,7 +32,7 @@ unsafeScaleOps = RustModule {
     outputName = "unsafe_scale",
     isUnsigned = True,
     generator = declareUnsafeScaleOperators,
-    testCase = Just generateUnsafeTests
+    testCase = Just generateUnsafeTest
 }
 
 declareSafeScaleOperators :: Word -> [Word] -> SourceFile Span
@@ -256,26 +253,17 @@ generateScaletiplier full size input output = loaders ++ [bigy] ++ ripples ++
 
 -- -----------------------------------------------------------------------------
 
-generateSafeTests :: RandomGen g => Word -> g -> [Map String String]
-generateSafeTests size g = go g numTestCases
+generateSafeTest :: RandomGen g => Word -> g -> (Map String String, g)
+generateSafeTest size g0 = (tcase, g2)
  where
-  go _  0 = []
-  go g0 i =
-    let (x, g1) = generateNum g0 size
-        (y, g2) = generateNum g1 64
-        tcase   = Map.fromList [("x", showX x), ("y", showX y),
-                                ("z", showX (x * y))]
-    in tcase : go g2 (i - 1)
+  (x, g1) = generateNum g0 size
+  (y, g2) = generateNum g1 64
+  tcase   = Map.fromList [("x", showX x), ("y", showX y), ("z", showX (x * y))]
 
-generateUnsafeTests :: RandomGen g => Word -> g -> [Map String String]
-generateUnsafeTests size g = go g numTestCases
+generateUnsafeTest :: RandomGen g => Word -> g -> (Map String String, g)
+generateUnsafeTest size g0 = (tcase, g2)
  where
-  go _  0 = []
-  go g0 i =
-    let (x, g1) = generateNum g0 size
-        (y, g2) = generateNum g1 64
-        z       = (x * y) .&. ((2 ^ size) - 1)
-        tcase   = Map.fromList [("x", showX x), ("y", showX y),
-                                ("z", showX z)]
-    in tcase : go g2 (i - 1)
-
+  (x, g1) = generateNum g0 size
+  (y, g2) = generateNum g1 64
+  z       = (x * y) .&. ((2 ^ size) - 1)
+  tcase   = Map.fromList [("x", showX x), ("y", showX y), ("z", showX z)]

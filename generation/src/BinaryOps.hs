@@ -16,16 +16,13 @@ import Language.Rust.Syntax
 import RustModule
 import System.Random(RandomGen)
 
-numTestCases :: Int
-numTestCases = 3000
-
 binaryOps :: RustModule
 binaryOps = RustModule {
     predicate = \ _ _ -> True,
     outputName = "binary",
     isUnsigned = True,
     generator = declareBinaryOperators,
-    testCase = Just generateTests
+    testCase = Just generateTest
 }
 
 declareBinaryOperators :: Word -> [Word] -> SourceFile Span
@@ -240,16 +237,13 @@ generateAllTheVariants traitname func sname oper entries = [
                            [expr| $$(right).value[$$(i)] |]
                            mempty) mempty
 
-generateTests :: RandomGen g => Word -> g -> [Map String String]
-generateTests size g = go g numTestCases
+generateTest :: RandomGen g => Word -> g -> (Map String String, g)
+generateTest size g0 = (tcase, g2)
  where
-  go _  0 = []
-  go g0 i =
-   let (x, g1) = generateNum g0 size
-       (y, g2) = generateNum g1 size
-       tcase   = Map.fromList [("x", showX x), ("y", showX y),
-                               ("a", showX (x .&. y)),
-                               ("o", showX (x .|. y)),
-                               ("e", showX (x `xor` y)),
-                               ("n", showX ( ((2 ^ size) - 1) `xor` x ))]
-   in tcase : go g2 (i - 1)
+  (x, g1) = generateNum g0 size
+  (y, g2) = generateNum g1 size
+  tcase   = Map.fromList [("x", showX x), ("y", showX y),
+                          ("a", showX (x .&. y)),
+                          ("o", showX (x .|. y)),
+                          ("e", showX (x `xor` y)),
+                          ("n", showX ( ((2 ^ size) - 1) `xor` x ))]

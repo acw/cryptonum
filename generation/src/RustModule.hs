@@ -8,7 +8,7 @@ module RustModule(
        )
  where
 
-import Control.Monad(forM_)
+import Control.Monad(forM_, unless)
 import Data.Char(toUpper)
 import Data.List(isPrefixOf, partition)
 import Data.Map.Strict(Map)
@@ -19,15 +19,29 @@ import Language.Rust.Data.Position(Span, spanOf)
 import Language.Rust.Pretty(writeSourceFile)
 import Language.Rust.Quote(item, sourceFile)
 import Language.Rust.Syntax(Item(..), SourceFile(..), Visibility(..))
+import System.CPUTime(getCPUTime)
 import System.IO(Handle,hPutStrLn)
 import System.Random(RandomGen(..))
+
+minimumTestCases :: Int
+minimumTestCases = 10
+
+maximumTestCases :: Int
+maximumTestCases = 5000
+
+targetTestGenerationTime :: Float
+targetTestGenerationTime = 5.0 -- in seconds
+
+targetTestGenerationPicos :: Integer
+targetTestGenerationPicos =
+  floor (targetTestGenerationTime * 1000000000000.0)
 
 data RustModule = RustModule {
     predicate :: Word -> [Word] -> Bool,
     outputName :: String,
     isUnsigned :: Bool,
     generator :: Word -> [Word] -> SourceFile Span,
-    testCase :: forall g. RandomGen g => Maybe (Word -> g -> [Map String String])
+    testCase :: forall g. RandomGen g => Maybe (Word -> g -> (Map String String, g))
 }
 
 data Task = Task {
@@ -96,96 +110,34 @@ generateTests :: RandomGen g =>
                  Maybe Task
 generateTests size rng m = fmap builder (testCase m)
  where
-  builder testGeneration =
+  builder testGenerator =
     let outFile = "testdata/" ++ outputName m ++ "/" ++ testFile (isUnsigned m) size
-        testGenAction hndl = writeTestCase hndl (testGeneration size (snd (split rng)))
+        testGenAction hndl = writeTestCases hndl (snd (split rng)) (testGenerator size)
     in Task outFile testGenAction
 
---   basicTasks ++ moduleTasks
--- where
---  basicTasks = go rng files sizes
---  moduleTasks = generateModules basicTasks
---  --
---  go :: RandomGen g => g -> [RustModule] -> [Word] -> [Task]
---  go _ []             _  = []
---  go g (_:rest)       [] = go g rest sizes
---  go g files'@(file:_) (size:rest)
---    | not (predicate file size sizes) = go g files' rest
---    | otherwise =
---        let (myg, theirg) = split g
---            tasks = go theirg files' rest
---            (signedBit, prefix) | isUnsigned file = ("unsigned", "u")
---                                | otherwise       = ("signed", "i")
---            mainTask = Task {
---              outputFile = "src" </> signedBit </> (prefix ++ show size) </>
---                           outputName file ++ ".rs",
---              writer = \ hndl -> writeSourceFile hndl (generator file size sizes)
---            }
---        in case testCase file of
---             Nothing ->
---               mainTask : tasks
---             Just caseGenerator ->
---               let testTask = Task {
---                     outputFile = "testdata" </> outputName file </> testFile (isUnsigned file) size,
---                     writer = \ hndl -> writeTestCase hndl (caseGenerator size myg)
---                   }
---               in testTask : mainTask : tasks
---
---generateModules :: [Task] -> [Task]
---generateModules tasks = Map.foldrWithKey maddModule [] fileMap ++ [signedTask, unsignedTask]
--- where
---  maddModule path mods acc
---   | ("src/unsigned" `isPrefixOf` path) || ("src/signed" `isPrefixOf` path) =
---        let (basePath, lowerName) = splitFileName (init path)
---            upperName = map toUpper lowerName
---            task = Task {
---              outputFile = basePath </> lowerName ++ ".rs",
---              writer = \ hndl ->
---                do forM_ mods $ \ modl ->
---                     hPutStrLn hndl ("mod " ++ modl ++ ";")
---                   hPutStrLn hndl ("pub use base::" ++ upperName ++ ";")
---            }
---        in task : acc
---   | otherwise =
---        acc
---  fileMap = foldr buildBaseMap Map.empty tasks
---  buildBaseMap task acc =
---    let (dir, fileext) = splitFileName (outputFile task)
---        file = dropExtension fileext
---    in Map.insertWith (++) dir [file] acc
---  --
---  signedTask = moduleTask "signed"
---  unsignedTask = moduleTask "unsigned"
---  moduleTask kind =
---    let mods = Map.foldrWithKey (topModule kind) [] fileMap
---        pubuses = Map.foldrWithKey (pubUse kind) [] fileMap
---    in Task {
---         outputFile = "src" </> (kind ++ ".rs"),
---         writer = \ hndl ->
---           writeSourceFile hndl [sourceFile|
---             $@{mods}
---             $@{pubuses}
---          |]
---       }
---  topModule kind path _ acc
---   | ("src/" ++ kind) `isPrefixOf` path =
---        let lowerName = takeFileName (init path)
---            modl = mkIdent lowerName
---        in [item| mod $$modl; |] : acc
---   | otherwise =
---        acc
---  pubUse kind path _ acc
---   | ("src/" ++ kind) `isPrefixOf` path =
---        let lowerName = takeFileName (init path)
---            tname = mkIdent (map toUpper lowerName)
---            modl = mkIdent lowerName
---        in [item| pub use $$modl::$$tname; |] : acc
---   | otherwise =
---        acc
---
---
-writeTestCase :: Handle -> [Map String String] -> IO ()
-writeTestCase hndl tests =
-  forM_ tests $ \ test ->
-    forM_ (Map.toList test) $ \ (key, value) ->
-      hPutStrLn hndl (key ++ ": " ++ value)
+writeTestCases :: RandomGen g =>
+                  Handle -> g ->
+                  (g -> (Map String String, g)) ->
+                  IO ()
+writeTestCases hndl rng nextTest =
+  do startTime <- getCPUTime
+     let stopTime = startTime + targetTestGenerationPicos
+     go 0 stopTime rng
+ where
+  go x endTime g
+   | x >= maximumTestCases = return ()
+   | x <  minimumTestCases = emit x endTime g
+   | otherwise =
+       do now <- getCPUTime
+          unless (now >= endTime) $
+            emit x endTime g
+  --
+  emit x endTime g =
+    do let (test, g') = nextTest g
+       writeTestCase hndl test
+       go (x + 1) endTime g'
+
+writeTestCase :: Handle -> Map String String -> IO ()
+writeTestCase hndl test =
+  forM_ (Map.toList test) $ \ (key, value) ->
+    hPutStrLn hndl (key ++ ": " ++ value)

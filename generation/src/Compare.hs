@@ -12,16 +12,13 @@ import Language.Rust.Syntax
 import RustModule
 import System.Random(RandomGen)
 
-numTestCases :: Int
-numTestCases = 3000
-
 comparisons :: RustModule
 comparisons = RustModule {
   predicate = \ _ _ -> True,
   outputName = "compare",
   isUnsigned = True,
   generator = declareComparators,
-  testCase = Just generateTests
+  testCase = Just generateTest
 }
 
 signedComparisons :: RustModule
@@ -30,7 +27,7 @@ signedComparisons = RustModule {
   outputName = "scompare",
   isUnsigned = False,
   generator = declareSignedComparators,
-  testCase = Just generateSignedTests
+  testCase = Just generateSignedTest
 }
 
 declareComparators :: Word -> [Word] -> SourceFile Span
@@ -249,34 +246,28 @@ buildCompareExp i numEntries
  where
   x = Lit [] (Int Dec (fromIntegral i) Unsuffixed mempty) mempty
 
-generateTests :: RandomGen g => Word -> g -> [Map String String]
-generateTests size g = go g numTestCases
+generateTest :: RandomGen g => Word -> g -> (Map String String, g)
+generateTest size g0 = (tcase, g2)
  where
-  go _  0 = []
-  go g0 i =
-   let (x, g1) = generateNum g0 size
-       (y, g2) = generateNum g1 size
-       tcase   = Map.fromList [("x", showX x), ("y", showX y),
-                               ("e", showB (x == y)),
-                               ("n", showB (x /= y)),
-                               ("g", showB (x >  y)),
-                               ("h", showB (x >= y)),
-                               ("l", showB (x <  y)),
-                               ("k", showB (x <= y))]
-   in tcase : go g2 (i - 1)
+  (x, g1) = generateNum g0 size
+  (y, g2) = generateNum g1 size
+  tcase   = Map.fromList [("x", showX x), ("y", showX y),
+                          ("e", showB (x == y)),
+                          ("n", showB (x /= y)),
+                          ("g", showB (x >  y)),
+                          ("h", showB (x >= y)),
+                          ("l", showB (x <  y)),
+                          ("k", showB (x <= y))]
 
-generateSignedTests :: RandomGen g => Word -> g -> [Map String String]
-generateSignedTests size g = go g numTestCases
+generateSignedTest :: RandomGen g => Word -> g -> (Map String String, g)
+generateSignedTest size g0 = (tcase, g2)
  where
-  go _  0 = []
-  go g0 i =
-   let (x, g1) = generateSignedNum g0 size
-       (y, g2) = generateSignedNum g1 size
-       tcase   = Map.fromList [("x", showX x), ("y", showX y),
-                               ("e", showB (x == y)),
-                               ("n", showB (x /= y)),
-                               ("g", showB (x >  y)),
-                               ("h", showB (x >= y)),
-                               ("l", showB (x <  y)),
-                               ("k", showB (x <= y))]
-   in tcase : go g2 (i - 1)
+  (x, g1) = generateSignedNum g0 size
+  (y, g2) = generateSignedNum g1 size
+  tcase   = Map.fromList [("x", showX x), ("y", showX y),
+                          ("e", showB (x == y)),
+                          ("n", showB (x /= y)),
+                          ("g", showB (x >  y)),
+                          ("h", showB (x >= y)),
+                          ("l", showB (x <  y)),
+                          ("k", showB (x <= y))]

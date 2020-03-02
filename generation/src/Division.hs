@@ -13,16 +13,13 @@ import Language.Rust.Syntax
 import RustModule
 import System.Random(RandomGen)
 
-numTestCases :: Int
-numTestCases = 3000
-
 divisionOps :: RustModule
 divisionOps = RustModule {
     predicate = \ _ _ -> True,
     outputName = "divmod",
     isUnsigned = True,
     generator = declareDivision,
-    testCase = Just generateDivisionTests
+    testCase = Just generateDivisionTest
 }
 
 declareDivision :: Word -> [Word] -> SourceFile Span
@@ -196,17 +193,15 @@ doCopy i =
     let liti = toLit i
     in [stmt| self.value[$$(liti)] = res.value[$$(liti)]; |]
 
-generateDivisionTests :: RandomGen g => Word -> g -> [Map String String]
-generateDivisionTests size g = go g numTestCases
+generateDivisionTest :: RandomGen g => Word -> g -> (Map String String, g)
+generateDivisionTest size g = go g
  where
-  go _  0 = []
-  go g0 i =
+  go g0 =
     let (x, g1) = generateNum g0 size
         (y, g2) = generateNum g1 size
         tcase   = Map.fromList [("x", showX x), ("y", showX y),
                                 ("z", showX (x `div` y)),
                                 ("r", showX (x `mod` y))]
     in if y == 0
-         then go g2 i
-         else tcase : go g2 (i - 1)
-
+         then go g2
+         else (tcase, g2)

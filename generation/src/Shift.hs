@@ -14,16 +14,13 @@ import Language.Rust.Syntax
 import RustModule
 import System.Random(RandomGen)
 
-numTestCases :: Int
-numTestCases = 3000
-
 shiftOps :: RustModule
 shiftOps = RustModule {
     predicate = \ _ _ -> True,
     outputName = "shift",
     isUnsigned = True,
     generator = declareShiftOperators,
-    testCase = Just generateTests
+    testCase = Just generateTest
 }
 
 signedShiftOps :: RustModule
@@ -32,7 +29,7 @@ signedShiftOps = RustModule {
     outputName = "sshift",
     isUnsigned = False,
     generator = declareSignedShiftOperators,
-    testCase = Just generateSignedTests
+    testCase = Just generateSignedTest
 }
 
 declareShiftOperators :: Word -> [Word] -> SourceFile Span
@@ -298,31 +295,24 @@ generateBaseImpls sname upper_shift lower_shift assign_shift lassign_shift right
     |]
   ]
 
-generateTests :: RandomGen g => Word -> g -> [Map String String]
-generateTests size g = go g numTestCases
+generateTest :: RandomGen g => Word -> g -> (Map String String, g)
+generateTest size g0 = (tcase, g2)
  where
-  go _  0 = []
-  go g0 i =
-   let (x, g1) = generateNum g0 size
-       (y, g2) = generateNum g1 size
-       s       = y `mod` fromIntegral size
-       l       = modulate (x `shiftL` fromIntegral s) size
-       r       = modulate (x `shiftR` fromIntegral s) size
-       tcase   = Map.fromList [("x", showX x), ("s", showX s),
-                               ("l", showX l), ("r", showX r)]
-   in tcase : go g2 (i - 1)
+  (x, g1) = generateNum g0 size
+  (y, g2) = generateNum g1 size
+  s       = y `mod` fromIntegral size
+  l       = modulate (x `shiftL` fromIntegral s) size
+  r       = modulate (x `shiftR` fromIntegral s) size
+  tcase   = Map.fromList [("x", showX x), ("s", showX s),
+                          ("l", showX l), ("r", showX r)]
 
-
-generateSignedTests :: RandomGen g => Word -> g -> [Map String String]
-generateSignedTests size g = go g numTestCases
+generateSignedTest :: RandomGen g => Word -> g -> (Map String String, g)
+generateSignedTest size g0 = (tcase, g2)
  where
-  go _  0 = []
-  go g0 i =
-   let (x, g1) = generateSignedNum g0 size
-       (y, g2) = generateNum g1 size
-       s       = y `mod` fromIntegral size
-       l       = modulate (x `shiftL` fromIntegral s) size
-       r       = modulate (x `shiftR` fromIntegral s) size
-       tcase   = Map.fromList [("x", showX x), ("s", showX s),
-                               ("l", showX l), ("r", showX r)]
-   in tcase : go g2 (i - 1)
+  (x, g1) = generateSignedNum g0 size
+  (y, g2) = generateNum g1 size
+  s       = y `mod` fromIntegral size
+  l       = modulate (x `shiftL` fromIntegral s) size
+  r       = modulate (x `shiftR` fromIntegral s) size
+  tcase   = Map.fromList [("x", showX x), ("s", showX s),
+                          ("l", showX l), ("r", showX r)]

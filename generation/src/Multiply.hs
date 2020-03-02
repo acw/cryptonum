@@ -19,16 +19,13 @@ import Language.Rust.Syntax
 import RustModule
 import System.Random(RandomGen)
 
-numTestCases :: Int
-numTestCases = 3000
-
 safeMultiplyOps :: RustModule
 safeMultiplyOps = RustModule {
     predicate = \ me others -> (me * 2) `elem` others,
     outputName = "safe_mul",
     isUnsigned = True,
     generator = declareSafeMulOperators,
-    testCase = Just generateSafeTests
+    testCase = Just generateSafeTest
 }
 
 unsafeMultiplyOps :: RustModule
@@ -37,7 +34,7 @@ unsafeMultiplyOps = RustModule {
     outputName = "unsafe_mul",
     isUnsigned = True,
     generator = declareUnsafeMulOperators,
-    testCase = Just generateUnsafeTests
+    testCase = Just generateUnsafeTest
 }
 
 declareSafeMulOperators :: Word -> [Word] -> SourceFile Span
@@ -289,31 +286,17 @@ inVars instr =
 
 -- -----------------------------------------------------------------------------
 
-generateSafeTests :: RandomGen g => Word -> g -> [Map String String]
-generateSafeTests size g = go g numTestCases
+generateSafeTest :: RandomGen g => Word -> g -> (Map String String, g)
+generateSafeTest size g0 = (tcase, g2)
  where
-  go _  0 = [
-      Map.fromList [("x", "0"), ("y", "0"), ("z", "0")]
-    , (let x = (2 ^ size) - 1
-           y = (2 ^ size) - 1
-           z = x * y
-        in Map.fromList [("x", showX x), ("y", showX y), ("z", showX z)])
-     ]
-  go g0 i =
-    let (x, g1) = generateNum g0 size
-        (y, g2) = generateNum g1 size
-        tcase   = Map.fromList [("x", showX x), ("y", showX y),
-                                ("z", showX (x * y))]
-    in tcase : go g2 (i - 1)
+  (x, g1) = generateNum g0 size
+  (y, g2) = generateNum g1 size
+  tcase   = Map.fromList [("x", showX x), ("y", showX y), ("z", showX (x * y))]
 
-generateUnsafeTests :: RandomGen g => Word -> g -> [Map String String]
-generateUnsafeTests size g = go g numTestCases
+generateUnsafeTest :: RandomGen g => Word -> g -> (Map String String, g)
+generateUnsafeTest size g0 = (tcase, g2)
  where
-  go _  0 = []
-  go g0 i =
-    let (x, g1) = generateNum g0 size
-        (y, g2) = generateNum g1 size
-        z       = (x * y) .&. ((2 ^ size) - 1)
-        tcase   = Map.fromList [("x", showX x), ("y", showX y),
-                                ("z", showX z)]
-    in tcase : go g2 (i - 1)
+  (x, g1) = generateNum g0 size
+  (y, g2) = generateNum g1 size
+  z       = (x * y) .&. ((2 ^ size) - 1)
+  tcase   = Map.fromList [("x", showX x), ("y", showX y), ("z", showX z)]
