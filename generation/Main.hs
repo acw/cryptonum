@@ -11,13 +11,14 @@ import Control.Monad(replicateM, void)
 import Conversions(conversions, signedConversions)
 import CryptoNum(cryptoNum)
 import Control.Monad(forM_,unless)
+import Data.List(nub)
 import Data.Text.Lazy(Text, pack)
 import Division(divisionOps)
 import GHC.Conc(getNumCapabilities)
 import ModInv(generateModInvOps)
 import ModOps(modulusOps)
 import Multiply(safeMultiplyOps, unsafeMultiplyOps)
-import RustModule(RustModule,Task(..),generateTasks)
+import RustModule(RustModule(suggested),Task(..),generateTasks)
 import Scale(safeScaleOps, unsafeScaleOps)
 import Shift(shiftOps, signedShiftOps)
 import Signed(signedBaseOps)
@@ -30,14 +31,19 @@ import System.IO(IOMode(..),withFile)
 import System.ProgressBar(Label(..), Progress(..), ProgressBar, Timing, defStyle, newProgressBar, stylePrefix, updateProgress)
 import System.Random(getStdGen)
 
-lowestBitsize :: Word
-lowestBitsize = 192
+rsaWordSizes :: [Word]
+rsaWordSizes = [512, 1024, 2048, 3072, 4096, 8192, 15360]
 
-highestBitsize :: Word
-highestBitsize = 512
+dsaWordSizes :: [Word]
+dsaWordSizes = [192, 256, 384, 1024, 2048, 3072]
+
+ecdsaIntSizes :: [Word]
+ecdsaIntSizes = [192, 256, 384, 576]
 
 bitsizes :: [Word]
-bitsizes = [lowestBitsize,lowestBitsize+64..highestBitsize]
+bitsizes = expandSizes initialSet
+ where
+  initialSet = nub (rsaWordSizes ++ dsaWordSizes ++ ecdsaIntSizes)
 
 unsignedFiles :: [RustModule]
 unsignedFiles = [
@@ -74,6 +80,11 @@ signedFiles = [
 
 allFiles :: [RustModule]
 allFiles = unsignedFiles ++ signedFiles
+
+expandSizes :: [Word] -> [Word]
+expandSizes ls = bigger
+ where
+  bigger = nub (ls ++ concatMap (\ f -> concatMap (\ x -> suggested f x) ls) allFiles)
 
 printLast :: Progress String -> Timing -> Text
 printLast prog _ = pack (progressCustom prog)

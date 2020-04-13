@@ -13,6 +13,7 @@ import RustModule
 base :: RustModule
 base = RustModule {
   predicate = \ _ _ -> True,
+  suggested = const [],
   outputName = "base",
   isUnsigned = True,
   generator = declareBaseStructure,

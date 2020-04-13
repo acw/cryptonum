@@ -38,6 +38,7 @@ targetTestGenerationPicos =
 
 data RustModule = RustModule {
     predicate :: Word -> [Word] -> Bool,
+    suggested :: Word -> [Word],
     outputName :: String,
     isUnsigned :: Bool,
     generator :: Word -> [Word] -> SourceFile Span,

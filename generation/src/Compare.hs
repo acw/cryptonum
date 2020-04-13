@@ -15,6 +15,7 @@ import System.Random(RandomGen)
 comparisons :: RustModule
 comparisons = RustModule {
   predicate = \ _ _ -> True,
+  suggested = const [],
   outputName = "compare",
   isUnsigned = True,
   generator = declareComparators,
@@ -24,6 +25,7 @@ comparisons = RustModule {
 signedComparisons :: RustModule
 signedComparisons = RustModule {
   predicate = \ _ _ -> True,
+  suggested = const [],
   outputName = "scompare",
   isUnsigned = False,
   generator = declareSignedComparators,

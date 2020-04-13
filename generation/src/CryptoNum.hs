@@ -7,7 +7,6 @@ module CryptoNum(
 import Data.Bits(testBit)
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import Gen
 import Generators
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
@@ -19,6 +18,7 @@ import System.Random(RandomGen)
 cryptoNum :: RustModule
 cryptoNum = RustModule {
   predicate = \ _ _ -> True,
+  suggested = const [],
   outputName = "cryptonum",
   isUnsigned = True,
   generator = declareCryptoNumInstance,

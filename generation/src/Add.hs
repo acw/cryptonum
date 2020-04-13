@@ -10,7 +10,6 @@ module Add(
 import Data.Bits((.&.))
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import Gen(toLit)
 import Generators
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
@@ -22,6 +21,7 @@ import System.Random(RandomGen)
 safeAddOps :: RustModule
 safeAddOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
+    suggested = \ me -> [me + 64],
     outputName = "safe_add",
     isUnsigned = True,
     generator = declareSafeAddOperators,
@@ -31,6 +31,7 @@ safeAddOps = RustModule {
 unsafeAddOps :: RustModule
 unsafeAddOps = RustModule {
     predicate = \ _ _ -> True,
+    suggested = const [],
     outputName = "unsafe_add",
     isUnsigned = True,
     generator = declareUnsafeAddOperators,
@@ -40,6 +41,7 @@ unsafeAddOps = RustModule {
 safeSignedAddOps :: RustModule
 safeSignedAddOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
+    suggested = \ me -> [me + 64],
     outputName = "safe_sadd",
     isUnsigned = False,
     generator = declareSafeSignedAddOperators,
@@ -49,6 +51,7 @@ safeSignedAddOps = RustModule {
 unsafeSignedAddOps :: RustModule
 unsafeSignedAddOps = RustModule {
     predicate = \ _ _ -> True,
+    suggested = const [],
     outputName = "unsafe_sadd",
     isUnsigned = False,
     generator = declareUnsafeSignedAddOperators,

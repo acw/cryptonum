@@ -20,6 +20,7 @@ import System.Random(RandomGen)
 generateModInvOps :: RustModule
 generateModInvOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
+    suggested = \ me -> [me + 64],
     outputName = "modinv",
     isUnsigned = True,
     generator = declareModInv,

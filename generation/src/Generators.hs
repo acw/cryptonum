@@ -1,8 +1,13 @@
 module Generators
  where
 
+import Language.Rust.Data.Position
+import Language.Rust.Syntax
 import Numeric(showHex)
 import System.Random(RandomGen,random,randomR)
+
+toLit :: Word -> Expr Span
+toLit i = Lit  [] (Int Dec (fromIntegral i) Unsuffixed mempty) mempty
 
 generateNum :: RandomGen g => g -> Word -> (Integer, g)
 generateNum g size =

@@ -16,6 +16,7 @@ import System.Random(RandomGen)
 modulusOps :: RustModule
 modulusOps = RustModule {
     predicate = \ me others -> (me * 2) `elem` others,
+    suggested = \ me -> [me * 2],
     outputName = "modops",
     isUnsigned = True,
     generator = declareModOps,

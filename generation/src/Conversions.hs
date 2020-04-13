@@ -5,7 +5,7 @@ module Conversions(
   )
  where
 
-import Gen(toLit)
+import Generators
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
 import Language.Rust.Quote
@@ -15,6 +15,7 @@ import RustModule
 conversions :: RustModule
 conversions = RustModule {
   predicate = \ _ _ -> True,
+  suggested = const [],
   outputName = "conversions",
   isUnsigned = True,
   generator = declareConversions,
@@ -24,6 +25,7 @@ conversions = RustModule {
 signedConversions :: RustModule
 signedConversions = RustModule {
   predicate = \ _ _ -> True,
+  suggested = const [],
   outputName = "sconversions",
   isUnsigned = False,
   generator = declareSignedConversions,

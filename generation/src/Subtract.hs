@@ -10,7 +10,6 @@ module Subtract(
 import Data.Bits((.&.))
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import Gen(toLit)
 import Generators
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
@@ -22,6 +21,7 @@ import System.Random(RandomGen)
 safeSubtractOps :: RustModule
 safeSubtractOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
+    suggested = \ me -> [me + 64],
     outputName = "safe_sub",
     isUnsigned = True,
     generator = declareSafeSubtractOperators,
@@ -31,6 +31,7 @@ safeSubtractOps = RustModule {
 safeSignedSubtractOps :: RustModule
 safeSignedSubtractOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
+    suggested = \ me -> [me + 64],
     outputName = "safe_ssub",
     isUnsigned = False,
     generator = declareSafeSignedSubtractOperators,
@@ -40,6 +41,7 @@ safeSignedSubtractOps = RustModule {
 unsafeSubtractOps :: RustModule
 unsafeSubtractOps = RustModule {
     predicate = \ _ _ -> True,
+    suggested = const [],
     outputName = "unsafe_sub",
     isUnsigned = True,
     generator = declareUnsafeSubtractOperators,
@@ -49,6 +51,7 @@ unsafeSubtractOps = RustModule {
 unsafeSignedSubtractOps :: RustModule
 unsafeSignedSubtractOps = RustModule {
     predicate = \ _ _ -> True,
+    suggested = const [],
     outputName = "unsafe_ssub",
     isUnsigned = False,
     generator = declareUnsafeSignedSubtractOperators,

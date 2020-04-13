@@ -5,7 +5,6 @@ module Shift(shiftOps, signedShiftOps)
 import Data.Bits(shiftL,shiftR)
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import Gen(toLit)
 import Generators
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
@@ -17,6 +16,7 @@ import System.Random(RandomGen)
 shiftOps :: RustModule
 shiftOps = RustModule {
     predicate = \ _ _ -> True,
+    suggested = const [],
     outputName = "shift",
     isUnsigned = True,
     generator = declareShiftOperators,
@@ -26,6 +26,7 @@ shiftOps = RustModule {
 signedShiftOps :: RustModule
 signedShiftOps = RustModule {
     predicate = \ _ _ -> True,
+    suggested = const [],
     outputName = "sshift",
     isUnsigned = False,
     generator = declareSignedShiftOperators,

@@ -8,7 +8,6 @@ module Scale(
 import Data.Bits((.&.))
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import Gen(toLit)
 import Generators
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
@@ -20,6 +19,7 @@ import System.Random(RandomGen)
 safeScaleOps :: RustModule
 safeScaleOps = RustModule {
     predicate = \ me others -> (me + 64) `elem` others,
+    suggested = \ me -> [me + 64],
     outputName = "safe_scale",
     isUnsigned = True,
     generator = declareSafeScaleOperators,
@@ -29,6 +29,7 @@ safeScaleOps = RustModule {
 unsafeScaleOps :: RustModule
 unsafeScaleOps = RustModule {
     predicate = \ _ _ -> True,
+    suggested = const [],
     outputName = "unsafe_scale",
     isUnsigned = True,
     generator = declareUnsafeScaleOperators,

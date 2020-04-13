@@ -1,9 +1,8 @@
 {-# LANGUAGE QuasiQuotes #-}
-module Multiply
--- (
---    safeMultiplyOps
---  , unsafeMultiplyOps
---  )
+module Multiply(
+    safeMultiplyOps
+  , unsafeMultiplyOps
+  )
  where
 
 import Data.Bits((.&.))
@@ -11,7 +10,6 @@ import Data.List(foldl')
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
-import Gen(toLit)
 import Generators
 import Karatsuba
 import Language.Rust.Data.Ident
@@ -24,19 +22,21 @@ import System.Random(RandomGen)
 safeMultiplyOps :: RustModule
 safeMultiplyOps = RustModule {
     predicate = \ me others -> (me * 2) `elem` others,
+    suggested = \ me -> [me * 2],
     outputName = "safe_mul",
     isUnsigned = True,
     generator = declareSafeMulOperators,
-    testCase = Nothing -- Just generateSafeTest
+    testCase = Just generateSafeTest
 }
 
 unsafeMultiplyOps :: RustModule
 unsafeMultiplyOps = RustModule {
     predicate = \ _ _ -> True,
+    suggested = const [],
     outputName = "unsafe_mul",
     isUnsigned = True,
     generator = declareUnsafeMulOperators,
-    testCase = Nothing -- Just generateUnsafeTest
+    testCase = Just generateUnsafeTest
 }
 
 declareSafeMulOperators :: Word -> [Word] -> SourceFile Span

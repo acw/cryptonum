@@ -27,8 +27,8 @@ modexpLR bitsize b e m = go (bitsize - 1) 1
  where
    go bit r0
      | bit < 0       = r0
-     | testBit e bit = trace ("1: r = " ++ showHex r2 "") $ go (bit - 1) r2
-     | otherwise     = trace ("0: r = " ++ showHex r1 "") $ go (bit - 1) r1
+     | testBit e bit = go (bit - 1) r2
+     | otherwise     = go (bit - 1) r1
     where
      r1 = (r0 * r0) `mod` m
      r2 = (r1 * b)  `mod` m

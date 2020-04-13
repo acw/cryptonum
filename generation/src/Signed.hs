@@ -11,6 +11,7 @@ import RustModule
 signedBaseOps :: RustModule
 signedBaseOps = RustModule {
     predicate = const (const True),
+    suggested = const [],
     outputName = "base",
     isUnsigned = False,
     generator = declareSigned,

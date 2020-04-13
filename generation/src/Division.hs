@@ -4,7 +4,6 @@ module Division(divisionOps)
 
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
-import Gen(toLit)
 import Generators
 import Language.Rust.Data.Ident
 import Language.Rust.Data.Position
@@ -16,6 +15,7 @@ import System.Random(RandomGen)
 divisionOps :: RustModule
 divisionOps = RustModule {
     predicate = \ _ _ -> True,
+    suggested = const [],
     outputName = "divmod",
     isUnsigned = True,
     generator = declareDivision,
