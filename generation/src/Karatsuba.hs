@@ -53,7 +53,7 @@ generateInstructions numdigits =
 --
 -- -----------------------------------------------------------------------------
 
-newtype Variable = V String
+newtype Variable = V Word
  deriving (Eq, Ord, Show)
 
 -- these are in Intel form, as I was corrupted young, so the first argument
@@ -136,9 +136,9 @@ replaceVar ls (from, to) = map replace ls
 --
 -- -----------------------------------------------------------------------------
 
-newtype Math a = Math { unMath :: RWS () [Instruction] Integer a }
+newtype Math a = Math { unMath :: RWS () [Instruction] Word a }
  deriving (Applicative, Functor, Monad,
-           MonadState Integer,
+           MonadState Word,
            MonadWriter [Instruction])
 
 instance MonadFail Math where
@@ -150,7 +150,7 @@ emit instr = tell [instr]
 newVariable :: Math Variable
 newVariable =
   do x <- state (\ i -> (i, i + 1))
-     return (V (show x))
+     return (V x)
 
 runMath :: Math a -> (a, [Instruction])
 runMath m = evalRWS (unMath m) () 0
