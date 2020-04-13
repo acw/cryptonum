@@ -205,90 +205,91 @@ generateMultiplier fullmul size inName outName =
      in [stmt| $$vec.value[$$(liti)] = $$var; |]
 
 translateInstruction :: Instruction -> Stmt Span
-translateInstruction instr =
-  case instr of
-    Add        outname args ->
-      let outid = mkIdent outname
-          args' = map (\x -> [expr| $$x |]) (map mkIdent args)
-          adds  = foldl (\ x y -> [expr| $$(x) + $$(y) |])
-                        (head args')
-                        (tail args')
-      in [stmt| let $$outid: u128 = $$(adds); |]
-    CastDown   outname arg  ->
-      let outid = mkIdent outname
-          inid  = mkIdent arg
-      in [stmt| let $$outid: u64 = $$inid as u64; |]
-    CastUp     outname arg  ->
-      let outid = mkIdent outname
-          inid  = mkIdent arg
-      in [stmt| let $$outid: u128 = $$inid as u128; |]
-    Complement outname arg  ->
-      let outid = mkIdent outname
-          inid  = mkIdent arg
-      in [stmt| let $$outid: u64 = !$$inid; |]
-    Declare64  outname arg  ->
-      let outid = mkIdent outname
-          val   = toLit (fromIntegral arg)
-      in [stmt| let $$outid: u64 = $$(val); |]
-    Declare128 outname arg  ->
-      let outid = mkIdent outname
-          val   = toLit (fromIntegral arg)
-      in [stmt| let $$outid: u128 = $$(val); |]
-    Mask       outname arg mask ->
-      let outid = mkIdent outname
-          inid  = mkIdent arg
-          val   = toLit (fromIntegral mask)
-      in [stmt| let $$outid: u128 = $$inid & $$(val); |]
-    Multiply   outname args ->
-      let outid = mkIdent outname
-          args' = map (\x -> [expr| $$x |]) (map mkIdent args)
-          muls  = foldl (\ x y -> [expr| $$(x) * $$(y) |])
-                        (head args')
-                        (tail args')
-      in [stmt| let $$outid: u128 = $$(muls); |]
-    ShiftR     outname arg amt ->
-      let outid = mkIdent outname
-          inid  = mkIdent arg
-          val   = toLit (fromIntegral amt)
-      in [stmt| let $$outid: u128 = $$inid >> $$(val); |]
+translateInstruction instr = undefined
+--  case instr of
+--    Add        outname args ->
+--      let outid = mkIdent outname
+--          args' = map (\x -> [expr| $$x |]) (map mkIdent args)
+--          adds  = foldl (\ x y -> [expr| $$(x) + $$(y) |])
+--                        (head args')
+--                        (tail args')
+--      in [stmt| let $$outid: u128 = $$(adds); |]
+--    CastDown   outname arg  ->
+--      let outid = mkIdent outname
+--          inid  = mkIdent arg
+--      in [stmt| let $$outid: u64 = $$inid as u64; |]
+--    CastUp     outname arg  ->
+--      let outid = mkIdent outname
+--          inid  = mkIdent arg
+--      in [stmt| let $$outid: u128 = $$inid as u128; |]
+--    Complement outname arg  ->
+--      let outid = mkIdent outname
+--          inid  = mkIdent arg
+--      in [stmt| let $$outid: u64 = !$$inid; |]
+--    Declare64  outname arg  ->
+--      let outid = mkIdent outname
+--          val   = toLit (fromIntegral arg)
+--      in [stmt| let $$outid: u64 = $$(val); |]
+--    Declare128 outname arg  ->
+--      let outid = mkIdent outname
+--          val   = toLit (fromIntegral arg)
+--      in [stmt| let $$outid: u128 = $$(val); |]
+--    Mask       outname arg mask ->
+--      let outid = mkIdent outname
+--          inid  = mkIdent arg
+--          val   = toLit (fromIntegral mask)
+--      in [stmt| let $$outid: u128 = $$inid & $$(val); |]
+--    Multiply   outname args ->
+--      let outid = mkIdent outname
+--          args' = map (\x -> [expr| $$x |]) (map mkIdent args)
+--          muls  = foldl (\ x y -> [expr| $$(x) * $$(y) |])
+--                        (head args')
+--                        (tail args')
+--      in [stmt| let $$outid: u128 = $$(muls); |]
+--    ShiftR     outname arg amt ->
+--      let outid = mkIdent outname
+--          inid  = mkIdent arg
+--          val   = toLit (fromIntegral amt)
+--      in [stmt| let $$outid: u128 = $$inid >> $$(val); |]
 
 releaseUnnecessary :: [String] -> [Instruction] -> [Instruction]
-releaseUnnecessary outkeys instrs = go (Set.fromList outkeys) [] rInstrs
- where
-   rInstrs = reverse instrs
-   --
-   go _ acc [] = acc
-   go required acc (cur:rest)
-     | outVar cur `Set.member` required =
-         go (foldl' (flip Set.insert) required (inVars cur)) (cur:acc) rest
-     | otherwise =
-         go required acc rest
-
-outVar :: Instruction -> String
-outVar instr =
-  case instr of
-    Add        outname _   -> outname
-    CastDown   outname _   -> outname
-    CastUp     outname _   -> outname
-    Complement outname _   -> outname
-    Declare64  outname _   -> outname
-    Declare128 outname _   -> outname
-    Mask       outname _ _ -> outname
-    Multiply   outname _   -> outname
-    ShiftR     outname _ _ -> outname
-
-inVars :: Instruction -> [String]
-inVars instr =
-  case instr of
-    Add        _ args  -> args
-    CastDown   _ arg   -> [arg]
-    CastUp     _ arg   -> [arg]
-    Complement _ arg   -> [arg]
-    Declare64  _ _     -> []
-    Declare128 _ _     -> []
-    Mask       _ arg _ -> [arg]
-    Multiply   _ args  -> args
-    ShiftR     _ arg _ -> [arg]
+releaseUnnecessary outkeys instrs = undefined
+-- go (Set.fromList outkeys) [] rInstrs
+-- where
+--   rInstrs = reverse instrs
+--   --
+--   go _ acc [] = acc
+--   go required acc (cur:rest)
+--     | outVar cur `Set.member` required =
+--         go (foldl' (flip Set.insert) required (inVars cur)) (cur:acc) rest
+--     | otherwise =
+--         go required acc rest
+--
+--outVar :: Instruction -> String
+--outVar instr =
+--  case instr of
+--    Add        outname _   -> outname
+--    CastDown   outname _   -> outname
+--    CastUp     outname _   -> outname
+--    Complement outname _   -> outname
+--    Declare64  outname _   -> outname
+--    Declare128 outname _   -> outname
+--    Mask       outname _ _ -> outname
+--    Multiply   outname _   -> outname
+--    ShiftR     outname _ _ -> outname
+--
+--inVars :: Instruction -> [String]
+--inVars instr =
+--  case instr of
+--    Add        _ args  -> args
+--    CastDown   _ arg   -> [arg]
+--    CastUp     _ arg   -> [arg]
+--    Complement _ arg   -> [arg]
+--    Declare64  _ _     -> []
+--    Declare128 _ _     -> []
+--    Mask       _ arg _ -> [arg]
+--    Multiply   _ args  -> args
+--    ShiftR     _ arg _ -> [arg]
 
 -- -----------------------------------------------------------------------------
 
