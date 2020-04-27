@@ -10,12 +10,12 @@ module RustModule(
 
 import Control.Monad(forM_, unless)
 import Data.Char(toUpper)
-import Data.List(isPrefixOf, partition)
+import Data.List(partition)
 import Data.Map.Strict(Map)
 import qualified Data.Map.Strict as Map
 import Data.Maybe(mapMaybe)
 import Language.Rust.Data.Ident(mkIdent)
-import Language.Rust.Data.Position(Span, spanOf)
+import Language.Rust.Data.Position(Position(NoPosition), Span(Span))
 import Language.Rust.Pretty(writeSourceFile)
 import Language.Rust.Quote(item, sourceFile)
 import Language.Rust.Syntax(Item(..), SourceFile(..), Visibility(..))
@@ -64,21 +64,18 @@ generateTasks :: RandomGen g => g -> [RustModule] -> [Word] -> [Task]
 generateTasks rng modules sizes = allTheFiles
  where
    allTheFiles = implementationsAndTests ++
-                 [lump "src/signed", lump "src/unsigned"]
+                 [lump "i" "src/signed.rs", lump "u" "src/unsigned.rs"]
    implementationsAndTests = concatMap generateModules sizes
    --
-   lump prefix =
-     let allFiles = map outputFile implementationsAndTests
-         files = filter (prefix `isPrefixOf`) allFiles
-         moduleFiles = map (drop (length prefix + 1)) files
-         moduleNames = map (takeWhile (/= '.')) moduleFiles 
+   lump prefix file =
+     let moduleNames = map (\s -> prefix ++ show s) sizes 
          moduleIdents = map mkIdent moduleNames
          types = map (mkIdent . map toUpper) moduleNames
          mods = map (\ name -> [item| mod $$name; |]) moduleIdents
          uses = zipWith (\ mname tname -> [item| pub use $$mname::$$tname; |])
                         moduleIdents types
-         file = [sourceFile| $@{mods} $@{uses} |]
-      in Task (prefix ++ ".rs") (\hndl -> writeSourceFile hndl file)
+         source = [sourceFile| $@{mods} $@{uses} |]
+      in Task file (\hndl -> writeSourceFile hndl source)
    --
    generateModules size =
      let modules' = filter (\m -> predicate m size sizes) modules
@@ -92,18 +89,21 @@ generateTasks rng modules sizes = allTheFiles
      | otherwise =
          let name = mkIdent (startsWith ++ show size)
              baseInclude = [item| pub use self::base::$$name; |]
-             moduleSources = map (generateSubmodule size sizes) modules'
-             moduleFile | startsWith == "I" = "src/signed/i" ++ show size ++ ".rs"
-                        | otherwise         = "src/unsigned/u" ++ show size ++ ".rs"
-             allSource = SourceFile Nothing [] (baseInclude : moduleSources)
-         in [Task moduleFile (\ hndl -> writeSourceFile hndl allSource)]
+             isSigned = startsWith == "I"
+             moduleSources = map (generateSubmodule isSigned size sizes) modules'
+             moduleFile | isSigned  = "src/signed/i" ++ show size ++ ".rs"
+                        | otherwise = "src/unsigned/u" ++ show size ++ ".rs"
+             allSource = SourceFile Nothing [] (baseInclude : map fst moduleSources)
+         in [Task moduleFile (\ hndl -> writeSourceFile hndl allSource)] ++ map snd moduleSources
 
-generateSubmodule :: Word -> [Word] -> RustModule -> Item Span
-generateSubmodule size allSizes m =
-  let SourceFile _ attrs internals = generator m size allSizes
+generateSubmodule :: Bool -> Word -> [Word] -> RustModule -> (Item Span, Task)
+generateSubmodule isSigned size allSizes m =
+  let modBody = generator m size allSizes
       modName = mkIdent (outputName m)
-      modSpan = spanOf internals
-  in Mod attrs CrateV modName (Just internals) modSpan
+      modDecl = Mod [] CrateV modName Nothing (Span NoPosition NoPosition)
+      modFile | isSigned  = "src/signed/i" ++ show size ++ "/" ++ outputName m ++ ".rs"
+              | otherwise = "src/unsigned/u" ++ show size ++ "/" ++ outputName m ++ ".rs"
+  in (modDecl, Task modFile (\ hndl -> writeSourceFile hndl modBody))
 
 generateTests :: RandomGen g =>
                  Word -> g ->

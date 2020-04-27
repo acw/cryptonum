@@ -1,5 +1,4 @@
 import Data.Bits hiding (bit)
-import Debug.Trace
 import GHC.Integer.GMP.Internals
 import qualified Karatsuba
 import Numeric
